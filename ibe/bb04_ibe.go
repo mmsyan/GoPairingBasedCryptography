@@ -17,10 +17,9 @@ package ibe
 //   - 解密(Decrypt)
 
 import (
-	"crypto/rand"
 	"fmt"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
 )
 
@@ -28,8 +27,8 @@ import (
 // 该实例包含了系统的主密钥对(x, y)，其中x和y都是Zp域上的随机元素。
 // 主密钥用于生成用户的私钥，必须严格保密。
 type BBIBEInstance struct {
-	x *big.Int
-	y *big.Int
+	x fr.Element
+	y fr.Element
 }
 
 // BBIBEPublicParams 表示Boneh-Boyen IBE方案的公共参数。
@@ -46,7 +45,7 @@ type BBIBEPublicParams struct {
 // 身份被编码为Zp有限域上的一个元素。
 // 在实际应用中，可以通过哈希函数将任意字符串(如邮箱地址)映射到Zp域元素。
 type BBIBEIdentity struct {
-	Id *big.Int
+	Id fr.Element
 }
 
 // BBIBESecretKey 表示Boneh-Boyen IBE方案中的用户私钥。
@@ -56,7 +55,7 @@ type BBIBEIdentity struct {
 //
 // 私钥由密钥生成中心(PKG)使用主密钥和用户身份生成，必须安全地传递给用户。
 type BBIBESecretKey struct {
-	r *big.Int
+	r fr.Element
 	k bn254.G2Affine
 }
 
@@ -87,8 +86,9 @@ type BBIBECiphertext struct {
 //   - error: 如果随机数生成失败，返回错误信息
 func NewBBIBEInstance() (*BBIBEInstance, error) {
 	var err error
-	x, err := rand.Int(rand.Reader, ecc.BN254.ScalarField())
-	y, err := rand.Int(rand.Reader, ecc.BN254.ScalarField())
+	var x, y fr.Element
+	_, err = x.SetRandom()
+	_, err = y.SetRandom()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate identity based encryption instance: %s", err)
 	}
@@ -105,8 +105,8 @@ func NewBBIBEInstance() (*BBIBEInstance, error) {
 func (instance *BBIBEInstance) SetUp() (*BBIBEPublicParams, error) {
 	_, _, g1, g2 := bn254.Generators()
 	// x = g1^x, y = g1^y
-	g1x := *new(bn254.G1Affine).ScalarMultiplicationBase(instance.x)
-	g1y := *new(bn254.G1Affine).ScalarMultiplicationBase(instance.y)
+	g1x := *new(bn254.G1Affine).ScalarMultiplicationBase(instance.x.BigInt(new(big.Int)))
+	g1y := *new(bn254.G1Affine).ScalarMultiplicationBase(instance.y.BigInt(new(big.Int)))
 	return &BBIBEPublicParams{
 		g1: g1,
 		g2: g2,
@@ -126,21 +126,29 @@ func (instance *BBIBEInstance) SetUp() (*BBIBEPublicParams, error) {
 //   - *BBIBESecretKey: 生成的私钥，包含随机参数r和密钥元素k
 //   - error: 如果密钥生成失败，返回错误信息
 func (instance *BBIBEInstance) KeyGenerate(identity *BBIBEIdentity) (*BBIBESecretKey, error) {
-	q := ecc.BN254.ScalarField()
-	r, err := rand.Int(rand.Reader, q)
+	var err error
+	var r fr.Element
+	_, err = r.SetRandom()
+
+	// 计算 1 / (ID + x + r*y) mod q
+	denominator := new(fr.Element)
+	denominator.Mul(&r, &instance.y)
+	denominator.Add(denominator, &instance.x)
+	denominator.Add(denominator, &identity.Id)
+	denominator.Inverse(denominator)
+
+	//denominator := new(big.Int).Mul(r, instance.y) // denominator = r*y
+	//denominator.Add(denominator, identity.Id)      // denominator = r*y + ID
+	//denominator.Add(denominator, instance.x)       // denominator = r*y + ID + x
+	//denominator.Mod(denominator, q)                // denominator = (r*y + ID + x) mod q
+	//denominator.ModInverse(denominator, q)
+
+	// k = g2 ^ {1 / (ID + x + r*y)}
+	k := *new(bn254.G2Affine).ScalarMultiplicationBase(denominator.BigInt(new(big.Int)))
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate random key: %s", err)
 	}
-
-	// 计算 1 / (ID + x + r*y) mod q
-	denominator := new(big.Int).Mul(r, instance.y) // denominator = r*y
-	denominator.Add(denominator, identity.Id)      // denominator = r*y + ID
-	denominator.Add(denominator, instance.x)       // denominator = r*y + ID + x
-	denominator.Mod(denominator, q)                // denominator = (r*y + ID + x) mod q
-	denominator.ModInverse(denominator, q)
-
-	// k = g2 ^ {1 / (ID + x + r*y)}
-	k := *new(bn254.G2Affine).ScalarMultiplicationBase(denominator)
 
 	// r, k = g2^{\frac{1}{Id+x+ry}}
 	return &BBIBESecretKey{
@@ -162,28 +170,28 @@ func (instance *BBIBEInstance) KeyGenerate(identity *BBIBEIdentity) (*BBIBESecre
 //   - *BBIBECiphertext: 加密后的密文，包含a, b, c三个组件
 //   - error: 如果加密失败，返回错误信息
 func (instance *BBIBEInstance) Encrypt(message *BBIBEMessage, identity *BBIBEIdentity, publicParams *BBIBEPublicParams) (*BBIBECiphertext, error) {
-	q := ecc.BN254.ScalarField()
-	s, err := rand.Int(rand.Reader, q)
+	var err error
+	var s fr.Element
+	_, err = s.SetRandom()
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt: %s", err)
 	}
 
 	// a = g1^{s * Id} * X^s
-	s_id := new(big.Int).Mul(s, identity.Id)
-	s_id.Mod(s_id, q)
-	a := new(bn254.G1Affine).ScalarMultiplicationBase(s_id)
-	x_s := new(bn254.G1Affine).ScalarMultiplication(&publicParams.x, s)
+	s_id := new(fr.Element).Mul(&s, &identity.Id)
+	a := new(bn254.G1Affine).ScalarMultiplicationBase(s_id.BigInt(new(big.Int)))
+	x_s := new(bn254.G1Affine).ScalarMultiplication(&publicParams.x, s.BigInt(new(big.Int)))
 	a.Add(a, x_s)
 
 	// b = Y^s
-	b := *new(bn254.G1Affine).ScalarMultiplication(&publicParams.y, s)
+	b := *new(bn254.G1Affine).ScalarMultiplication(&publicParams.y, s.BigInt(new(big.Int)))
 
 	// c = e(g1, g2)^s * message
 	c, err := bn254.Pair([]bn254.G1Affine{publicParams.g1}, []bn254.G2Affine{publicParams.g2})
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt message")
 	}
-	c.Exp(c, s)
+	c.Exp(c, s.BigInt(new(big.Int)))
 	c.Mul(&c, &message.Message)
 
 	return &BBIBECiphertext{*a, b, c}, nil
@@ -202,8 +210,8 @@ func (instance *BBIBEInstance) Encrypt(message *BBIBEMessage, identity *BBIBEIde
 //   - error: 如果解密失败，返回错误信息
 func (instance *BBIBEInstance) Decrypt(ciphertext *BBIBECiphertext, secretKey *BBIBESecretKey) (*BBIBEMessage, error) {
 	// A*B^r
-	a_br := new(bn254.G1Affine).ScalarMultiplication(&ciphertext.b, secretKey.r) // B^r
-	a_br.Add(&ciphertext.a, a_br)                                                // A*B^r(注意gnark)是加法群
+	a_br := new(bn254.G1Affine).ScalarMultiplication(&ciphertext.b, secretKey.r.BigInt(new(big.Int))) // B^r
+	a_br.Add(&ciphertext.a, a_br)                                                                     // A*B^r(注意gnark)是加法群
 
 	// e(A*B^r, K)
 	denominator, err := bn254.Pair([]bn254.G1Affine{*a_br}, []bn254.G2Affine{secretKey.k})
@@ -214,4 +222,10 @@ func (instance *BBIBEInstance) Decrypt(ciphertext *BBIBECiphertext, secretKey *B
 	// m = C / e(A*B^r, K)
 	decryptedMessage := *(new(bn254.GT)).Div(&ciphertext.c, &denominator)
 	return &BBIBEMessage{Message: decryptedMessage}, nil
+}
+
+func CreateBB04Identity(identity *big.Int) (*BBIBEIdentity, error) {
+	return &BBIBEIdentity{
+		Id: *new(fr.Element).SetBigInt(identity),
+	}, nil
 }

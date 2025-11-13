@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GnarkPairingProject/utils"
 	"math/big"
 )
@@ -34,7 +35,7 @@ import (
 // 主密钥用于生成用户的私钥,必须严格保密。
 // DST(Domain Separation Tag)用于Hash-to-Curve操作,确保哈希的域分离。
 type BFIBEInstance struct {
-	x   *big.Int
+	x   fr.Element
 	DST []byte
 }
 
@@ -85,8 +86,9 @@ type BFIBECiphertext struct {
 //   - *BFIBEInstance: 包含主密钥和DST的IBE实例
 //   - error: 如果创建实例失败,返回错误信息
 func NewBFIBEInstance() (*BFIBEInstance, error) {
+	var x fr.Element
 	var err error
-	x, err := rand.Int(rand.Reader, ecc.BN254.ScalarField())
+	_, err = x.SetRandom()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate identity based encryption instance")
 	}
@@ -104,7 +106,7 @@ func (instance *BFIBEInstance) SetUp() (*BFIBEPublicParams, error) {
 	// g <- G1
 	// g^x in G1
 	_, _, g, _ := bn254.Generators()
-	gx := *new(bn254.G1Affine).ScalarMultiplicationBase(instance.x)
+	gx := *new(bn254.G1Affine).ScalarMultiplicationBase(instance.x.BigInt(new(big.Int)))
 	return &BFIBEPublicParams{
 		g1:  g,
 		g1x: gx,
@@ -128,7 +130,7 @@ func (instance *BFIBEInstance) KeyGenerate(identity *BFIBEIdentity) (*BFIBESecre
 		return nil, fmt.Errorf("failed to generate key")
 	}
 	// sk = qid^x
-	sk := *new(bn254.G2Affine).ScalarMultiplication(&qid, instance.x)
+	sk := *new(bn254.G2Affine).ScalarMultiplication(&qid, instance.x.BigInt(new(big.Int)))
 	return &BFIBESecretKey{
 		sk: sk,
 	}, nil

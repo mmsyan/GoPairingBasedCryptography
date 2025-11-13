@@ -13,9 +13,7 @@ func TestBBIBe1(t *testing.T) {
 	var err error
 
 	// 创建用户身份
-	identity := &BBIBEIdentity{
-		Id: big.NewInt(123456),
-	}
+	identity, err := CreateBB04Identity(big.NewInt(123456))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
@@ -70,14 +68,10 @@ func TestBBIBe2(t *testing.T) {
 	var err error
 
 	// 创建Alice的身份
-	alice_identity := &BBIBEIdentity{
-		Id: big.NewInt(123456),
-	}
+	aliceIdentity, err := CreateBB04Identity(big.NewInt(123456))
 
 	// 创建Bob的身份
-	bob_identity := &BBIBEIdentity{
-		Id: big.NewInt(789456),
-	}
+	bobIdentity, err := CreateBB04Identity(big.NewInt(456789))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
@@ -99,13 +93,13 @@ func TestBBIBe2(t *testing.T) {
 	}
 
 	// 为Alice生成密钥
-	secretKey, err := instance.KeyGenerate(alice_identity)
+	secretKey, err := instance.KeyGenerate(aliceIdentity)
 	if err != nil {
 		t.Fatal("为Alice生成密钥失败:", err)
 	}
 
 	// 使用Bob的身份加密消息（消息是发给Bob的）
-	ciphertext, err := instance.Encrypt(message, bob_identity, publicParams)
+	ciphertext, err := instance.Encrypt(message, bobIdentity, publicParams)
 	if err != nil {
 		t.Fatal("加密失败:", err)
 	}
@@ -141,9 +135,9 @@ func TestBBIBe3(t *testing.T) {
 	}
 
 	// 创建三个用户身份
-	alice := &BBIBEIdentity{Id: big.NewInt(1001)}
-	bob := &BBIBEIdentity{Id: big.NewInt(2002)}
-	charlie := &BBIBEIdentity{Id: big.NewInt(3003)}
+	alice, err := CreateBB04Identity(big.NewInt(1001))
+	bob, err := CreateBB04Identity(big.NewInt(2002))
+	charlie, err := CreateBB04Identity(big.NewInt(3003))
 
 	// 为每个用户生成密钥
 	aliceKey, err := instance.KeyGenerate(alice)
@@ -239,7 +233,7 @@ func TestBBIBe4(t *testing.T) {
 	}
 
 	// 创建用户身份和密钥
-	identity := &BBIBEIdentity{Id: big.NewInt(12345)}
+	identity, err := CreateBB04Identity(big.NewInt(123456))
 	secretKey, err := instance.KeyGenerate(identity)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
@@ -328,7 +322,7 @@ func TestBBIBe5(t *testing.T) {
 			fmt.Printf("\n测试 %s (ID=%s)\n", tc.name, tc.idVal.String())
 
 			// 创建身份
-			identity := &BBIBEIdentity{Id: tc.idVal}
+			identity, err := CreateBB04Identity(tc.idVal)
 
 			// 生成密钥
 			secretKey, err := instance.KeyGenerate(identity)
