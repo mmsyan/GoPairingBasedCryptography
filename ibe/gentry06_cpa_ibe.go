@@ -1,12 +1,5 @@
 package ibe
 
-import (
-	"fmt"
-	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"math/big"
-)
-
 // 作者: mmsyan
 // 日期: 2025-11-13
 // 参考论文:
@@ -23,6 +16,13 @@ import (
 //
 // 该实现基于论文的第三章：Construction I: Chosen-Plaintext Security的第3.1节
 // 该实现基于的方案是IND-ID-CPA安全的
+
+import (
+	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bn254"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"math/big"
+)
 
 // Gentry06CPAIBEInstance 表示 Gentry IBE (2006) 方案的实例对象。
 // 该实例包含了系统的主密钥 alpha。
@@ -56,7 +56,7 @@ type Gentry06CPAIBESecretKey struct {
 	hid bn254.G2Affine // 密钥元素 h_ID 属于 G2
 }
 
-// Gentry06CPAIBEMessage 表示 IBE 方案中的明文消息。
+// Gentry06IBEMessage 表示 IBE 方案中的明文消息。
 // 明文 M 被编码为 GT 群（配对运算的目标群）上的一个元素。
 type Gentry06CPAIBEMessage struct {
 	Message bn254.GT // 明文 M 属于 GT
@@ -78,7 +78,7 @@ type Gentry06CPAIBECiphertext struct {
 // 返回的实例对象包含主密钥，应由可信中心持有并妥善保管。
 //
 // 返回值:
-//   - *Gentry06CPAIBEInstance: 包含主密钥的 IBE 实例
+//   - *Gentry06IBEInstance: 包含主密钥的 IBE 实例
 //   - error: 如果随机数生成失败，返回错误信息
 func NewGentry06CPAIBEInstance() (*Gentry06CPAIBEInstance, error) {
 	// 随机选取主密钥 alpha 属于 Zp
@@ -100,7 +100,7 @@ func NewGentry06CPAIBEInstance() (*Gentry06CPAIBEInstance, error) {
 // 3. 随机选择 h 并计算 $g_2^r$ 作为 $h$。
 //
 // 返回值:
-//   - *Gentry06CPAIBEPublicParams: 系统公共参数
+//   - *Gentry06IBEPublicParams: 系统公共参数
 //   - error: 如果初始化失败，返回错误信息
 func (instance *Gentry06CPAIBEInstance) SetUp() (*Gentry06CPAIBEPublicParams, error) {
 	// 获取 BN254 曲线的生成元 g1 和 g2
@@ -133,7 +133,7 @@ func (instance *Gentry06CPAIBEInstance) SetUp() (*Gentry06CPAIBEPublicParams, er
 // 4. 计算 $h_{ID} = (h g_2^{-r_{ID}})^{\frac{1}{\alpha - ID}}$。
 //
 // 返回值:
-//   - *Gentry06CPAIBESecretKey: 生成的私钥
+//   - *Gentry06IBESecretKey: 生成的私钥
 //   - error: 如果密钥生成失败或 ID = alpha，返回错误信息
 func (instance *Gentry06CPAIBEInstance) KeyGenerate(identity *Gentry06CPAIBEIdentity, publicParams *Gentry06CPAIBEPublicParams) (*Gentry06CPAIBESecretKey, error) {
 	var err error
@@ -170,7 +170,7 @@ func (instance *Gentry06CPAIBEInstance) KeyGenerate(identity *Gentry06CPAIBEIden
 // 4. 计算 $w = M \cdot e(g_1, h)^{-s}$。
 //
 // 返回值:
-//   - *Gentry06CPAIBECiphertext: 加密后的密文
+//   - *Gentry06IBECiphertext: 加密后的密文
 //   - error: 如果加密失败，返回错误信息
 func (instance *Gentry06CPAIBEInstance) Encrypt(message *Gentry06CPAIBEMessage, identity *Gentry06CPAIBEIdentity, publicParams *Gentry06CPAIBEPublicParams) (*Gentry06CPAIBECiphertext, error) {
 	var err error
@@ -221,7 +221,7 @@ func (instance *Gentry06CPAIBEInstance) Encrypt(message *Gentry06CPAIBEMessage, 
 // 3. 计算 $M = w \cdot e(u, h_{ID}) \cdot v^{r_{ID}}$。
 //
 // 返回值:
-//   - *Gentry06CPAIBEMessage: 解密后的明文消息
+//   - *Gentry06IBEMessage: 解密后的明文消息
 //   - error: 如果解密失败，返回错误信息
 func (instance *Gentry06CPAIBEInstance) Decrypt(ciphertext *Gentry06CPAIBECiphertext, secretKey *Gentry06CPAIBESecretKey, publicParams *Gentry06CPAIBEPublicParams) (*Gentry06CPAIBEMessage, error) {
 	var err error
@@ -244,8 +244,8 @@ func (instance *Gentry06CPAIBEInstance) Decrypt(ciphertext *Gentry06CPAIBECipher
 	}, nil
 }
 
-// CreateGentry06Identity 将大整数类型的 ID 转换为 IBE 方案使用的 fr.Element 身份结构体。
-func CreateGentry06Identity(identity *big.Int) (*Gentry06CPAIBEIdentity, error) {
+// CreateGentry06CPAIdentity 将大整数类型的 ID 转换为 IBE 方案使用的 fr.Element 身份结构体。
+func CreateGentry06CPAIdentity(identity *big.Int) (*Gentry06CPAIBEIdentity, error) {
 	return &Gentry06CPAIBEIdentity{
 		Id: *new(fr.Element).SetBigInt(identity), // 将 big.Int 映射到 Zp 域元素
 	}, nil

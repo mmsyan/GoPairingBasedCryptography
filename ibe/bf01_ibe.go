@@ -55,7 +55,7 @@ type BFIBEIdentity struct {
 }
 
 // BFIBESecretKey 表示Boneh-Franklin IBE方案中的用户私钥。
-// 私钥是G2群上的一个元素,计算为sk=H(Id)^x,其中H是Hash-to-Curve函数。
+// 私钥是G2群上的一个元素,计算为sk=h(Id)^x,其中H是Hash-to-Curve函数。
 // 私钥由密钥生成中心(PKG)使用主密钥和用户身份生成,必须安全地传递给用户。
 type BFIBESecretKey struct {
 	sk bn254.G2Affine
@@ -71,7 +71,7 @@ type BFIBEMessage struct {
 // BFIBECiphertext 表示Boneh-Franklin IBE方案中的密文。
 // 密文由两个部分组成:
 //   - C1: G1群上的元素,为g^r,其中r是随机数
-//   - C2: 字节数组,为M ⊕ H2(e(g1x, H(Id))^r),包含加密后的消息
+//   - C2: 字节数组,为M ⊕ H2(e(g1x, h(Id))^r),包含加密后的消息
 type BFIBECiphertext struct {
 	C1 bn254.G1Affine
 	C2 []byte
