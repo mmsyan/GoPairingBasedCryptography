@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestBB01IBE1(t *testing.T) {
+func TestBF01IBE1(t *testing.T) {
 	var err error
 
 	identity := &BFIBEIdentity{
@@ -18,9 +18,9 @@ func TestBB01IBE1(t *testing.T) {
 
 	instance, err := NewBFIBEInstance()
 	publicParams, err := instance.SetUp()
-	secretKey, err := instance.KeyGenerate(identity)
+	secretKey, err := instance.KeyGenerate(identity, publicParams)
 	ciphertext, err := instance.Encrypt(identity, message, publicParams)
-	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey)
+	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey, publicParams)
 
 	if string(decryptedMessage.Message) != "Hello World" {
 		t.Fatalf("decrypted wrong, %s", string(decryptedMessage.Message))
@@ -34,7 +34,7 @@ func TestBB01IBE1(t *testing.T) {
 	}
 }
 
-func TestBB01IBE2(t *testing.T) {
+func TestBF01IBE2(t *testing.T) {
 	var err error
 
 	identity := &BFIBEIdentity{
@@ -47,9 +47,9 @@ func TestBB01IBE2(t *testing.T) {
 	fmt.Println("测试不通过，因为明文长度太长导致异或步骤失效；建议对一个对称加密密钥进行")
 	instance, err := NewBFIBEInstance()
 	publicParams, err := instance.SetUp()
-	secretKey, err := instance.KeyGenerate(identity)
+	secretKey, err := instance.KeyGenerate(identity, publicParams)
 	ciphertext, err := instance.Encrypt(identity, message, publicParams)
-	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey)
+	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey, publicParams)
 
 	fmt.Printf("message before encrypt: %s \n", string(message.Message))
 	fmt.Printf("message after decrypt: %s \n", string(decryptedMessage.Message))

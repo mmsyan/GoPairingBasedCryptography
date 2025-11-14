@@ -9,7 +9,7 @@ import (
 
 // TestBBIBe1 测试基本的加密解密流程
 // 场景：使用正确的身份和密钥进行加密解密，验证能否正确恢复原始消息
-func TestBBIBe1(t *testing.T) {
+func TestBB04IBe1(t *testing.T) {
 	var err error
 
 	// 创建用户身份
@@ -35,7 +35,7 @@ func TestBBIBe1(t *testing.T) {
 	}
 
 	// 为用户生成密钥
-	secretKey, err := instance.KeyGenerate(identity)
+	secretKey, err := instance.KeyGenerate(identity, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -47,7 +47,7 @@ func TestBBIBe1(t *testing.T) {
 	}
 
 	// 使用用户密钥解密消息
-	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey)
+	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey, publicParams)
 	if err != nil {
 		t.Fatal("解密失败:", err)
 	}
@@ -64,7 +64,7 @@ func TestBBIBe1(t *testing.T) {
 
 // TestBBIBe2 测试错误密钥无法解密的情况
 // 场景：使用Alice的密钥尝试解密发给Bob的消息，应该解密失败（得到错误的明文）
-func TestBBIBe2(t *testing.T) {
+func TestBB04IBe2(t *testing.T) {
 	var err error
 
 	// 创建Alice的身份
@@ -93,7 +93,7 @@ func TestBBIBe2(t *testing.T) {
 	}
 
 	// 为Alice生成密钥
-	secretKey, err := instance.KeyGenerate(aliceIdentity)
+	secretKey, err := instance.KeyGenerate(aliceIdentity, publicParams)
 	if err != nil {
 		t.Fatal("为Alice生成密钥失败:", err)
 	}
@@ -105,7 +105,7 @@ func TestBBIBe2(t *testing.T) {
 	}
 
 	// 尝试使用Alice的密钥解密（应该得到错误的结果）
-	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey)
+	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey, publicParams)
 	if err != nil {
 		t.Fatal("解密操作失败:", err)
 	}
@@ -122,7 +122,7 @@ func TestBBIBe2(t *testing.T) {
 
 // TestBBIBe3 测试多个用户的独立性
 // 场景：同一个系统中有多个用户，每个用户只能解密发给自己的消息
-func TestBBIBe3(t *testing.T) {
+func TestBB04IBe3(t *testing.T) {
 	// 系统初始化
 	instance, err := NewBBIBEInstance()
 	if err != nil {
@@ -140,17 +140,17 @@ func TestBBIBe3(t *testing.T) {
 	charlie, err := CreateBB04Identity(big.NewInt(3003))
 
 	// 为每个用户生成密钥
-	aliceKey, err := instance.KeyGenerate(alice)
+	aliceKey, err := instance.KeyGenerate(alice, publicParams)
 	if err != nil {
 		t.Fatal("为Alice生成密钥失败:", err)
 	}
 
-	bobKey, err := instance.KeyGenerate(bob)
+	bobKey, err := instance.KeyGenerate(bob, publicParams)
 	if err != nil {
 		t.Fatal("为Bob生成密钥失败:", err)
 	}
 
-	charlieKey, err := instance.KeyGenerate(charlie)
+	charlieKey, err := instance.KeyGenerate(charlie, publicParams)
 	if err != nil {
 		t.Fatal("为Charlie生成密钥失败:", err)
 	}
@@ -181,7 +181,7 @@ func TestBBIBe3(t *testing.T) {
 	}
 
 	// 验证每个用户只能解密自己的消息
-	decrypted1, err := instance.Decrypt(ct1, aliceKey)
+	decrypted1, err := instance.Decrypt(ct1, aliceKey, publicParams)
 	if err != nil {
 		t.Fatal("Alice解密失败:", err)
 	}
@@ -190,7 +190,7 @@ func TestBBIBe3(t *testing.T) {
 	}
 	fmt.Println("✓ Alice成功解密自己的消息")
 
-	decrypted2, err := instance.Decrypt(ct2, bobKey)
+	decrypted2, err := instance.Decrypt(ct2, bobKey, publicParams)
 	if err != nil {
 		t.Fatal("Bob解密失败:", err)
 	}
@@ -199,7 +199,7 @@ func TestBBIBe3(t *testing.T) {
 	}
 	fmt.Println("✓ Bob成功解密自己的消息")
 
-	decrypted3, err := instance.Decrypt(ct3, charlieKey)
+	decrypted3, err := instance.Decrypt(ct3, charlieKey, publicParams)
 	if err != nil {
 		t.Fatal("Charlie解密失败:", err)
 	}
@@ -209,7 +209,7 @@ func TestBBIBe3(t *testing.T) {
 	fmt.Println("✓ Charlie成功解密自己的消息")
 
 	// 验证用户无法解密其他人的消息
-	wrongDecrypted, _ := instance.Decrypt(ct2, aliceKey)
+	wrongDecrypted, _ := instance.Decrypt(ct2, aliceKey, publicParams)
 	if wrongDecrypted.Message == msg2.Message {
 		t.Fatal("错误：Alice不应该能解密Bob的消息")
 	}
@@ -220,7 +220,7 @@ func TestBBIBe3(t *testing.T) {
 
 // TestBBIBe4 测试同一消息多次加密的不确定性
 // 场景：同一消息多次加密应该产生不同的密文（由于随机数s的不同）
-func TestBBIBe4(t *testing.T) {
+func TestBB04IBe4(t *testing.T) {
 	// 系统初始化
 	instance, err := NewBBIBEInstance()
 	if err != nil {
@@ -234,7 +234,7 @@ func TestBBIBe4(t *testing.T) {
 
 	// 创建用户身份和密钥
 	identity, err := CreateBB04Identity(big.NewInt(123456))
-	secretKey, err := instance.KeyGenerate(identity)
+	secretKey, err := instance.KeyGenerate(identity, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -273,17 +273,17 @@ func TestBBIBe4(t *testing.T) {
 	fmt.Println("✓ 三次加密产生了不同的密文")
 
 	// 验证所有密文都能正确解密
-	dec1, err := instance.Decrypt(ct1, secretKey)
+	dec1, err := instance.Decrypt(ct1, secretKey, publicParams)
 	if err != nil || dec1.Message != message.Message {
 		t.Fatal("密文1解密失败或结果不正确")
 	}
 
-	dec2, err := instance.Decrypt(ct2, secretKey)
+	dec2, err := instance.Decrypt(ct2, secretKey, publicParams)
 	if err != nil || dec2.Message != message.Message {
 		t.Fatal("密文2解密失败或结果不正确")
 	}
 
-	dec3, err := instance.Decrypt(ct3, secretKey)
+	dec3, err := instance.Decrypt(ct3, secretKey, publicParams)
 	if err != nil || dec3.Message != message.Message {
 		t.Fatal("密文3解密失败或结果不正确")
 	}
@@ -294,7 +294,7 @@ func TestBBIBe4(t *testing.T) {
 
 // TestBBIBe5 测试边界情况和特殊身份值
 // 场景：测试使用特殊值（如1、大数等）作为身份的情况
-func TestBBIBe5(t *testing.T) {
+func TestBB04IBe5(t *testing.T) {
 	// 系统初始化
 	instance, err := NewBBIBEInstance()
 	if err != nil {
@@ -325,7 +325,7 @@ func TestBBIBe5(t *testing.T) {
 			identity, err := CreateBB04Identity(tc.idVal)
 
 			// 生成密钥
-			secretKey, err := instance.KeyGenerate(identity)
+			secretKey, err := instance.KeyGenerate(identity, publicParams)
 			if err != nil {
 				t.Fatalf("为 %s 生成密钥失败: %v", tc.name, err)
 			}
@@ -341,7 +341,7 @@ func TestBBIBe5(t *testing.T) {
 			}
 
 			// 解密
-			decrypted, err := instance.Decrypt(ciphertext, secretKey)
+			decrypted, err := instance.Decrypt(ciphertext, secretKey, publicParams)
 			if err != nil {
 				t.Fatalf("使用 %s 解密失败: %v", tc.name, err)
 			}

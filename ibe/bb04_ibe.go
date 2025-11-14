@@ -121,11 +121,12 @@ func (instance *BBIBEInstance) SetUp() (*BBIBEPublicParams, error) {
 //
 // 参数:
 //   - identity: 用户的身份标识符
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *BBIBESecretKey: 生成的私钥，包含随机参数r和密钥元素k
 //   - error: 如果密钥生成失败，返回错误信息
-func (instance *BBIBEInstance) KeyGenerate(identity *BBIBEIdentity) (*BBIBESecretKey, error) {
+func (instance *BBIBEInstance) KeyGenerate(identity *BBIBEIdentity, publicParams *BBIBEPublicParams) (*BBIBESecretKey, error) {
 	var err error
 	var r fr.Element
 	_, err = r.SetRandom()
@@ -204,11 +205,12 @@ func (instance *BBIBEInstance) Encrypt(message *BBIBEMessage, identity *BBIBEIde
 // 参数:
 //   - ciphertext: 要解密的密文
 //   - secretKey: 用户的私钥
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *BBIBEMessage: 解密后的明文消息
 //   - error: 如果解密失败，返回错误信息
-func (instance *BBIBEInstance) Decrypt(ciphertext *BBIBECiphertext, secretKey *BBIBESecretKey) (*BBIBEMessage, error) {
+func (instance *BBIBEInstance) Decrypt(ciphertext *BBIBECiphertext, secretKey *BBIBESecretKey, publicParams *BBIBEPublicParams) (*BBIBEMessage, error) {
 	// A*B^r
 	a_br := new(bn254.G1Affine).ScalarMultiplication(&ciphertext.b, secretKey.r.BigInt(new(big.Int))) // B^r
 	a_br.Add(&ciphertext.a, a_br)                                                                     // A*B^r(注意gnark)是加法群

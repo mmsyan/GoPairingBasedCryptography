@@ -126,11 +126,9 @@ func (instance *Gentry06CPAIBEInstance) SetUp() (*Gentry06CPAIBEPublicParams, er
 // 该方法使用主密钥 alpha 和用户身份 ID，通过密钥生成算法计算用户的私钥。
 // 私钥应通过安全信道传递给对应的用户。
 //
-// 步骤:
-// 1. 随机选取 $r_{ID} \in Zp$。
-// 2. 计算 $h g_2^{-r_{ID}}$。
-// 3. 计算 $1 / (\alpha - ID)$。
-// 4. 计算 $h_{ID} = (h g_2^{-r_{ID}})^{\frac{1}{\alpha - ID}}$。
+// 参数:
+//   - identity: 用户的身份标识符
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *Gentry06IBESecretKey: 生成的私钥
@@ -163,11 +161,10 @@ func (instance *Gentry06CPAIBEInstance) KeyGenerate(identity *Gentry06CPAIBEIden
 // Encrypt 使用指定用户身份对 GT 群上的消息 M 进行加密，生成密文 $C=(u, v, w)$。
 // 该方法实现了基于身份的加密算法。
 //
-// 步骤:
-// 1. 随机选取 $s \in Zp$。
-// 2. 计算 $u = (g_1^{\alpha})^s g_1^{-s \cdot ID} = g_1^{s(\alpha - ID)}$。
-// 3. 计算 $v = e(g_1, g_2)^s$。
-// 4. 计算 $w = M \cdot e(g_1, h)^{-s}$。
+// 参数:
+//   - identity: 接收者的身份标识符
+//   - message: 要加密的明文消息(字节数组)
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *Gentry06IBECiphertext: 加密后的密文
@@ -214,6 +211,11 @@ func (instance *Gentry06CPAIBEInstance) Encrypt(message *Gentry06CPAIBEMessage, 
 
 // Decrypt 使用私钥 $d_{ID} = (r_{ID}, h_{ID})$ 对密文 $C=(u, v, w)$ 进行解密。
 // 解密恢复原始明文消息 $M$。
+//
+// 参数:
+//   - ciphertext: 要解密的密文
+//   - secretKey: 用户的私钥
+//   - publicParams: 系统公共参数
 //
 // 步骤:
 // 1. 计算 $e(u, h_{ID})$。

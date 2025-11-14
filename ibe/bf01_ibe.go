@@ -119,11 +119,12 @@ func (instance *BFIBEInstance) SetUp() (*BFIBEPublicParams, error) {
 //
 // 参数:
 //   - identity: 用户的身份标识符(字符串形式)
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *BFIBESecretKey: 生成的私钥,为G2群上的元素
 //   - error: 如果Hash-to-Curve或密钥生成失败,返回错误信息
-func (instance *BFIBEInstance) KeyGenerate(identity *BFIBEIdentity) (*BFIBESecretKey, error) {
+func (instance *BFIBEInstance) KeyGenerate(identity *BFIBEIdentity, publicParams *BFIBEPublicParams) (*BFIBESecretKey, error) {
 	// qid = hashToCurve(id) in G2
 	qid, err := bn254.HashToG2([]byte(identity.Id), instance.DST)
 	if err != nil {
@@ -196,11 +197,12 @@ func (instance *BFIBEInstance) Encrypt(identity *BFIBEIdentity, message *BFIBEMe
 // 参数:
 //   - ciphertext: 要解密的密文
 //   - secretKey: 用户的私钥
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *BFIBEMessage: 解密后的明文消息(字节数组)
 //   - error: 如果解密失败,返回错误信息
-func (instance *BFIBEInstance) Decrypt(ciphertext *BFIBECiphertext, secretKey *BFIBESecretKey) (*BFIBEMessage, error) {
+func (instance *BFIBEInstance) Decrypt(ciphertext *BFIBECiphertext, secretKey *BFIBESecretKey, publicParams *BFIBEPublicParams) (*BFIBEMessage, error) {
 	// gid = e(c1, sk) = e(g^r, qid^x)
 	gid, err := bn254.Pair([]bn254.G1Affine{ciphertext.C1}, []bn254.G2Affine{secretKey.sk})
 	if err != nil {

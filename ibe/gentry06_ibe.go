@@ -135,11 +135,9 @@ func (instance *Gentry06IBEInstance) SetUp() (*Gentry06IBEPublicParams, error) {
 // KeyGenerate 为指定用户身份生成私钥 $d_{ID}$。
 // 该方法使用主密钥 $\alpha$ 和用户身份 $ID$，计算三组私钥组件。
 //
-// 步骤 (对 i=1, 2, 3):
-// 1. 随机选取 $r_{(ID,i)} \in \mathbb{Z}_p$。
-// 2. 计算 $\frac{1}{\alpha - ID}$。
-// 3. 计算 $h_i g_2^{-r_{(ID,i)}}$。
-// 4. 计算 $h_{(ID,i)} = (h_i g_2^{-r_{(ID,i)}})^{\frac{1}{\alpha - ID}}$。
+// 参数:
+//   - identity: 用户的身份标识符
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *Gentry06IBESecretKey: 生成的私钥
@@ -183,13 +181,10 @@ func (instance *Gentry06IBEInstance) KeyGenerate(identity *Gentry06IBEIdentity, 
 
 // Encrypt 使用指定用户身份对 $G_T$ 群上的消息 $M$ 进行加密，生成密文 $C=(u, v, w, y)$。
 //
-// 步骤:
-// 1. 随机选取 $s \in \mathbb{Z}_p$。
-// 2. 计算 $u = (g_1^{\alpha})^s g_1^{-s \cdot ID} = g_1^{s(\alpha - ID)}$。
-// 3. 计算 $v = e(g_1, g_2)^s$。
-// 4. 计算 $w = M \cdot e(g_1, h_1)^{-s}$。
-// 5. 计算 $\beta = H(u, v, w)$。
-// 6. 计算 $y = e(g_1, h_2)^s e(g_1, h_3)^{s\beta} = e(g_1, h_2 h_3^{\beta})^s$。
+// 参数:
+//   - identity: 接收者的身份标识符
+//   - message: 要加密的明文消息(字节数组)
+//   - publicParams: 系统公共参数
 //
 // 返回值:
 //   - *Gentry06IBECiphertext: 加密后的密文 $C=(u, v, w, y)$
@@ -251,6 +246,11 @@ func (instance *Gentry06IBEInstance) Encrypt(message *Gentry06IBEMessage, identi
 
 // Decrypt 使用私钥 $d_{ID}$ 对密文 $C=(u, v, w, y)$ 进行解密。
 // 首先进行 CCA 安全性检查，检查通过后恢复原始明文消息 $M$。
+//
+// 参数:
+//   - ciphertext: 要解密的密文
+//   - secretKey: 用户的私钥
+//   - publicParams: 系统公共参数
 //
 // 步骤:
 //  1. 计算 $\beta = H(u, v, w)$。
