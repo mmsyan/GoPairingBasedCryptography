@@ -19,15 +19,15 @@ func TestFIBE1(t *testing.T) {
 	}
 	fmt.Println("原始消息:", message.Message)
 
-	userAttributes := []int{1, 2, 3, 4}
-	messageAttributes := []int{1, 2, 3, 4}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4})
+	messageAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4})
 
 	fibeInstance := NewFIBEInstance(10, 3)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
 	}
-	secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -36,7 +36,7 @@ func TestFIBE1(t *testing.T) {
 		t.Fatal("加密失败:", err)
 	}
 
-	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext)
+	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 	if err != nil {
 		t.Fatal("解密失败:", err)
 	}
@@ -58,9 +58,9 @@ func TestFIBE2(t *testing.T) {
 	message := &FIBEMessage{Message: *m}
 
 	// 用户属性：1,2,3,4,5
-	userAttributes := []int{1, 2, 3, 4, 5}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4})
 	// 消息属性：1,2,3,6,7 (与用户属性有3个重叠)
-	messageAttributes := []int{1, 2, 3, 6, 7}
+	messageAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 6, 7})
 
 	// n=10, d=3：需要至少3个属性匹配
 	fibeInstance := NewFIBEInstance(10, 3)
@@ -69,7 +69,7 @@ func TestFIBE2(t *testing.T) {
 		t.Fatal("系统初始化失败:", err)
 	}
 
-	secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -79,7 +79,7 @@ func TestFIBE2(t *testing.T) {
 		t.Fatal("加密失败:", err)
 	}
 
-	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext)
+	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 	if err != nil {
 		t.Fatal("解密失败:", err)
 	}
@@ -100,9 +100,9 @@ func TestFIBE3(t *testing.T) {
 	message := &FIBEMessage{Message: *m}
 
 	// 用户属性：1,2,3,4,5,6,7
-	userAttributes := []int{1, 2, 3, 4, 5, 6, 7}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5, 6, 7})
 	// 消息属性：1,2,3,4,8,9,10 (刚好4个重叠)
-	messageAttributes := []int{1, 2, 3, 4, 8, 9, 10}
+	messageAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 8, 9, 10})
 
 	// d=4：需要至少4个属性匹配
 	fibeInstance := NewFIBEInstance(15, 4)
@@ -111,7 +111,7 @@ func TestFIBE3(t *testing.T) {
 		t.Fatal("系统初始化失败:", err)
 	}
 
-	secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -121,7 +121,7 @@ func TestFIBE3(t *testing.T) {
 		t.Fatal("加密失败:", err)
 	}
 
-	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext)
+	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 	if err != nil {
 		t.Fatal("解密失败:", err)
 	}
@@ -142,9 +142,9 @@ func TestFIBE4(t *testing.T) {
 	message := &FIBEMessage{Message: *m}
 
 	// 用户属性：1,2,3
-	userAttributes := []int{1, 2, 3}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3})
 	// 消息属性：4,5,6,7,8 (没有重叠)
-	messageAttributes := []int{4, 5, 6, 7, 8}
+	messageAttributes, err := NewFIBEAttributes([]int{4, 5, 6, 7, 8})
 
 	// d=3：需要至少3个属性匹配，但实际重叠为0
 	fibeInstance := NewFIBEInstance(10, 3)
@@ -153,7 +153,7 @@ func TestFIBE4(t *testing.T) {
 		t.Fatal("系统初始化失败:", err)
 	}
 
-	secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -163,7 +163,7 @@ func TestFIBE4(t *testing.T) {
 		t.Fatal("加密失败:", err)
 	}
 
-	_, err = fibeInstance.Decrypt(secretKey, ciphertext)
+	_, err = fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 	// 解密失败这里err不为空，如果为空则不通过这个测试案例
 	if err == nil {
 		t.Fatal("解密失败的测试案例错误")
@@ -173,8 +173,8 @@ func TestFIBE4(t *testing.T) {
 
 // TestFIBE5 - 多消息测试：同一密钥对不同消息的加解密
 func TestFIBE5(t *testing.T) {
-	userAttributes := []int{1, 2, 3, 4, 5}
-	messageAttributes := []int{1, 2, 3, 4, 5}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5})
+	messageAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5})
 
 	fibeInstance := NewFIBEInstance(10, 3)
 	publicParams, err := fibeInstance.SetUp()
@@ -182,7 +182,7 @@ func TestFIBE5(t *testing.T) {
 		t.Fatal("系统初始化失败:", err)
 	}
 
-	secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -200,7 +200,7 @@ func TestFIBE5(t *testing.T) {
 			t.Fatalf("第%d次加密失败: %v", i+1, err)
 		}
 
-		decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext)
+		decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 		if err != nil {
 			t.Fatalf("第%d次解密失败: %v", i+1, err)
 		}
@@ -221,8 +221,8 @@ func TestFIBE6(t *testing.T) {
 	}
 	message := &FIBEMessage{Message: *m}
 
-	userAttributes := []int{1, 2, 3, 4, 5, 6}
-	messageAttributes := []int{1, 2, 3, 4, 7, 8}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5, 6})
+	messageAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 7, 8})
 
 	testCases := []struct {
 		d           int
@@ -240,7 +240,7 @@ func TestFIBE6(t *testing.T) {
 			t.Fatal("系统初始化失败:", err)
 		}
 
-		secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+		secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 		if err != nil {
 			t.Fatal("密钥生成失败:", err)
 		}
@@ -250,7 +250,7 @@ func TestFIBE6(t *testing.T) {
 			t.Fatal("加密失败:", err)
 		}
 
-		decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext)
+		decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 		if err != nil {
 			t.Fatal("解密失败:", err)
 		}
@@ -273,8 +273,8 @@ func TestFIBE7(t *testing.T) {
 	message := &FIBEMessage{Message: *m}
 
 	// 大属性集：20个属性
-	userAttributes := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
-	messageAttributes := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20})
+	messageAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30})
 
 	// n=50, d=10：需要至少10个属性匹配
 	fibeInstance := NewFIBEInstance(50, 10)
@@ -283,7 +283,7 @@ func TestFIBE7(t *testing.T) {
 		t.Fatal("系统初始化失败:", err)
 	}
 
-	secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -293,7 +293,7 @@ func TestFIBE7(t *testing.T) {
 		t.Fatal("加密失败:", err)
 	}
 
-	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext)
+	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 	if err != nil {
 		t.Fatal("解密失败:", err)
 	}
@@ -313,8 +313,8 @@ func TestFIBE8(t *testing.T) {
 	}
 	message := &FIBEMessage{Message: *m}
 
-	userAttributes := []int{1}
-	messageAttributes := []int{1}
+	userAttributes, err := NewFIBEAttributes([]int{1})
+	messageAttributes, err := NewFIBEAttributes([]int{1})
 
 	// n=5, d=1：只需1个属性匹配
 	fibeInstance := NewFIBEInstance(5, 1)
@@ -323,7 +323,7 @@ func TestFIBE8(t *testing.T) {
 		t.Fatal("系统初始化失败:", err)
 	}
 
-	secretKey, err := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, err := fibeInstance.KeyGenerate(userAttributes, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
 	}
@@ -333,7 +333,7 @@ func TestFIBE8(t *testing.T) {
 		t.Fatal("加密失败:", err)
 	}
 
-	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext)
+	decryptedMessage, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 	if err != nil {
 		t.Fatal("解密失败:", err)
 	}
@@ -355,9 +355,9 @@ func TestFIBE9(t *testing.T) {
 	message := &FIBEMessage{Message: *m}
 
 	// 相同属性，不同顺序
-	userAttributes1 := []int{1, 2, 3, 4, 5}
-	userAttributes2 := []int{5, 4, 3, 2, 1}
-	messageAttributes := []int{3, 1, 5, 2, 4}
+	userAttributes1, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5})
+	userAttributes2, err := NewFIBEAttributes([]int{5, 4, 3, 2, 1})
+	messageAttributes, err := NewFIBEAttributes([]int{3, 1, 5, 2, 4})
 
 	fibeInstance := NewFIBEInstance(10, 3)
 	publicParams, err := fibeInstance.SetUp()
@@ -366,13 +366,13 @@ func TestFIBE9(t *testing.T) {
 	}
 
 	// 第一组密钥
-	secretKey1, err := fibeInstance.KeyGenerate(userAttributes1)
+	secretKey1, err := fibeInstance.KeyGenerate(userAttributes1, publicParams)
 	if err != nil {
 		t.Fatal("密钥1生成失败:", err)
 	}
 
 	// 第二组密钥（不同顺序）
-	secretKey2, err := fibeInstance.KeyGenerate(userAttributes2)
+	secretKey2, err := fibeInstance.KeyGenerate(userAttributes2, publicParams)
 	if err != nil {
 		t.Fatal("密钥2生成失败:", err)
 	}
@@ -383,13 +383,13 @@ func TestFIBE9(t *testing.T) {
 	}
 
 	// 两个密钥都应该能成功解密
-	decryptedMessage1, err := fibeInstance.Decrypt(secretKey1, ciphertext)
+	decryptedMessage1, err := fibeInstance.Decrypt(secretKey1, ciphertext, publicParams)
 	if err != nil {
 		t.Fatal("密钥1解密失败:", err)
 	}
 	fmt.Println("密钥1解密消息:", decryptedMessage1.Message)
 
-	decryptedMessage2, err := fibeInstance.Decrypt(secretKey2, ciphertext)
+	decryptedMessage2, err := fibeInstance.Decrypt(secretKey2, ciphertext, publicParams)
 	if err != nil {
 		t.Fatal("密钥2解密失败:", err)
 	}
@@ -408,6 +408,7 @@ func TestFIBE9(t *testing.T) {
 
 // TestFIBE10 - 性能基准测试：测量加密和解密性能
 func TestFIBE10(t *testing.T) {
+	var err error
 	if testing.Short() {
 		t.Skip("跳过性能测试")
 	}
@@ -415,12 +416,16 @@ func TestFIBE10(t *testing.T) {
 	m, _ := new(bn254.GT).SetRandom()
 	message := &FIBEMessage{Message: *m}
 
-	userAttributes := []int{1, 2, 3, 4, 5}
-	messageAttributes := []int{1, 2, 3, 4, 5}
+	userAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5})
+	messageAttributes, err := NewFIBEAttributes([]int{1, 2, 3, 4, 5})
+
+	if err != nil {
+		t.Fatal("属性错误:", err)
+	}
 
 	fibeInstance := NewFIBEInstance(10, 3)
 	publicParams, _ := fibeInstance.SetUp()
-	secretKey, _ := fibeInstance.KeyGenerate(userAttributes)
+	secretKey, _ := fibeInstance.KeyGenerate(userAttributes, publicParams)
 
 	iterations := 10
 	fmt.Printf("\n性能测试（%d次迭代）:\n", iterations)
@@ -437,7 +442,7 @@ func TestFIBE10(t *testing.T) {
 	// 测试解密性能
 	ciphertext, _ := fibeInstance.Encrypt(messageAttributes, message, publicParams)
 	for i := 0; i < iterations; i++ {
-		_, err := fibeInstance.Decrypt(secretKey, ciphertext)
+		_, err := fibeInstance.Decrypt(secretKey, ciphertext, publicParams)
 		if err != nil {
 			t.Fatal("解密失败:", err)
 		}

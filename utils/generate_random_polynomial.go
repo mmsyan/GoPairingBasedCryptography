@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"crypto/rand"
-	"github.com/consensys/gnark-crypto/ecc"
-	"math/big"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
 // GenerateRandomPolynomial 生成一个次数最高为 (degree - 1) 的多项式的系数列表。
@@ -12,19 +10,18 @@ import (
 // degree:   多项式系数列表的长度（即最高次数 + 1）。
 // constantTerm: 多项式的常数项系数 a_0。
 // 返回值:   一个 []*big.Int 数组，表示多项式的系数。
-func GenerateRandomPolynomial(degree int, constantTerm *big.Int) []*big.Int {
-	q := ecc.BN254.ScalarField()
+func GenerateRandomPolynomial(degree int, constantTerm fr.Element) []fr.Element {
 	if degree <= 0 {
-		return []*big.Int{}
+		return []fr.Element{}
 	}
-	coefficients := make([]*big.Int, degree)
-	coefficients[0] = new(big.Int).Set(constantTerm)
+	coefficients := make([]fr.Element, degree)
+	coefficients[0] = constantTerm
 	for i := 1; i < degree; i++ {
-		randomCoef, err := rand.Int(rand.Reader, q)
+		randomCoef, err := new(fr.Element).SetRandom()
 		if err != nil {
 			panic(err)
 		}
-		coefficients[i] = randomCoef
+		coefficients[i] = *randomCoef
 	}
 	return coefficients
 }

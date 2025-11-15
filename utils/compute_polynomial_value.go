@@ -1,8 +1,7 @@
 package utils
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
-	"math/big"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
 // ComputePolynomialValue 使用秦九韶算法计算多项式的值。一切运算都是模q运算
@@ -12,32 +11,28 @@ import (
 // x: 要求值的点。
 // 返回值: P(x) mod q 的计算结果 (*big.Int)
 
-func ComputePolynomialValue(coefficient []*big.Int, x *big.Int) *big.Int {
-	q := ecc.BN254.ScalarField()
+func ComputePolynomialValue(coefficient []fr.Element, x fr.Element) fr.Element {
 
 	if len(coefficient) == 0 {
-		return big.NewInt(0)
+		return *new(fr.Element).SetZero()
 	}
-	result := new(big.Int)
+	result := new(fr.Element)
 
 	// 1. 初始化 result = a_n (最高次系数) mod q。[0, q-1]，但为了安全，仍然执行 Mod
-	result.Set(coefficient[len(coefficient)-1])
-	result.Mod(result, q)
+	result.Set(&coefficient[len(coefficient)-1])
 
 	// 从倒数第二个系数开始 (a_{n-1}) 迭代到 a_0
 	// i 的范围是 [len(coefficient)-2, 0]
 	for i := len(coefficient) - 2; i >= 0; i-- {
 		// 1. result = (result * x) mod q
 		// 使用 Mul 方法将当前 result 乘以 x
-		result.Mul(result, x)
-		result.Mod(result, q)
+		result.Mul(result, &x)
 
 		// 2. result = (result + coefficient[i]) mod q
 		// 使用 Add 方法将 coefficient[i] 加到 result 上
-		result.Add(result, coefficient[i])
-		result.Mod(result, q)
+		result.Add(result, &coefficient[i])
 	}
 
 	// 返回计算结果的指针
-	return result
+	return *result
 }
