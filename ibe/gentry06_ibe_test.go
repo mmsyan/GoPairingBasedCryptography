@@ -13,7 +13,7 @@ func TestGentry06Ibe1(t *testing.T) {
 	var err error
 
 	// 创建用户身份
-	identity, err := CreateGentry06Identity(big.NewInt(123456))
+	identity, err := NewGentry06Identity(big.NewInt(123456))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
@@ -70,7 +70,7 @@ func TestGentry06Ibe2(t *testing.T) {
 	// --- 1. 初始化和密钥生成 ---
 
 	// 创建Alice的身份
-	aliceIdentity, err := CreateGentry06Identity(big.NewInt(987654))
+	aliceIdentity, err := NewGentry06Identity(big.NewInt(987654))
 	if err != nil {
 		t.Fatal("创建Alice身份失败:", err)
 	}
@@ -149,9 +149,9 @@ func TestGentry06Ibe3(t *testing.T) {
 	}
 
 	// 创建三个用户身份
-	alice, err := CreateGentry06Identity(big.NewInt(1001))
-	bob, err := CreateGentry06Identity(big.NewInt(2002))
-	charlie, err := CreateGentry06Identity(big.NewInt(3003))
+	alice, err := NewGentry06Identity(big.NewInt(1001))
+	bob, err := NewGentry06Identity(big.NewInt(2002))
+	charlie, err := NewGentry06Identity(big.NewInt(3003))
 
 	// 为每个用户生成密钥
 	aliceKey, err := instance.KeyGenerate(alice, publicParams)
@@ -257,7 +257,7 @@ func TestGentry06Ibe4(t *testing.T) {
 			fmt.Printf("\n测试 %s (ID=%s)\n", tc.name, tc.idVal.String())
 
 			// 创建身份
-			identity, err := CreateGentry06Identity(tc.idVal)
+			identity, err := NewGentry06Identity(tc.idVal)
 
 			// 生成密钥
 			secretKey, err := instance.KeyGenerate(identity, publicParams)

@@ -213,3 +213,9 @@ func (instance *BFIBEInstance) Decrypt(ciphertext *BFIBECiphertext, secretKey *B
 		Message: utils.Xor(ciphertext.C2, gidBytes),
 	}, nil
 }
+
+func NewBF01Identity(identity string) (*BFIBEIdentity, error) {
+	return &BFIBEIdentity{
+		Id: identity,
+	}, nil
+}

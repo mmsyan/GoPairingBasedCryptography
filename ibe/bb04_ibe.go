@@ -226,7 +226,7 @@ func (instance *BBIBEInstance) Decrypt(ciphertext *BBIBECiphertext, secretKey *B
 	return &BBIBEMessage{Message: decryptedMessage}, nil
 }
 
-func CreateBB04Identity(identity *big.Int) (*BBIBEIdentity, error) {
+func NewBB04Identity(identity *big.Int) (*BBIBEIdentity, error) {
 	return &BBIBEIdentity{
 		Id: *new(fr.Element).SetBigInt(identity),
 	}, nil

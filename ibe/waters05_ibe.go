@@ -135,11 +135,11 @@ func (instance *Waters05IBEInstance) SetUp() (*Waters05IBEPublicParams, error) {
 	for i := 0; i < len(ui); i++ {
 		// 随机选取 U_i 的指数
 		uRandom, err := new(fr.Element).SetRandom()
-		// 计算 U_i = g2^{随机数}
-		ui[i] = *new(bn254.G2Affine).ScalarMultiplicationBase(uRandom.BigInt(new(big.Int)))
 		if err != nil {
 			return nil, fmt.Errorf("failed to set up")
 		}
+		// 计算 U_i = g2^{随机数}
+		ui[i] = *new(bn254.G2Affine).ScalarMultiplicationBase(uRandom.BigInt(new(big.Int)))
 	}
 
 	return &Waters05IBEPublicParams{
