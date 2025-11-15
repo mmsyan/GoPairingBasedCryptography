@@ -13,7 +13,7 @@ func TestBB04sIbe1(t *testing.T) {
 	var err error
 
 	// 创建用户身份
-	identity, err := NewBB04Identity(big.NewInt(123456))
+	identity, err := NewBB04sIBEIdentity(big.NewInt(123456))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
@@ -68,10 +68,10 @@ func TestBB04sIbe2(t *testing.T) {
 	var err error
 
 	// 创建Alice的身份
-	aliceIdentity, err := NewBB04Identity(big.NewInt(123456))
+	aliceIdentity, err := NewBB04sIBEIdentity(big.NewInt(123456))
 
 	// 创建Bob的身份
-	bobIdentity, err := NewBB04Identity(big.NewInt(456789))
+	bobIdentity, err := NewBB04sIBEIdentity(big.NewInt(456789))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
@@ -135,9 +135,9 @@ func TestBB04sIbe3(t *testing.T) {
 	}
 
 	// 创建三个用户身份
-	alice, err := NewBB04Identity(big.NewInt(1001))
-	bob, err := NewBB04Identity(big.NewInt(2002))
-	charlie, err := NewBB04Identity(big.NewInt(3003))
+	alice, err := NewBB04sIBEIdentity(big.NewInt(1001))
+	bob, err := NewBB04sIBEIdentity(big.NewInt(2002))
+	charlie, err := NewBB04sIBEIdentity(big.NewInt(3003))
 
 	// 为每个用户生成密钥
 	aliceKey, err := instance.KeyGenerate(alice, publicParams)
@@ -233,7 +233,7 @@ func TestBB04sIbe4(t *testing.T) {
 	}
 
 	// 创建用户身份和密钥
-	identity, err := NewBB04Identity(big.NewInt(123456))
+	identity, err := NewBB04sIBEIdentity(big.NewInt(123456))
 	secretKey, err := instance.KeyGenerate(identity, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
@@ -322,7 +322,7 @@ func TestBB04sIbe5(t *testing.T) {
 			fmt.Printf("\n测试 %s (ID=%s)\n", tc.name, tc.idVal.String())
 
 			// 创建身份
-			identity, err := NewBB04Identity(tc.idVal)
+			identity, err := NewBB04sIBEIdentity(tc.idVal)
 
 			// 生成密钥
 			secretKey, err := instance.KeyGenerate(identity, publicParams)

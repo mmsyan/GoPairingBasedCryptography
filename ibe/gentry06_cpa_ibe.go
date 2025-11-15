@@ -246,8 +246,8 @@ func (instance *Gentry06CPAIBEInstance) Decrypt(ciphertext *Gentry06CPAIBECipher
 	}, nil
 }
 
-// NewGentry06CPAIdentity 将大整数类型的 ID 转换为 IBE 方案使用的 fr.Element 身份结构体。
-func NewGentry06CPAIdentity(identity *big.Int) (*Gentry06CPAIBEIdentity, error) {
+// NewGentry06CPAIBEIdentity 将大整数类型的 ID 转换为 IBE 方案使用的 fr.Element 身份结构体。
+func NewGentry06CPAIBEIdentity(identity *big.Int) (*Gentry06CPAIBEIdentity, error) {
 	return &Gentry06CPAIBEIdentity{
 		Id: *new(fr.Element).SetBigInt(identity), // 将 big.Int 映射到 Zp 域元素
 	}, nil

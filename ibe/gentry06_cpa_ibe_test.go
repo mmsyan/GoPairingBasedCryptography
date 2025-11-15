@@ -12,7 +12,7 @@ func TestGentry06CPAIbe1(t *testing.T) {
 	var err error
 
 	// 创建用户身份
-	identity, err := NewGentry06CPAIdentity(big.NewInt(123456))
+	identity, err := NewGentry06CPAIBEIdentity(big.NewInt(123456))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
@@ -67,10 +67,10 @@ func TestGentry06CPAIbe2(t *testing.T) {
 	var err error
 
 	// 创建Alice的身份
-	aliceIdentity, err := NewGentry06CPAIdentity(big.NewInt(123456))
+	aliceIdentity, err := NewGentry06CPAIBEIdentity(big.NewInt(123456))
 
 	// 创建Bob的身份
-	bobIdentity, err := NewGentry06CPAIdentity(big.NewInt(456789))
+	bobIdentity, err := NewGentry06CPAIBEIdentity(big.NewInt(456789))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
@@ -134,9 +134,9 @@ func TestGentry06CPAIbe3(t *testing.T) {
 	}
 
 	// 创建三个用户身份
-	alice, err := NewGentry06CPAIdentity(big.NewInt(1001))
-	bob, err := NewGentry06CPAIdentity(big.NewInt(2002))
-	charlie, err := NewGentry06CPAIdentity(big.NewInt(3003))
+	alice, err := NewGentry06CPAIBEIdentity(big.NewInt(1001))
+	bob, err := NewGentry06CPAIBEIdentity(big.NewInt(2002))
+	charlie, err := NewGentry06CPAIBEIdentity(big.NewInt(3003))
 
 	// 为每个用户生成密钥
 	aliceKey, err := instance.KeyGenerate(alice, publicParams)
@@ -232,7 +232,7 @@ func TestGentry06CPAIbe4(t *testing.T) {
 	}
 
 	// 创建用户身份和密钥
-	identity, err := NewGentry06CPAIdentity(big.NewInt(123456))
+	identity, err := NewGentry06CPAIBEIdentity(big.NewInt(123456))
 	secretKey, err := instance.KeyGenerate(identity, publicParams)
 	if err != nil {
 		t.Fatal("密钥生成失败:", err)
@@ -321,7 +321,7 @@ func TestGentry06CPAIbe5(t *testing.T) {
 			fmt.Printf("\n测试 %s (ID=%s)\n", tc.name, tc.idVal.String())
 
 			// 创建身份
-			identity, err := NewGentry06CPAIdentity(tc.idVal)
+			identity, err := NewGentry06CPAIBEIdentity(tc.idVal)
 
 			// 生成密钥
 			secretKey, err := instance.KeyGenerate(identity, publicParams)

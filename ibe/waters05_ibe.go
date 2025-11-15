@@ -115,7 +115,6 @@ func NewWaters05IBEInstance() (*Waters05IBEInstance, error) {
 //   - *Waters05IBEPublicParams: 系统公共参数。
 //   - error: 如果初始化失败，返回错误信息。
 func (instance *Waters05IBEInstance) SetUp() (*Waters05IBEPublicParams, error) {
-	var err error
 	// 获取 BN254 曲线的生成元 g1 和 g2
 	_, _, g1, g2 := bn254.Generators()
 	// 计算 g1^alpha
@@ -255,12 +254,12 @@ func (instance *Waters05IBEInstance) Encrypt(message *Waters05IBEMessage, identi
 // 返回值:
 //   - *Waters05IBEMessage: 解密后的明文消息。
 //   - error: 如果解密失败，返回错误信息。
-func (instance *Waters05IBEInstance) Decrypt(ciphertext *Waters05IBECiphertext, secretkey *Waters05IBESecretKey, publicParams *Waters05IBEPublicParams) (*Waters05IBEMessage, error) {
+func (instance *Waters05IBEInstance) Decrypt(ciphertext *Waters05IBECiphertext, secretKey *Waters05IBESecretKey, publicParams *Waters05IBEPublicParams) (*Waters05IBEMessage, error) {
 	// eD2C3 = e(d2, c3) = e(g1^r, (Product)^t) = e(g1, Product)^{rt}
-	eD2C3, err := bn254.Pair([]bn254.G1Affine{secretkey.d2}, []bn254.G2Affine{ciphertext.c3})
+	eD2C3, err := bn254.Pair([]bn254.G1Affine{secretKey.d2}, []bn254.G2Affine{ciphertext.c3})
 
 	// eC2D1 = e(c2, d1) = e(g1^t, g2^alpha * Product^r) = e(g1, g2)^{t*alpha} * e(g1, Product)^{tr}
-	eC2D1, err := bn254.Pair([]bn254.G1Affine{ciphertext.c2}, []bn254.G2Affine{secretkey.d1})
+	eC2D1, err := bn254.Pair([]bn254.G1Affine{ciphertext.c2}, []bn254.G2Affine{secretKey.d1})
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt message")
 	}
@@ -279,7 +278,7 @@ func (instance *Waters05IBEInstance) Decrypt(ciphertext *Waters05IBECiphertext, 
 	}, nil
 }
 
-// NewWatersIdentity 将一个字符串身份转换为 Waters-05 IBE 所需的 256 位二进制身份向量。
+// NewWaters05IBEIdentity 将一个字符串身份转换为 Waters-05 IBE 所需的 256 位二进制身份向量。
 // 它通过 SHA-256 哈希身份字符串来实现。
 //
 // 参数:
@@ -288,7 +287,7 @@ func (instance *Waters05IBEInstance) Decrypt(ciphertext *Waters05IBECiphertext, 
 // 返回值:
 //   - *Waters05IBEIdentity: 对应的 256 位身份向量。
 //   - error: 如果身份字符串为空或哈希失败，返回错误信息。
-func NewWatersIdentity(identity string) (*Waters05IBEIdentity, error) {
+func NewWaters05IBEIdentity(identity string) (*Waters05IBEIdentity, error) {
 	if len(identity) == 0 {
 		return nil, errors.New("identity string cannot be empty")
 	}

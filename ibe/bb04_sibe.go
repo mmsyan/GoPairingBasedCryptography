@@ -230,7 +230,7 @@ func (instance *BB04sIBEInstance) Decrypt(ciphertext *BB04sIBECiphertext, secret
 	return &BB04sIBEMessage{Message: decryptedMessage}, nil
 }
 
-func NewBB04Identity(identity *big.Int) (*BB04sIBEIdentity, error) {
+func NewBB04sIBEIdentity(identity *big.Int) (*BB04sIBEIdentity, error) {
 	return &BB04sIBEIdentity{
 		Id: *new(fr.Element).SetBigInt(identity),
 	}, nil

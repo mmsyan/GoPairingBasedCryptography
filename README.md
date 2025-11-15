@@ -10,10 +10,12 @@ bls signature
 Identity Based Encryption Implementation
   * __BF01__ [《Identity-Based Encryption from the Weil Pairing》](https://link.springer.com/chapter/10.1007/3-540-44647-8_13)
     *  §4.2 BasicIdent
-  * __BB04__ [《Efficient Selective-ID Secure Identity-Based Encryption Without Random Oracles》](https://link.springer.com/chapter/10.1007/978-3-540-24676-3_14)
+  * __BB04 selective-secure__ [《Efficient Selective-ID Secure Identity-Based Encryption Without Random Oracles》](https://link.springer.com/chapter/10.1007/978-3-540-24676-3_14)
     * §5 More Efficient Selective Identity IBE Based on BDHI Without Random Oracles
+  * __BB04 full-secure__ [《Secure Identity Based Encryption Without Random Oracles》](https://link.springer.com/chapter/10.1007/978-3-540-28628-8_27)
+    * §4 Secure IBE Construction
   * __Waters05__ [《Efficient Identity-Based Encryption Without Random Oracles》](https://link.springer.com/chapter/10.1007/11426639_7) 
-    * §4 Construction
+  * §4 Construction
   * __Gentry06__ [《Practical Identity-Based Encryption Without Random Oracles》](https://link.springer.com/chapter/10.1007/11761679_27)
     * §3 Construction I: Chosen-Plaintext Security
     * §4 Construction II: Chosen-Ciphertext Security

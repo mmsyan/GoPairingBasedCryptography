@@ -342,14 +342,14 @@ func h(u bn254.G1Affine, v bn254.GT, w bn254.GT) fr.Element {
 	return beta
 }
 
-// NewGentry06Identity 将大整数类型的 ID 转换为 IBE 方案使用的 fr.Element 身份结构体。
+// NewGentry06IBEIdentity 将大整数类型的 ID 转换为 IBE 方案使用的 fr.Element 身份结构体。
 //
 // 输入:
 //   - identity: 大整数形式的用户 ID
 //
 // 返回值:
 //   - *Gentry06IBEIdentity: 包含 $\mathbb{Z}_p$ 元素的身份结构体
-func NewGentry06Identity(identity *big.Int) (*Gentry06IBEIdentity, error) {
+func NewGentry06IBEIdentity(identity *big.Int) (*Gentry06IBEIdentity, error) {
 	return &Gentry06IBEIdentity{
 		Id: *new(fr.Element).SetBigInt(identity), // 将 big.Int 映射到 $\mathbb{Z}_p$ 域元素
 	}, nil
