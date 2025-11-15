@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-// TestBBIBe1 测试基本的加密解密流程
+// TestBB04sIbe1 测试基本的加密解密流程
 // 场景：使用正确的身份和密钥进行加密解密，验证能否正确恢复原始消息
-func TestBB04IBe1(t *testing.T) {
+func TestBB04sIbe1(t *testing.T) {
 	var err error
 
 	// 创建用户身份
@@ -17,13 +17,13 @@ func TestBB04IBe1(t *testing.T) {
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
-	message := &BBIBEMessage{
+	message := &BB04sIBEMessage{
 		Message: *m,
 	}
 	fmt.Println("原始消息:", message.Message)
 
 	// 系统初始化
-	instance, err := NewBBIBEInstance()
+	instance, err := NewBB04sIBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -62,9 +62,9 @@ func TestBB04IBe1(t *testing.T) {
 	fmt.Println("✓ 测试通过：正确的身份和密钥成功解密")
 }
 
-// TestBBIBe2 测试错误密钥无法解密的情况
+// TestBB04sIbe2 测试错误密钥无法解密的情况
 // 场景：使用Alice的密钥尝试解密发给Bob的消息，应该解密失败（得到错误的明文）
-func TestBB04IBe2(t *testing.T) {
+func TestBB04sIbe2(t *testing.T) {
 	var err error
 
 	// 创建Alice的身份
@@ -75,13 +75,13 @@ func TestBB04IBe2(t *testing.T) {
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
-	message := &BBIBEMessage{
+	message := &BB04sIBEMessage{
 		Message: *m,
 	}
 	fmt.Println("原始消息:", message.Message)
 
 	// 系统初始化
-	instance, err := NewBBIBEInstance()
+	instance, err := NewBB04sIBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -120,11 +120,11 @@ func TestBB04IBe2(t *testing.T) {
 	fmt.Println("✓ 测试通过：错误的密钥无法正确解密")
 }
 
-// TestBBIBe3 测试多个用户的独立性
+// TestBB04sIbe3 测试多个用户的独立性
 // 场景：同一个系统中有多个用户，每个用户只能解密发给自己的消息
-func TestBB04IBe3(t *testing.T) {
+func TestBB04sIbe3(t *testing.T) {
 	// 系统初始化
-	instance, err := NewBBIBEInstance()
+	instance, err := NewBB04sIBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -160,9 +160,9 @@ func TestBB04IBe3(t *testing.T) {
 	m2, _ := new(bn254.GT).SetRandom()
 	m3, _ := new(bn254.GT).SetRandom()
 
-	msg1 := &BBIBEMessage{Message: *m1}
-	msg2 := &BBIBEMessage{Message: *m2}
-	msg3 := &BBIBEMessage{Message: *m3}
+	msg1 := &BB04sIBEMessage{Message: *m1}
+	msg2 := &BB04sIBEMessage{Message: *m2}
+	msg3 := &BB04sIBEMessage{Message: *m3}
 
 	// 分别加密发给不同的用户
 	ct1, err := instance.Encrypt(msg1, alice, publicParams)
@@ -218,11 +218,11 @@ func TestBB04IBe3(t *testing.T) {
 	fmt.Println("✓ 测试通过：多用户独立性验证成功")
 }
 
-// TestBBIBe4 测试同一消息多次加密的不确定性
+// TestBB04sIbe4 测试同一消息多次加密的不确定性
 // 场景：同一消息多次加密应该产生不同的密文（由于随机数s的不同）
-func TestBB04IBe4(t *testing.T) {
+func TestBB04sIbe4(t *testing.T) {
 	// 系统初始化
-	instance, err := NewBBIBEInstance()
+	instance, err := NewBB04sIBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -241,7 +241,7 @@ func TestBB04IBe4(t *testing.T) {
 
 	// 生成一条消息
 	m, _ := new(bn254.GT).SetRandom()
-	message := &BBIBEMessage{Message: *m}
+	message := &BB04sIBEMessage{Message: *m}
 	fmt.Println("原始消息:", message.Message)
 
 	// 对同一消息进行三次加密
@@ -292,11 +292,11 @@ func TestBB04IBe4(t *testing.T) {
 	fmt.Println("✓ 测试通过：加密的概率性和正确性验证成功")
 }
 
-// TestBBIBe5 测试边界情况和特殊身份值
+// TestBB04sIbe5 测试边界情况和特殊身份值
 // 场景：测试使用特殊值（如1、大数等）作为身份的情况
-func TestBB04IBe5(t *testing.T) {
+func TestBB04sIbe5(t *testing.T) {
 	// 系统初始化
-	instance, err := NewBBIBEInstance()
+	instance, err := NewBB04sIBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -332,7 +332,7 @@ func TestBB04IBe5(t *testing.T) {
 
 			// 生成消息
 			m, _ := new(bn254.GT).SetRandom()
-			message := &BBIBEMessage{Message: *m}
+			message := &BB04sIBEMessage{Message: *m}
 
 			// 加密
 			ciphertext, err := instance.Encrypt(message, identity, publicParams)
