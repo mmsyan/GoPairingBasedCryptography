@@ -85,7 +85,7 @@ type SW05FIBECiphertext struct {
 // NewSW05FIBEInstance 创建一个新的 FIBE 方案实例。
 //
 // 参数:
-//   - universe: 属性宇宙的大小 U。
+//   - universe: 属性宇宙的大小 U。属性被预定义为 [1, 2, ..., U]。
 //   - distance: 容错距离 d。
 //
 // 返回值:
@@ -109,18 +109,16 @@ func NewSW05FIBEInstance(universe int64, distance int) *SW05FIBEInstance {
 func (instance *SW05FIBEInstance) SetUp() (*SW05FIBEPublicParams, error) {
 	// 获取 G1 和 G2 群的生成元。
 	_, _, g1, g2 := bn254.Generators()
-	// 初始化公钥组件 T_i 数组，长度为 universe+1。
-	pk_Ti := make(map[int64]*bn254.G2Affine)
 
 	// 随机生成属性主密钥 t_i，并计算公钥组件 T_i = g2^t_i。
+	pk_Ti := make(map[int64]*bn254.G2Affine)
 	for i := int64(1); i <= instance.universe; i++ {
 		temp, err := new(fr.Element).SetRandom() // t_i <- Zq
 		if err != nil {
 			return nil, fmt.Errorf("fibe instance setup failure")
 		}
 		instance.msk_ti[i] = *temp
-		// T_i = g2^t_i
-		pk_Ti[i] = new(bn254.G2Affine).ScalarMultiplicationBase(temp.BigInt(new(big.Int)))
+		pk_Ti[i] = new(bn254.G2Affine).ScalarMultiplicationBase(temp.BigInt(new(big.Int))) // T_i = g2^t_i
 	}
 
 	// 随机生成主密钥 y，并计算公钥组件 Y = e(g1, g2)^y。
