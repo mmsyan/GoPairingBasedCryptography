@@ -5,8 +5,8 @@ import (
 )
 
 // ComputeLagrangeBasis 计算拉格朗日基函数在 x 处的值：Delta_{i, S}(x) mod q
-func ComputeLagrangeBasis(i int, s []int, x int) fr.Element {
-	iElement := new(fr.Element).SetInt64(int64(i))
+func ComputeLagrangeBasis(i int64, s []int64, x int) fr.Element {
+	iElement := new(fr.Element).SetInt64(i)
 	xElement := new(fr.Element).SetInt64(int64(x))
 	delta := new(fr.Element).SetOne()
 

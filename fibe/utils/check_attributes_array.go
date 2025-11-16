@@ -1,6 +1,6 @@
 package utils
 
-func CheckAttributesArray(attributes []int, universe int) bool {
+func CheckAttributesArray(attributes []int64, universe int64) bool {
 	if attributes == nil || len(attributes) == 0 {
 		return false
 	}
