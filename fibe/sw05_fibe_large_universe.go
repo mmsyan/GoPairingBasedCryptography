@@ -10,13 +10,9 @@ package fibe
 // 预印本: https://eprint.iacr.org/2004/086.pdf
 //
 // 该实现基于BN254椭圆曲线和配对运算,实现了Sahai-Waters (SW05) 提出的
-// "Large Universe" 模糊身份基加密(FIBE)方案。
+// "Section6 Large Universe Construction" 模糊身份基加密(FIBE)方案。
 //
-// 主要特点:
-//   - **容错性/门限解密:** 密文和私钥各关联一个属性集,只要这两个集合的交集大小
-//     超过预设的门限距离 d,即可成功解密。
-//   - **大域支持:** 属性集可以从一个较大的域(整数集)中选取。
-//   - **配对基加密:** 利用双线性对的性质实现密文和私钥的匹配。
+// 截至2025-11-22，这个方案是仍然存在一定问题的，具体而言是SetUp当中n的含义，并没有很理解论文当中给出的说明
 //
 // 系统功能包括:
 //   - 系统初始化(SetUp)
@@ -103,7 +99,7 @@ func NewSW05FIBELargeUniverseInstance(distance int) *SW05FIBELargeUniverseInstan
 // 该方法设置属性域大小 n,并基于主密钥 y 生成公开参数 Y 和辅助参数 T_i'。
 //
 // 参数:
-//   - n: 属性集 I = {1, ..., n} 的上限。
+//   - n: 加密的时候可以用的属性个数上限
 //
 // 返回值:
 //   - *SW05FIBELargeUniversePublicParams: 系统公共参数。
@@ -316,7 +312,6 @@ func (publicParams *SW05FIBELargeUniversePublicParams) computeT(x fr.Element) bn
 
 	// 2. 计算 $\prod_{i=1}^{n+1} (T_i')^{\Delta_{x, N}(i)}$ 并累加到 $g_2^{x^n}$ 上。
 	// 注意: 代码中的循环索引从 0 开始,与论文中的 $i \in \{1, \dots, n+1\}$ 可能不完全对应,
-	// 假定 utils2.ComputeLagrangeBasis 和 publicParams.ti 的索引处理是正确的。
 	for i := int64(0); i < int64(len(publicParams.ti)); i++ {
 		// 计算 $\Delta_{x, N}(i) = \prod_{j \in N, j \neq i} \frac{x - j}{i - j}$。
 		// 这里的 i 应该代表 N 中的元素。
