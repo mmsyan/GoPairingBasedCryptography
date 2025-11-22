@@ -305,9 +305,7 @@ func (instance *SW05FIBELargeUniverseInstance) Decrypt(userSecretKey *SW05FIBELa
 //   - bn254.G2Affine: G2 群上的元素 $T_x$。
 func (publicParams *SW05FIBELargeUniversePublicParams) computeT(x fr.Element) bn254.G2Affine {
 	// 1. 计算 $g_2^{x^n}$。
-	xElement := new(fr.Element).Set(&x)
-	nElement := new(fr.Element).SetInt64(int64(publicParams.n))
-	xExpN := new(fr.Element).Exp(*xElement, nElement.BigInt(new(big.Int)))
+	xExpN := new(fr.Element).Exp(x, big.NewInt(publicParams.n))
 	g2ExpXExpN := new(bn254.G2Affine).ScalarMultiplicationBase(xExpN.BigInt(new(big.Int)))
 
 	// 构造集合 N = {1, ..., n+1}。

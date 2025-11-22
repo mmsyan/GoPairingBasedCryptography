@@ -34,10 +34,10 @@ import (
 // SW05FIBEInstance 表示模糊身份基加密 (FIBE) 方案的实例对象。
 // 包含了方案运行所需的系统参数和主密钥。
 type SW05FIBEInstance struct {
-	universe map[fr.Element]struct{}   // 属性宇宙的大小 U。属性被预定义为 [1, 2, ..., U]。
-	distance int                       // 加密方案的容错距离 d (也称为门限值)。解密时用户属性集与密文属性集要求的最小匹配度 (|S_user ∩ S_msg| >= d)。
-	msk_ti   map[fr.Element]fr.Element // 主密钥组件 t_i，是 Zq 域上的随机元素数组。msk_ti[i] 对应第 i 个属性的主密钥。
-	msk_y    fr.Element                // 另一个主密钥组件 y，是 Zq 域上的随机元素。
+	universe map[fr.Element]struct{}   // 属性宇宙 U（所有合法属性）
+	distance int                       // 容错距离 d（最小匹配属性数量）
+	msk_ti   map[fr.Element]fr.Element // 主密钥组件：t_i（每个属性对应一个随机数）
+	msk_y    fr.Element                // 主密钥组件：y（共享秘密）
 }
 
 // SW05FIBEPublicParams 表示 FIBE 方案的公共参数。
@@ -53,8 +53,7 @@ type SW05FIBEPublicParams struct {
 // 私钥与用户的属性集相关联，用于对匹配的密文进行解密。
 type SW05FIBESecretKey struct {
 	userAttributes []fr.Element                  // 用户拥有的属性集 S_user。
-	di             map[fr.Element]bn254.G1Affine // 私钥组件 D_i，对应 S_user 中的每个属性 i。
-	// Di = g1^(q(i)/t_i)，其中 q(x) 是一个 d-1 阶随机多项式。
+	di             map[fr.Element]bn254.G1Affine // 私钥组件 D_i，Di = g1^(q(i)/t_i)，对应 S_user 中的每个属性 i。
 }
 
 // SW05FIBEMessage 表示要加密或解密的消息。
@@ -73,15 +72,15 @@ type SW05FIBECiphertext struct {
 
 // NewSW05FIBEInstanceByElements 创建一个新的 FIBE 方案实例。
 //
-// 参数:
-//   - universe: 属性宇宙U。
-//   - distance: 容错距离 d。
+// Parameters:
+// - universe: 属性宇宙U，直接以 []fr.Element 形式传入。
+// - distance: 容错距离 d（解密所需的最小属性匹配数量）。
 //
-// 返回值:
-//   - *SW05FIBEInstance: 初始化后的 FIBE 实例指针。
+// Returns:
+// - *SW05FIBEInstance: 初始化后的 FIBE 实例指针。
 func NewSW05FIBEInstanceByElements(universe []fr.Element, distance int) *SW05FIBEInstance {
 	// 使用 &SW05FIBEInstance{} 语法创建一个结构体实例并返回其指针。
-	attributesUniverse := make(map[fr.Element]struct{})
+	attributesUniverse := make(map[fr.Element]struct{}, len(universe))
 	for _, u := range universe {
 		attributesUniverse[u] = struct{}{}
 	}
@@ -92,8 +91,16 @@ func NewSW05FIBEInstanceByElements(universe []fr.Element, distance int) *SW05FIB
 	}
 }
 
+// NewSW05FIBEInstanceByInt64Slice 创建一个新的 FIBE 方案实例。
+//
+// Parameters:
+// - universe: 属性宇宙U，以 []int64 切片形式传入，每个 int64 会被转换为 fr.Element。
+// - distance: 容错距离 d（解密所需的最小属性匹配数量）。
+//
+// Returns:
+// - *SW05FIBEInstance: 初始化后的 FIBE 实例指针。
 func NewSW05FIBEInstanceByInt64Slice(universe []int64, distance int) *SW05FIBEInstance {
-	attributesUniverse := make(map[fr.Element]struct{})
+	attributesUniverse := make(map[fr.Element]struct{}, len(universe))
 	for _, u := range universe {
 		uElement := *new(fr.Element).SetInt64(u)
 		attributesUniverse[uElement] = struct{}{}
@@ -105,8 +112,21 @@ func NewSW05FIBEInstanceByInt64Slice(universe []int64, distance int) *SW05FIBEIn
 	}
 }
 
+// NewSW05FIBEInstanceByInt64Pair 创建一个新的 FIBE 方案实例（连续整数区间）。
+//
+// Parameters:
+// - start: 属性宇宙的起始整数（包含）。
+// - end:   属性宇宙的结束整数（不包含），即生成 [start, end) 区间内的所有整数属性。
+// - distance: 容错距离 d（解密所需的最小属性匹配数量）。
+//
+// Returns:
+// - *SW05FIBEInstance: 初始化后的 FIBE 实例指针。
+//
+// Example:
+//
+//	NewSW05FIBEInstanceByInt64Pair(1, 101, 10)  // 生成属性宇宙 {1,2,...,100}
 func NewSW05FIBEInstanceByInt64Pair(start int64, end int64, distance int) *SW05FIBEInstance {
-	attributesUniverse := make(map[fr.Element]struct{})
+	attributesUniverse := make(map[fr.Element]struct{}, end-start)
 	for i := start; i < end; i++ {
 		u := *new(fr.Element).SetInt64(i)
 		attributesUniverse[u] = struct{}{}
