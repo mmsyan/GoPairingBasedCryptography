@@ -19,7 +19,14 @@ pairing-library: https://github.com/Consensys/gnark
 
 
 ## Fuzzy Identity Based Encryption Implementation
-  * __SW05 §4.1__ [Fuzzy Identity-Based Encryption](https://link.springer.com/chapter/10.1007/11426639_27)
+
+
+| Scheme Abbr.              | Paper Title | Paper Link | Core Chapter | Code Repository                                                                                  | Security Assumption               |
+|:--------------------------| :--- | :--- | :--- |:-------------------------------------------------------------------------------------------------|:----------------------------------|
+| **SW05**                  | *Fuzzy Identity-Based Encryption* | [Link](https://eprint.iacr.org/2004/086.pdf) | §4 Our Construction | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/fibe/sw05_fibe_common.go)         | Selective-ID CPA         |
+| **SW05 (Large Universe)** | *Fuzzy Identity-Based Encryption* | [Link](https://eprint.iacr.org/2004/086.pdf) | §6 Large Universe Construction | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/fibe/sw05_fibe_large_universe.go) | Selective-ID CPA  |
+
+
 
 ## How to use our code
 
