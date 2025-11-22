@@ -19,10 +19,10 @@ func TestFIBE1(t *testing.T) {
 	}
 	fmt.Println("原始消息:", message.Message)
 
-	userAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4})
-	messageAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4})
+	userAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4})
+	messageAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4})
 
-	fibeInstance := NewSW05FIBEInstance(10, 3)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 10, 3)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -58,12 +58,12 @@ func TestFIBE2(t *testing.T) {
 	message := &SW05FIBEMessage{Message: *m}
 
 	// 用户属性：1,2,3,4,5
-	userAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4})
+	userAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4})
 	// 消息属性：1,2,3,6,7 (与用户属性有3个重叠)
-	messageAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 6, 7})
+	messageAttributes := NewFIBEAttributes([]int64{1, 2, 3, 6, 7})
 
 	// n=10, d=3：需要至少3个属性匹配
-	fibeInstance := NewSW05FIBEInstance(10, 3)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 10, 3)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -100,12 +100,12 @@ func TestFIBE3(t *testing.T) {
 	message := &SW05FIBEMessage{Message: *m}
 
 	// 用户属性：1,2,3,4,5,6,7
-	userAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 5, 6, 7})
+	userAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4, 5, 6, 7})
 	// 消息属性：1,2,3,4,8,9,10 (刚好4个重叠)
-	messageAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 8, 9, 10})
+	messageAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4, 8, 9, 10})
 
 	// d=4：需要至少4个属性匹配
-	fibeInstance := NewSW05FIBEInstance(15, 4)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 15, 4)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -142,12 +142,12 @@ func TestFIBE4(t *testing.T) {
 	message := &SW05FIBEMessage{Message: *m}
 
 	// 用户属性：1,2,3
-	userAttributes, err := NewFIBEAttributes([]int64{1, 2, 3})
+	userAttributes := NewFIBEAttributes([]int64{1, 2, 3})
 	// 消息属性：4,5,6,7,8 (没有重叠)
-	messageAttributes, err := NewFIBEAttributes([]int64{4, 5, 6, 7, 8})
+	messageAttributes := NewFIBEAttributes([]int64{4, 5, 6, 7, 8})
 
 	// d=3：需要至少3个属性匹配，但实际重叠为0
-	fibeInstance := NewSW05FIBEInstance(10, 3)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 10, 3)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -173,10 +173,10 @@ func TestFIBE4(t *testing.T) {
 
 // TestFIBE5 - 多消息测试：同一密钥对不同消息的加解密
 func TestFIBE5(t *testing.T) {
-	userAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
-	messageAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
+	userAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
+	messageAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
 
-	fibeInstance := NewSW05FIBEInstance(10, 3)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 10, 3)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -221,8 +221,8 @@ func TestFIBE6(t *testing.T) {
 	}
 	message := &SW05FIBEMessage{Message: *m}
 
-	userAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 5, 6})
-	messageAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 7, 8})
+	userAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4, 5, 6})
+	messageAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4, 7, 8})
 
 	testCases := []struct {
 		d           int
@@ -234,7 +234,7 @@ func TestFIBE6(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		fibeInstance := NewSW05FIBEInstance(10, tc.d)
+		fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 10, tc.d)
 		publicParams, err := fibeInstance.SetUp()
 		if err != nil {
 			t.Fatal("系统初始化失败:", err)
@@ -273,11 +273,11 @@ func TestFIBE7(t *testing.T) {
 	message := &SW05FIBEMessage{Message: *m}
 
 	// 大属性集：20个属性
-	userAttributes, err := NewFIBEAttributes([]int64{10000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20})
-	messageAttributes, err := NewFIBEAttributes([]int64{10000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9, 10, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30})
+	userAttributes := NewFIBEAttributes([]int64{1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20})
+	messageAttributes := NewFIBEAttributes([]int64{1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9, 10, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30})
 
 	// n=50, d=10：需要至少10个属性匹配
-	fibeInstance := NewSW05FIBEInstance(50000000, 10)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 100000, 10)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -313,11 +313,11 @@ func TestFIBE8(t *testing.T) {
 	}
 	message := &SW05FIBEMessage{Message: *m}
 
-	userAttributes, err := NewFIBEAttributes([]int64{1})
-	messageAttributes, err := NewFIBEAttributes([]int64{1})
+	userAttributes := NewFIBEAttributes([]int64{1})
+	messageAttributes := NewFIBEAttributes([]int64{1})
 
 	// n=5, d=1：只需1个属性匹配
-	fibeInstance := NewSW05FIBEInstance(5, 1)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 5, 1)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -355,11 +355,11 @@ func TestFIBE9(t *testing.T) {
 	message := &SW05FIBEMessage{Message: *m}
 
 	// 相同属性，不同顺序
-	userAttributes1, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
-	userAttributes2, err := NewFIBEAttributes([]int64{5, 4, 3, 2, 1})
-	messageAttributes, err := NewFIBEAttributes([]int64{3, 1, 5, 2, 4})
+	userAttributes1 := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
+	userAttributes2 := NewFIBEAttributes([]int64{5, 4, 3, 2, 1})
+	messageAttributes := NewFIBEAttributes([]int64{3, 1, 5, 2, 4})
 
-	fibeInstance := NewSW05FIBEInstance(10, 3)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 10, 3)
 	publicParams, err := fibeInstance.SetUp()
 	if err != nil {
 		t.Fatal("系统初始化失败:", err)
@@ -416,14 +416,14 @@ func TestFIBE10(t *testing.T) {
 	m, _ := new(bn254.GT).SetRandom()
 	message := &SW05FIBEMessage{Message: *m}
 
-	userAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
-	messageAttributes, err := NewFIBEAttributes([]int64{1, 2, 3, 4, 5})
+	userAttributes := NewFIBEAttributes([]int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32})
+	messageAttributes := NewFIBEAttributes([]int64{40, 39, 38, 37, 36, 35, 34, 33, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32})
 
 	if err != nil {
 		t.Fatal("属性错误:", err)
 	}
 
-	fibeInstance := NewSW05FIBEInstance(10, 3)
+	fibeInstance := NewSW05FIBEInstanceByInt64Pair(1, 100, 30)
 	publicParams, _ := fibeInstance.SetUp()
 	secretKey, _ := fibeInstance.KeyGenerate(userAttributes, publicParams)
 
