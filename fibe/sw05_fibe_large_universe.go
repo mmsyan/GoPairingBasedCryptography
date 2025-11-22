@@ -56,10 +56,10 @@ type SW05FIBELargeUniversePublicParams struct {
 // SW05FIBELargeUniverseSecretKey 表示SW05 FIBE方案中的用户私钥。
 // 该私钥由 PKG 为用户的特定属性集 S_user 生成。
 type SW05FIBELargeUniverseSecretKey struct {
-	userAttributes []fr.Element                   // **用户拥有的属性集 S_user。**
-	_di            map[fr.Element]*bn254.G1Affine // **私钥组件 d_i:** 对应 S_user 中每个属性 i 的 G1 群元素,
+	userAttributes []fr.Element                  // **用户拥有的属性集 S_user。**
+	_di            map[fr.Element]bn254.G1Affine // **私钥组件 d_i:** 对应 S_user 中每个属性 i 的 G1 群元素,
 	// 形式为 $d_i = g_1^{r_i}$, $r_i$ 是密钥生成时的随机数。
-	_Di map[fr.Element]*bn254.G2Affine // **私钥组件 D_i:** 对应 S_user 中每个属性 i 的 G2 群元素,
+	_Di map[fr.Element]bn254.G2Affine // **私钥组件 D_i:** 对应 S_user 中每个属性 i 的 G2 群元素,
 	// 形式为 $D_i = g_2^{q(i)} \cdot T_i^{r_i}$。
 	// 其中 $q(x)$ 是一个度为 $d-1$ 且 $q(0)=y$ 的多项式。
 }
@@ -73,10 +73,10 @@ type SW05FIBELargeUniverseMessage struct {
 // SW05FIBELargeUniverseCiphertext 表示SW05 FIBE方案中的密文。
 // 密文是针对一个属性集 S_msg 加密的。
 type SW05FIBELargeUniverseCiphertext struct {
-	messageAttributes []fr.Element                   // **密文关联的属性集 S_msg。**
-	ePrime            bn254.GT                       // **密文组件 e':** $e' = M \cdot Y^s$, 其中 $s$ 是加密随机数。
-	ePrimePrime       bn254.G1Affine                 // **密文组件 E'':** $E'' = g_1^s$。
-	ei                map[fr.Element]*bn254.G2Affine // **密文组件 E_i:** 对应 S_msg 中每个属性 i 的 G2 群元素,
+	messageAttributes []fr.Element                  // **密文关联的属性集 S_msg。**
+	ePrime            bn254.GT                      // **密文组件 e':** $e' = M \cdot Y^s$, 其中 $s$ 是加密随机数。
+	ePrimePrime       bn254.G1Affine                // **密文组件 E'':** $E'' = g_1^s$。
+	ei                map[fr.Element]bn254.G2Affine // **密文组件 E_i:** 对应 S_msg 中每个属性 i 的 G2 群元素,
 	// 形式为 $E_i = T_i^s$。
 }
 
@@ -149,8 +149,8 @@ func (instance *SW05FIBELargeUniverseInstance) SetUp(n int64) (*SW05FIBELargeUni
 //   - *SW05FIBELargeUniverseSecretKey: 生成的私钥。
 //   - error: 如果密钥生成失败,返回错误信息。
 func (instance *SW05FIBELargeUniverseInstance) KeyGenerate(userAttributes *SW05FIBEAttributes, publicParams *SW05FIBELargeUniversePublicParams) (*SW05FIBELargeUniverseSecretKey, error) {
-	di := make(map[fr.Element]*bn254.G1Affine)
-	Di := make(map[fr.Element]*bn254.G2Affine)
+	di := make(map[fr.Element]bn254.G1Affine)
+	Di := make(map[fr.Element]bn254.G2Affine)
 
 	// 1. 生成一个 d-1 次的多项式 q(x), 满足 q(0) = y。
 	// q(x) = y + \sum_{j=1}^{d-1} a_j x^j
@@ -165,7 +165,7 @@ func (instance *SW05FIBELargeUniverseInstance) KeyGenerate(userAttributes *SW05F
 		}
 
 		// 计算 d_i = g1^{r_i}。
-		di[i] = new(bn254.G1Affine).ScalarMultiplicationBase(ri.BigInt(new(big.Int)))
+		di[i] = *new(bn254.G1Affine).ScalarMultiplicationBase(ri.BigInt(new(big.Int)))
 
 		// 计算 q(i)。
 		qi := utils.ComputePolynomialValue(polynomial, i)
@@ -180,7 +180,7 @@ func (instance *SW05FIBELargeUniverseInstance) KeyGenerate(userAttributes *SW05F
 		tiExpRi := new(bn254.G2Affine).ScalarMultiplication(&ti, ri.BigInt(new(big.Int)))
 
 		// 计算 D_i = g2^{q(i)} \cdot T_i^{r_i}。
-		Di[i] = new(bn254.G2Affine).Add(g2ExpQi, tiExpRi)
+		Di[i] = *new(bn254.G2Affine).Add(g2ExpQi, tiExpRi)
 	}
 
 	return &SW05FIBELargeUniverseSecretKey{
@@ -217,12 +217,12 @@ func (instance *SW05FIBELargeUniverseInstance) Encrypt(messageAttributes *SW05FI
 	ePrimePrime := *new(bn254.G1Affine).ScalarMultiplicationBase(s.BigInt(new(big.Int)))
 
 	// 5. 为 S_msg 中的每个属性 i 计算密文组件 E_i。
-	ei := make(map[fr.Element]*bn254.G2Affine)
+	ei := make(map[fr.Element]bn254.G2Affine)
 	for _, i := range messageAttributes.attributes {
 		// 计算 T_i = g2^t(i)。
 		ti := publicParams.computeT(i)
 		// 计算 E_i = T_i^s。
-		ei[i] = new(bn254.G2Affine).ScalarMultiplication(&ti, s.BigInt(new(big.Int)))
+		ei[i] = *new(bn254.G2Affine).ScalarMultiplication(&ti, s.BigInt(new(big.Int)))
 	}
 
 	return &SW05FIBELargeUniverseCiphertext{
@@ -257,9 +257,9 @@ func (instance *SW05FIBELargeUniverseInstance) Decrypt(userSecretKey *SW05FIBELa
 
 	// 3. 遍历公共属性集 S 中的每个属性 i, 利用拉格朗日插值计算 Y^s 的逆。
 	for _, i := range s {
-		di := *userSecretKey._di[i]           // $d_i = g_1^{r_i}$
-		Di := *userSecretKey._Di[i]           // $D_i = g_2^{q(i)} \cdot T_i^{r_i}$
-		ei := *ciphertext.ei[i]               // $E_i = T_i^s$
+		di := userSecretKey._di[i]            // $d_i = g_1^{r_i}$
+		Di := userSecretKey._Di[i]            // $D_i = g_2^{q(i)} \cdot T_i^{r_i}$
+		ei := ciphertext.ei[i]                // $E_i = T_i^s$
 		ePrimePrime := ciphertext.ePrimePrime // $E'' = g_1^s$
 
 		// 计算配对项 1: $e(d_i, E_i) = e(g_1^{r_i}, T_i^s) = e(g_1, T_i)^{r_i s}$。

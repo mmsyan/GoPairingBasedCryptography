@@ -43,17 +43,17 @@ type SW05FIBEInstance struct {
 // SW05FIBEPublicParams 表示 FIBE 方案的公共参数。
 // 这些参数在系统初始化时生成并公开发布，用于密钥生成、加密和解密操作。
 type SW05FIBEPublicParams struct {
-	g1    bn254.G1Affine                 // G1 群的生成元 g1。
-	g2    bn254.G2Affine                 // G2 群的生成元 g2。
-	pk_Ti map[fr.Element]*bn254.G2Affine // 公钥组件 T_i = g2^t_i，对应第 i 个属性。
-	pk_Y  bn254.GT                       // 公钥组件 Y = e(g1, g2)^y，GT 群上的元素。
+	g1    bn254.G1Affine                // G1 群的生成元 g1。
+	g2    bn254.G2Affine                // G2 群的生成元 g2。
+	pk_Ti map[fr.Element]bn254.G2Affine // 公钥组件 T_i = g2^t_i，对应第 i 个属性。
+	pk_Y  bn254.GT                      // 公钥组件 Y = e(g1, g2)^y，GT 群上的元素。
 }
 
 // SW05FIBESecretKey 表示用户的私钥。
 // 私钥与用户的属性集相关联，用于对匹配的密文进行解密。
 type SW05FIBESecretKey struct {
-	userAttributes []fr.Element                   // 用户拥有的属性集 S_user。
-	di             map[fr.Element]*bn254.G1Affine // 私钥组件 D_i，对应 S_user 中的每个属性 i。
+	userAttributes []fr.Element                  // 用户拥有的属性集 S_user。
+	di             map[fr.Element]bn254.G1Affine // 私钥组件 D_i，对应 S_user 中的每个属性 i。
 	// Di = g1^(q(i)/t_i)，其中 q(x) 是一个 d-1 阶随机多项式。
 }
 
@@ -66,9 +66,9 @@ type SW05FIBEMessage struct {
 // SW05FIBECiphertext 表示加密后的密文。
 // 密文与一个属性集相关联，只有属性集匹配的用户才能解密。
 type SW05FIBECiphertext struct {
-	messageAttributes []fr.Element                   // 密文关联的属性集 S_msg。
-	ePrime            bn254.GT                       // 密文组件 e' = M * Y^s，其中 s 是加密随机数。
-	ei                map[fr.Element]*bn254.G2Affine // 密文组件 E_i = (T_i)^s，对应 S_msg 中的每个属性 i。
+	messageAttributes []fr.Element                  // 密文关联的属性集 S_msg。
+	ePrime            bn254.GT                      // 密文组件 e' = M * Y^s，其中 s 是加密随机数。
+	ei                map[fr.Element]bn254.G2Affine // 密文组件 E_i = (T_i)^s，对应 S_msg 中的每个属性 i。
 }
 
 // NewSW05FIBEInstanceByElements 创建一个新的 FIBE 方案实例。
@@ -129,14 +129,14 @@ func (instance *SW05FIBEInstance) SetUp() (*SW05FIBEPublicParams, error) {
 	_, _, g1, g2 := bn254.Generators()
 
 	// 随机生成属性主密钥 t_i，并计算公钥组件 T_i = g2^t_i。
-	pk_Ti := make(map[fr.Element]*bn254.G2Affine)
+	pk_Ti := make(map[fr.Element]bn254.G2Affine)
 	for i := range instance.universe {
 		temp, err := new(fr.Element).SetRandom() // t_i <- Zq
 		if err != nil {
 			return nil, fmt.Errorf("fibe instance setup failure")
 		}
 		instance.msk_ti[i] = *temp
-		pk_Ti[i] = new(bn254.G2Affine).ScalarMultiplicationBase(temp.BigInt(new(big.Int))) // T_i = g2^t_i
+		pk_Ti[i] = *new(bn254.G2Affine).ScalarMultiplicationBase(temp.BigInt(new(big.Int))) // T_i = g2^t_i
 	}
 
 	// 随机生成主密钥 y，并计算公钥组件 Y = e(g1, g2)^y。
@@ -179,7 +179,7 @@ func (instance *SW05FIBEInstance) KeyGenerate(userAttributes *SW05FIBEAttributes
 		return nil, fmt.Errorf("invalid user attributes")
 	}
 
-	di := make(map[fr.Element]*bn254.G1Affine)
+	di := make(map[fr.Element]bn254.G1Affine)
 
 	// 生成一个 d-1 阶的随机多项式 q(x)，满足 q(0) = y = msk_y。
 	polynomial := utils.GenerateRandomPolynomial(instance.distance, instance.msk_y)
@@ -195,8 +195,7 @@ func (instance *SW05FIBEInstance) KeyGenerate(userAttributes *SW05FIBEAttributes
 		qiDivTi := new(fr.Element).Mul(&qi, tiInverse)
 
 		// 计算私钥组件 D_i = g1^(q(i)/t_i)。
-		Di := new(bn254.G1Affine).ScalarMultiplicationBase(qiDivTi.BigInt(new(big.Int)))
-		di[i] = Di
+		di[i] = *new(bn254.G1Affine).ScalarMultiplicationBase(qiDivTi.BigInt(new(big.Int)))
 	}
 
 	return &SW05FIBESecretKey{
@@ -235,10 +234,11 @@ func (instance *SW05FIBEInstance) Encrypt(messageAttributes *SW05FIBEAttributes,
 
 	// 为密文属性集 S_msg 中的每个属性 i 计算密文组件 E_i。
 	// E_i = (T_i)^s = (g2^t_i)^s。
-	ei := map[fr.Element]*bn254.G2Affine{}
+	ei := map[fr.Element]bn254.G2Affine{}
 	for _, i := range messageAttributes.attributes {
 		// E_i = (pk_Ti[i])^s。
-		ei[i] = (&bn254.G2Affine{}).ScalarMultiplication(publicParams.pk_Ti[i], s.BigInt(new(big.Int)))
+		ti := publicParams.pk_Ti[i]
+		ei[i] = *(&bn254.G2Affine{}).ScalarMultiplication(&ti, s.BigInt(new(big.Int)))
 	}
 
 	return &SW05FIBECiphertext{
@@ -283,8 +283,8 @@ func (instance *SW05FIBEInstance) Decrypt(userSecretKey *SW05FIBESecretKey, ciph
 
 	// 遍历公共属性集 S 中的每个属性 i。
 	for _, i := range s {
-		di := *userSecretKey.di[i] // 私钥组件 D_i = g1^(q(i)/t_i)
-		ei := *ciphertext.ei[i]    // 密文组件 E_i = g2^(t_i * s)
+		di := userSecretKey.di[i] // 私钥组件 D_i = g1^(q(i)/t_i)
+		ei := ciphertext.ei[i]    // 密文组件 E_i = g2^(t_i * s)
 
 		// 计算配对 e(D_i, E_i) = e(g1^(q(i)/t_i), g2^(t_i * s)) = e(g1, g2)^(q(i) * s)。
 		eDiEi, err := bn254.Pair([]bn254.G1Affine{di}, []bn254.G2Affine{ei})
