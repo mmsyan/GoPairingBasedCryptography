@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	utils2 "github.com/mmsyan/GnarkPairingProject/fibe/utils"
 	"github.com/mmsyan/GnarkPairingProject/utils"
 	"math/big"
 )
@@ -273,7 +272,7 @@ func (instance *SW05FIBEInstance) Decrypt(userSecretKey *SW05FIBESecretKey, ciph
 
 	// 查找用户属性集和密文属性集之间的公共属性集 S = S_user ∩ S_msg。
 	// 如果 |S| < d，则返回 nil，表示匹配失败。
-	s := utils2.FindCommonAttributes(userSecretKey.userAttributes, ciphertext.messageAttributes, instance.distance)
+	s := utils.FindCommonAttributes(userSecretKey.userAttributes, ciphertext.messageAttributes, instance.distance)
 	if s == nil {
 		return nil, fmt.Errorf("failed to find enough common attributes")
 	}
@@ -294,7 +293,7 @@ func (instance *SW05FIBEInstance) Decrypt(userSecretKey *SW05FIBESecretKey, ciph
 		}
 
 		// 计算拉格朗日基多项式 Δ_{0, S}(i) = ∏_{j ∈ S, j ≠ i} (0 - j) / (i - j)。
-		delta := utils2.ComputeLagrangeBasis(i, s, *new(fr.Element).SetZero())
+		delta := utils.ComputeLagrangeBasis(i, s, *new(fr.Element).SetZero())
 
 		// 计算 e(D_i, E_i)^(Δ_{0, S}(i))。
 		eDiEiDelta := new(bn254.GT).Exp(eDiEi, delta.BigInt(new(big.Int)))
