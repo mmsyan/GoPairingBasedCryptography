@@ -32,8 +32,9 @@ type LW11DabeAttributeSK struct {
 }
 
 type LW11DabeUserKey struct {
-	Gid string
-	Key map[fr.Element]bn254.G1Affine
+	Gid            string
+	UserAttributes []fr.Element
+	Key            map[fr.Element]bn254.G1Affine
 }
 
 type Lw11DabeMessage struct {
@@ -47,8 +48,9 @@ type lw11DabeCiphertext struct {
 }
 
 type LW11DabeCiphertext struct {
-	c0 bn254.GT
-	cx []lw11DabeCiphertext
+	matrix *lsss.LewkoWatersLsssMatrix
+	c0     bn254.GT
+	cx     []lw11DabeCiphertext
 }
 
 func GlobalSetup() (*LW11DABEGlobalParams, error) {
@@ -98,23 +100,27 @@ func KeyGenerate(attribute []fr.Element, gid string, attributeSK *LW11DabeAttrib
 		Key[a] = *new(bn254.G1Affine).Add(gExpAlphai, hGidExpY1)
 	}
 	return &LW11DabeUserKey{
-		Gid: gid,
-		Key: Key,
+		Gid:            gid,
+		UserAttributes: attribute,
+		Key:            Key,
 	}, nil
 }
 
 func Encrypt(message *Lw11DabeMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *LW11DABEGlobalParams, pk *LW11DabeAttributePK) (*LW11DabeCiphertext, error) {
-	var cx []lw11DabeCiphertext
+
+	l := matrix.GetL()
+	cx := make([]lw11DabeCiphertext, l)
 
 	s, err := new(fr.Element).SetRandom()
 	if err != nil {
 		return nil, fmt.Errorf("Encrypt failed: %v", err)
 	}
-	var v []fr.Element
-	var w []fr.Element
+
+	v := make([]fr.Element, l)
+	w := make([]fr.Element, l)
 	v[0] = *s
 	w[0] = *new(fr.Element).SetZero()
-	for i := 1; i < matrix.GetL(); i++ {
+	for i := 1; i < l; i++ {
 		vi, err := new(fr.Element).SetRandom()
 		if err != nil {
 			return nil, fmt.Errorf("Encrypt failed: %v", err)
@@ -135,7 +141,7 @@ func Encrypt(message *Lw11DabeMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *L
 	eG1G2ExpS := new(bn254.GT).Exp(eG1G2, s.BigInt(new(big.Int)))
 	c0 := new(bn254.GT).Mul(&message.Message, eG1G2ExpS)
 
-	for x := 0; x < matrix.GetL(); x++ {
+	for x := 0; x < l; x++ {
 		rx, err := new(fr.Element).SetRandom()
 		if err != nil {
 			return nil, fmt.Errorf("Encrypt failed: %v", err)
@@ -162,8 +168,43 @@ func Encrypt(message *Lw11DabeMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *L
 		}
 	}
 
+	var accessMatrix = *matrix
+
 	return &LW11DabeCiphertext{
-		c0: *c0,
-		cx: cx,
+		c0:     *c0,
+		matrix: &accessMatrix,
+		cx:     cx,
+	}, nil
+}
+
+func Decrypt(ciphertext *LW11DabeCiphertext, userKey *LW11DabeUserKey, gp *LW11DABEGlobalParams) (*Lw11DabeMessage, error) {
+	hGid, err := bn254.HashToG1([]byte(userKey.Gid), []byte("<Decentralizing Attribute-Based Encryption>"))
+	if err != nil {
+		return nil, err
+	}
+	xSlice, wSlice := ciphertext.matrix.GetSatisfiedLinearCombination(userKey.UserAttributes)
+	denominator := new(bn254.GT).SetOne()
+	for _, x := range xSlice {
+		c1x := ciphertext.cx[x].c1x
+		eHGidC3x, err := bn254.Pair([]bn254.G1Affine{hGid}, []bn254.G2Affine{ciphertext.cx[x].c3x})
+		if err != nil {
+			return nil, err
+		}
+
+		rhoX := ciphertext.matrix.RhoX(x)
+		kRho := userKey.Key[rhoX]
+		eKRhoC2x, err := bn254.Pair([]bn254.G1Affine{kRho}, []bn254.G2Affine{ciphertext.cx[x].c2x})
+
+		denominator.Mul(denominator, &c1x)
+		denominator.Mul(denominator, &eHGidC3x)
+		denominator.Div(denominator, &eKRhoC2x)
+
+		denominator.Exp(*denominator, wSlice[x].BigInt(new(big.Int)))
+	}
+
+	message := *new(bn254.GT).Div(&ciphertext.c0, denominator)
+
+	return &Lw11DabeMessage{
+		Message: message,
 	}, nil
 }
