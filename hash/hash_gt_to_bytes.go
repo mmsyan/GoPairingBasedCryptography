@@ -1,8 +1,8 @@
-package utils
+package hash
 
 import "github.com/consensys/gnark-crypto/ecc/bn254"
 
-func Hash2(gt bn254.GT) []byte {
+func HashGtToBytes(gt bn254.GT) []byte {
 	gtBytes := gt.Bytes()
 	return gtBytes[:]
 }

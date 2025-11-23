@@ -6,7 +6,7 @@ type LewkoWatersLsssMatrix struct {
 	l            int
 	n            int
 	lsssMatrix   [][]int
-	attributeRho []string
+	attributeRho []fr.Element
 }
 
 func copyVector(v []int) []int {
@@ -18,7 +18,7 @@ func copyVector(v []int) []int {
 func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 	counter := 1
 	var matrix [][]int
-	var rho []string
+	var rho []fr.Element
 	root.Vector = []int{1}
 
 	var recursionFunc func(node *BinaryAccessTree)

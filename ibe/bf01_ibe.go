@@ -26,6 +26,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/mmsyan/GnarkPairingProject/hash"
 	"github.com/mmsyan/GnarkPairingProject/utils"
 	"math/big"
 )
@@ -177,7 +178,7 @@ func (instance *BFIBEInstance) Encrypt(identity *BFIBEIdentity, message *BFIBEMe
 		return nil, fmt.Errorf("failed to encrypt message")
 	}
 	gid := *(new(bn254.GT).Exp(eGxQid, r))
-	gidBytes := utils.Hash2(gid)
+	gidBytes := hash.HashGtToBytes(gid)
 	c2 := utils.Xor(message.Message, gidBytes)
 
 	return &BFIBECiphertext{
@@ -208,7 +209,7 @@ func (instance *BFIBEInstance) Decrypt(ciphertext *BFIBECiphertext, secretKey *B
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt message")
 	}
-	gidBytes := utils.Hash2(gid)
+	gidBytes := hash.HashGtToBytes(gid)
 	return &BFIBEMessage{
 		Message: utils.Xor(ciphertext.C2, gidBytes),
 	}, nil
