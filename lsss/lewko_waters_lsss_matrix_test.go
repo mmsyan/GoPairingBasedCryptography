@@ -14,8 +14,9 @@ func TestLSSSMatrix(t *testing.T) {
 		fmt.Printf("matrix l: %d, n: %d\n", m.l, m.n)
 		fmt.Println("ρ(i)  Matrix")
 		for j := range m.lsssMatrix {
-			fmt.Printf("%s   %v\n", m.attributeRho[j].String()[:4], m.lsssMatrix[j])
+			fmt.Printf("index %d, %s   %v\n", j, m.attributeRho[j].String()[:4], m.lsssMatrix[j])
 		}
+
 		fmt.Println()
 	}
 

@@ -80,15 +80,67 @@ func (m *LewkoWatersLsssMatrix) ComputeVector(x int, v []fr.Element) fr.Element 
 	return *result
 }
 
-func (m *LewkoWatersLsssMatrix) Mi(i int) []fr.Element {
-	if i < 0 || i >= m.l {
-		panic("index out of Lewko Waters Lsss Matrix range")
+func (m *LewkoWatersLsssMatrix) GetSatisfiedLinearCombination(attributes []fr.Element) ([]int, []fr.Element) {
+	var satisfiedRows []int
+
+	// 遍历m.attributeRho；如果attributes切片当中有某个元素等于m.attributeRho[i]，则i加入satisfiedRows
+	for i := 0; i < len(m.attributeRho); i++ {
+		for j := 0; j < len(attributes); j++ {
+			if m.attributeRho[i].Equal(&attributes[j]) {
+				satisfiedRows = append(satisfiedRows, i)
+				break
+			}
+		}
 	}
-	result := make([]fr.Element, m.n)
-	for j := 0; j < m.n; j++ {
-		result[j] = *new(fr.Element).SetInt64(int64(m.lsssMatrix[i][j]))
+
+	// 如果没有满足的行，返回nil
+	if len(satisfiedRows) == 0 {
+		return nil, nil
 	}
-	return result
+
+	// satisfiedRows是所有可能的行集合；我们在这里需要找到线性组合满足(1,0,0,..,0)
+	// 注意线性组合的参数只有可能是1或者0，这里可以穷举
+
+	// 使用位掩码穷举所有可能的子集（除了空集）
+	numRows := len(satisfiedRows)
+	maxCombinations := (1 << numRows) - 1 // 2^n - 1, 排除空集
+
+	for mask := 1; mask <= maxCombinations; mask++ {
+		// 计算当前子集的线性组合
+		combination := make([]int, m.n)
+
+		for i := 0; i < numRows; i++ {
+			if (mask & (1 << i)) != 0 {
+				rowIdx := satisfiedRows[i]
+				// 将该行加到组合中
+				for j := 0; j < m.n; j++ {
+					combination[j] += m.lsssMatrix[rowIdx][j]
+				}
+			}
+		}
+
+		// 检查是否满足目标向量 (1,0,0,...,0)
+		if isTargetVector(combination) {
+			// 构造结果
+			var resultRows []int
+			var resultCoeffs []fr.Element
+
+			for i := 0; i < numRows; i++ {
+				if (mask & (1 << i)) != 0 {
+					resultRows = append(resultRows, satisfiedRows[i])
+					// 系数为1
+					var one fr.Element
+					one.SetOne()
+					resultCoeffs = append(resultCoeffs, one)
+				}
+			}
+
+			return resultRows, resultCoeffs
+		}
+	}
+
+	// 没有找到满足的线性组合
+	return nil, nil
 }
 
 func isTargetVector(v []int) bool {
