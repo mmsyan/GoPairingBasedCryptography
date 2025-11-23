@@ -127,10 +127,7 @@ func (instance *BFIBEInstance) SetUp() (*BFIBEPublicParams, error) {
 //   - error: 如果Hash-to-Curve或密钥生成失败,返回错误信息
 func (instance *BFIBEInstance) KeyGenerate(identity *BFIBEIdentity, publicParams *BFIBEPublicParams) (*BFIBESecretKey, error) {
 	// qid = hashToCurve(id) in G2
-	qid, err := bn254.HashToG2([]byte(identity.Id), instance.DST)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate key")
-	}
+	qid := hash.ToG2(identity.Id)
 	// sk = qid^x
 	sk := *new(bn254.G2Affine).ScalarMultiplication(&qid, instance.x.BigInt(new(big.Int)))
 	return &BFIBESecretKey{
@@ -158,10 +155,7 @@ func (instance *BFIBEInstance) KeyGenerate(identity *BFIBEIdentity, publicParams
 //   - error: 如果加密过程失败,返回错误信息
 func (instance *BFIBEInstance) Encrypt(identity *BFIBEIdentity, message *BFIBEMessage, publicParams *BFIBEPublicParams) (*BFIBECiphertext, error) {
 	// qid = hashToCurve(id) in G2
-	qid, err := bn254.HashToG2([]byte(identity.Id), instance.DST)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt message")
-	}
+	qid := hash.ToG2(identity.Id)
 
 	// r <- Zq
 	r, err := rand.Int(rand.Reader, ecc.BN254.ScalarField())
@@ -178,7 +172,7 @@ func (instance *BFIBEInstance) Encrypt(identity *BFIBEIdentity, message *BFIBEMe
 		return nil, fmt.Errorf("failed to encrypt message")
 	}
 	gid := *(new(bn254.GT).Exp(eGxQid, r))
-	gidBytes := hash.HashGtToBytes(gid)
+	gidBytes := hash.FromGT(gid)
 	c2 := utils.Xor(message.Message, gidBytes)
 
 	return &BFIBECiphertext{
@@ -209,7 +203,7 @@ func (instance *BFIBEInstance) Decrypt(ciphertext *BFIBECiphertext, secretKey *B
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt message")
 	}
-	gidBytes := hash.HashGtToBytes(gid)
+	gidBytes := hash.FromGT(gid)
 	return &BFIBEMessage{
 		Message: utils.Xor(ciphertext.C2, gidBytes),
 	}, nil

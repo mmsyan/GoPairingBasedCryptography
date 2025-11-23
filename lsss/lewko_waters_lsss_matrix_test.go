@@ -27,7 +27,7 @@ func TestLewkoWatersLsssMatrix_ComputeVector1(t *testing.T) {
 	m := NewLSSSMatrixFromTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
-	AElement := hash.HashStringToField("A")
+	AElement := hash.ToField("A")
 	attributes := []fr.Element{AElement}
 
 	rows, wis := m.GetSatisfiedLinearCombination(attributes)
@@ -44,8 +44,8 @@ func TestLewkoWatersLsssMatrix_ComputeVector14(t *testing.T) {
 	m := NewLSSSMatrixFromTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
-	AElement := hash.HashStringToField("A")
-	CElement := hash.HashStringToField("C")
+	AElement := hash.ToField("A")
+	CElement := hash.ToField("C")
 	attributes := []fr.Element{AElement, CElement}
 
 	rows, wis := m.GetSatisfiedLinearCombination(attributes)

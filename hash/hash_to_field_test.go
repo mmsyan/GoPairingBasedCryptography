@@ -27,7 +27,7 @@ func TestHashStringToFidld_Basic(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := HashStringToField(tt.input)
+			result := ToField(tt.input)
 
 			// 验证结果是有效的域元素
 			var zero fr.Element
@@ -60,7 +60,7 @@ func TestHashStringToFidld_LongStrings(t *testing.T) {
 			longString := strings.Repeat("a", tt.length)
 
 			// 测试不会崩溃
-			result := HashStringToField(longString)
+			result := ToField(longString)
 
 			// 验证结果有效
 			fmt.Println(result)
@@ -84,10 +84,10 @@ func TestHashStringToFidld_Consistency(t *testing.T) {
 		t.Run("一致性测试_"+str[:min(len(str), 10)], func(t *testing.T) {
 			// 多次计算同一个字符串的哈希
 			iterations := 100
-			firstResult := HashStringToField(str)
+			firstResult := ToField(str)
 
 			for i := 0; i < iterations; i++ {
-				result := HashStringToField(str)
+				result := ToField(str)
 
 				if !result.Equal(&firstResult) {
 					t.Errorf("第 %d 次哈希结果不一致", i+1)
@@ -122,8 +122,8 @@ func TestHashStringToFidld_CollisionResistance(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.str1+"_vs_"+tt.str2, func(t *testing.T) {
-				result1 := HashStringToField(tt.str1)
-				result2 := HashStringToField(tt.str2)
+				result1 := ToField(tt.str1)
+				result2 := ToField(tt.str2)
 
 				if result1.Equal(&result2) {
 					t.Errorf("碰撞检测失败！不同字符串产生相同哈希")
@@ -145,7 +145,7 @@ func TestHashStringToFidld_CollisionResistance(t *testing.T) {
 		for i := 0; i < numTests; i++ {
 			// 生成不同的字符串
 			testStr := strings.Repeat("test", i) + string(rune(i))
-			result := HashStringToField(testStr)
+			result := ToField(testStr)
 			resultStr := result.String()
 
 			// 检查是否有碰撞
@@ -186,7 +186,7 @@ func TestHashStringToFidld_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := HashStringToField(tt.input)
+			result := ToField(tt.input)
 
 			fmt.Println(result)
 		})
@@ -208,7 +208,7 @@ func BenchmarkHashStringToFidld(b *testing.B) {
 		b.Run(tc.name, func(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_ = HashStringToField(tc.str)
+				_ = ToField(tc.str)
 			}
 		})
 	}

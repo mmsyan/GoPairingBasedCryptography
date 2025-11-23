@@ -89,7 +89,7 @@ func KeyGenerate(attribute []fr.Element, userGid string, attributeSK *LW11DABEAt
 		alphaI := attributeSK.alphaI[i]
 		// g1^αi
 		gExpAlphaI := new(bn254.G1Affine).ScalarMultiplicationBase(alphaI.BigInt(new(big.Int)))
-		hGid := hash.HashStringToG1(userGid)
+		hGid := hash.ToG1(userGid)
 		yi := attributeSK.yi[i]
 		// H(GID)^yi
 		hGidExpY1 := new(bn254.G1Affine).ScalarMultiplication(&hGid, yi.BigInt(new(big.Int)))
@@ -170,7 +170,7 @@ func Encrypt(message *Lw11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *L
 }
 
 func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11DABEGlobalParams) (*Lw11DABEMessage, error) {
-	hGid := hash.HashStringToG1(userKey.UserGid)
+	hGid := hash.ToG1(userKey.UserGid)
 	xSlice, wSlice := ciphertext.matrix.GetSatisfiedLinearCombination(userKey.UserAttributes)
 	denominator := new(bn254.GT).SetOne()
 	for _, x := range xSlice {

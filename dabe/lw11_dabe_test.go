@@ -36,9 +36,9 @@ func TestGlobalSetup(t *testing.T) {
 func TestKeyGenerate(t *testing.T) {
 	gp, _ := GlobalSetup()
 
-	AElement := hash.HashStringToField("A")
-	BElement := hash.HashStringToField("B")
-	CElement := hash.HashStringToField("C")
+	AElement := hash.ToField("A")
+	BElement := hash.ToField("B")
+	CElement := hash.ToField("C")
 	attributes := []fr.Element{AElement, BElement, CElement}
 
 	_, sk, err := AuthoritySetup(attributes, gp)
@@ -78,7 +78,7 @@ func TestKeyGenerate(t *testing.T) {
 func TestEncryptDecryptSimple(t *testing.T) {
 	// 设置
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToField("A")
+	AElement := hash.ToField("A")
 	attributes := []fr.Element{AElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -123,10 +123,10 @@ func TestEncryptDecryptSimple(t *testing.T) {
 func TestEncryptDecryptComplexAND(t *testing.T) {
 	// 设置
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToField("A")
-	BElement := hash.HashStringToField("B")
-	CElement := hash.HashStringToField("C")
-	DElement := hash.HashStringToField("D")
+	AElement := hash.ToField("A")
+	BElement := hash.ToField("B")
+	CElement := hash.ToField("C")
+	DElement := hash.ToField("D")
 	attributes := []fr.Element{AElement, BElement, CElement, DElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -171,9 +171,9 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 func TestDecryptWithInsufficientAttributes(t *testing.T) {
 	// 设置
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToField("A")
-	BElement := hash.HashStringToField("B")
-	CElement := hash.HashStringToField("C")
+	AElement := hash.ToField("A")
+	BElement := hash.ToField("B")
+	CElement := hash.ToField("C")
 	attributes := []fr.Element{AElement, BElement, CElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -211,9 +211,9 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 // 测试多个用户使用相同的公钥
 func TestMultipleUsersWithSameAuthority(t *testing.T) {
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToField("A")
-	BElement := hash.HashStringToField("B")
-	CElement := hash.HashStringToField("C")
+	AElement := hash.ToField("A")
+	BElement := hash.ToField("B")
+	CElement := hash.ToField("C")
 	attributes := []fr.Element{AElement, BElement, CElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -269,9 +269,9 @@ func BenchmarkGlobalSetup(b *testing.B) {
 func BenchmarkAuthoritySetup(b *testing.B) {
 	gp, _ := GlobalSetup()
 	attributes := []fr.Element{
-		hash.HashStringToField("A"),
-		hash.HashStringToField("B"),
-		hash.HashStringToField("C"),
+		hash.ToField("A"),
+		hash.ToField("B"),
+		hash.ToField("C"),
 	}
 
 	b.ResetTimer()
@@ -284,9 +284,9 @@ func BenchmarkAuthoritySetup(b *testing.B) {
 func BenchmarkEncrypt(b *testing.B) {
 	gp, _ := GlobalSetup()
 	attributes := []fr.Element{
-		hash.HashStringToField("A"),
-		hash.HashStringToField("B"),
-		hash.HashStringToField("C"),
+		hash.ToField("A"),
+		hash.ToField("B"),
+		hash.ToField("C"),
 	}
 	pk, _, _ := AuthoritySetup(attributes, gp)
 
@@ -306,7 +306,7 @@ func BenchmarkEncrypt(b *testing.B) {
 // 基准测试：解密
 func BenchmarkDecrypt(b *testing.B) {
 	gp, _ := GlobalSetup()
-	attributes := []fr.Element{hash.HashStringToField("A")}
+	attributes := []fr.Element{hash.ToField("A")}
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 	userKey, _ := KeyGenerate(attributes, "user", sk)
 
