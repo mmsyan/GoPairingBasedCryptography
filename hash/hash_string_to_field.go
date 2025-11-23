@@ -5,7 +5,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
-func HashStringToFidld(str string) fr.Element {
+func HashStringToField(str string) fr.Element {
 	// 创建 SHA-256 哈希器
 	sha256 := sha256.New()
 	sha256.Write([]byte(str))

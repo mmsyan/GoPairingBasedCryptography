@@ -10,11 +10,11 @@ func GetExamples() ([]*BinaryAccessTree, []string) {
 	var booleanFormulas []string
 	exampleTrees := make([]*BinaryAccessTree, 0, 16)
 
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
-	CElement := hash.HashStringToFidld("C")
-	DElement := hash.HashStringToFidld("D")
-	EElement := hash.HashStringToFidld("E")
+	AElement := hash.HashStringToField("A")
+	BElement := hash.HashStringToField("B")
+	CElement := hash.HashStringToField("C")
+	DElement := hash.HashStringToField("D")
+	EElement := hash.HashStringToField("E")
 
 	// 0: (A or B)
 	booleanFormulas = append(booleanFormulas, "(A or B)")
@@ -116,8 +116,8 @@ func GetExamples() ([]*BinaryAccessTree, []string) {
 }
 
 func GetExample1() (*BinaryAccessTree, string) {
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
+	AElement := hash.HashStringToField("A")
+	BElement := hash.HashStringToField("B")
 	booleanFormulas := "(A or B)"
 	exampleTrees := NewBinaryAccessTree(NodeTypeOr, fr.Element{},
 		NewBinaryAccessTree(NodeTypeLeave, AElement, nil, nil),
@@ -126,8 +126,8 @@ func GetExample1() (*BinaryAccessTree, string) {
 }
 
 func GetExample2() (*BinaryAccessTree, string) {
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
+	AElement := hash.HashStringToField("A")
+	BElement := hash.HashStringToField("B")
 	booleanFormulas := "(A and B)"
 	exampleTrees := NewBinaryAccessTree(NodeTypeAnd, fr.Element{},
 		NewBinaryAccessTree(NodeTypeLeave, AElement, nil, nil),
@@ -136,8 +136,8 @@ func GetExample2() (*BinaryAccessTree, string) {
 }
 
 func GetExample3() (*BinaryAccessTree, string) {
-	BElement := hash.HashStringToFidld("B")
-	CElement := hash.HashStringToFidld("C")
+	BElement := hash.HashStringToField("B")
+	CElement := hash.HashStringToField("C")
 	booleanFormulas := "(B and C)"
 	exampleTrees := NewBinaryAccessTree(NodeTypeAnd, fr.Element{},
 		NewBinaryAccessTree(NodeTypeLeave, BElement, nil, nil),

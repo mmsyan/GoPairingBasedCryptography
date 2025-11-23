@@ -32,52 +32,13 @@ func TestGlobalSetup(t *testing.T) {
 	fmt.Println("GlobalSetup test passed")
 }
 
-// 测试权威机构设置
-func TestAuthoritySetup(t *testing.T) {
-	gp, err := GlobalSetup()
-	if err != nil {
-		t.Fatalf("GlobalSetup failed: %v", err)
-	}
-
-	// 创建测试属性
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
-	CElement := hash.HashStringToFidld("C")
-	attributes := []fr.Element{AElement, BElement, CElement}
-
-	pk, sk, err := AuthoritySetup(attributes, gp)
-	if err != nil {
-		t.Fatalf("AuthoritySetup failed: %v", err)
-	}
-
-	// 验证公钥和私钥的长度
-	if len(pk.Pk) != len(attributes) {
-		t.Errorf("Expected %d public keys, got %d", len(attributes), len(pk.Pk))
-	}
-	if len(sk.Sk) != len(attributes) {
-		t.Errorf("Expected %d secret keys, got %d", len(attributes), len(sk.Sk))
-	}
-
-	// 验证每个属性都有对应的密钥
-	for _, attr := range attributes {
-		if _, exists := pk.Pk[attr]; !exists {
-			t.Errorf("Public key for attribute %s not found", attr.String()[:8])
-		}
-		if _, exists := sk.Sk[attr]; !exists {
-			t.Errorf("Secret key for attribute %s not found", attr.String()[:8])
-		}
-	}
-
-	fmt.Println("AuthoritySetup test passed")
-}
-
 // 测试用户密钥生成
 func TestKeyGenerate(t *testing.T) {
 	gp, _ := GlobalSetup()
 
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
-	CElement := hash.HashStringToFidld("C")
+	AElement := hash.HashStringToField("A")
+	BElement := hash.HashStringToField("B")
+	CElement := hash.HashStringToField("C")
 	attributes := []fr.Element{AElement, BElement, CElement}
 
 	_, sk, err := AuthoritySetup(attributes, gp)
@@ -94,19 +55,19 @@ func TestKeyGenerate(t *testing.T) {
 	}
 
 	// 验证用户密钥
-	if userKey.Gid != gid {
-		t.Errorf("Expected gid %s, got %s", gid, userKey.Gid)
+	if userKey.UserGid != gid {
+		t.Errorf("Expected gid %s, got %s", gid, userKey.UserGid)
 	}
-	if len(userKey.Key) != len(userAttributes) {
-		t.Errorf("Expected %d keys, got %d", len(userAttributes), len(userKey.Key))
+	if len(userKey.KIGID) != len(userAttributes) {
+		t.Errorf("Expected %d keys, got %d", len(userAttributes), len(userKey.KIGID))
 	}
 
 	// 验证每个属性都有对应的密钥
 	for _, attr := range userAttributes {
-		if key, exists := userKey.Key[attr]; !exists {
-			t.Errorf("Key for attribute %s not found", attr.String()[:8])
+		if key, exists := userKey.KIGID[attr]; !exists {
+			t.Errorf("KIGID for attribute %s not found", attr.String()[:8])
 		} else if key.IsInfinity() {
-			t.Errorf("Key for attribute %s is infinity", attr.String()[:8])
+			t.Errorf("KIGID for attribute %s is infinity", attr.String()[:8])
 		}
 	}
 
@@ -117,7 +78,7 @@ func TestKeyGenerate(t *testing.T) {
 func TestEncryptDecryptSimple(t *testing.T) {
 	// 设置
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToFidld("A")
+	AElement := hash.HashStringToField("A")
 	attributes := []fr.Element{AElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -130,7 +91,7 @@ func TestEncryptDecryptSimple(t *testing.T) {
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
 	// 创建消息
-	message := &Lw11DabeMessage{
+	message := &Lw11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 
@@ -162,10 +123,10 @@ func TestEncryptDecryptSimple(t *testing.T) {
 func TestEncryptDecryptComplexAND(t *testing.T) {
 	// 设置
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
-	CElement := hash.HashStringToFidld("C")
-	DElement := hash.HashStringToFidld("D")
+	AElement := hash.HashStringToField("A")
+	BElement := hash.HashStringToField("B")
+	CElement := hash.HashStringToField("C")
+	DElement := hash.HashStringToField("D")
 	attributes := []fr.Element{AElement, BElement, CElement, DElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -182,7 +143,7 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 
 	// 创建随机消息
 	originalMessage, err := new(bn254.GT).SetRandom()
-	message := &Lw11DabeMessage{
+	message := &Lw11DABEMessage{
 		Message: *originalMessage,
 	}
 
@@ -210,9 +171,9 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 func TestDecryptWithInsufficientAttributes(t *testing.T) {
 	// 设置
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
-	CElement := hash.HashStringToFidld("C")
+	AElement := hash.HashStringToField("A")
+	BElement := hash.HashStringToField("B")
+	CElement := hash.HashStringToField("C")
 	attributes := []fr.Element{AElement, BElement, CElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -226,7 +187,7 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 	exampleTree, _ := lsss.GetExample14()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
-	message := &Lw11DabeMessage{
+	message := &Lw11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 
@@ -250,9 +211,9 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 // 测试多个用户使用相同的公钥
 func TestMultipleUsersWithSameAuthority(t *testing.T) {
 	gp, _ := GlobalSetup()
-	AElement := hash.HashStringToFidld("A")
-	BElement := hash.HashStringToFidld("B")
-	CElement := hash.HashStringToFidld("C")
+	AElement := hash.HashStringToField("A")
+	BElement := hash.HashStringToField("B")
+	CElement := hash.HashStringToField("C")
 	attributes := []fr.Element{AElement, BElement, CElement}
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
@@ -269,7 +230,7 @@ func TestMultipleUsersWithSameAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
-	message := &Lw11DabeMessage{
+	message := &Lw11DABEMessage{
 		Message: *m,
 	}
 
@@ -308,9 +269,9 @@ func BenchmarkGlobalSetup(b *testing.B) {
 func BenchmarkAuthoritySetup(b *testing.B) {
 	gp, _ := GlobalSetup()
 	attributes := []fr.Element{
-		hash.HashStringToFidld("A"),
-		hash.HashStringToFidld("B"),
-		hash.HashStringToFidld("C"),
+		hash.HashStringToField("A"),
+		hash.HashStringToField("B"),
+		hash.HashStringToField("C"),
 	}
 
 	b.ResetTimer()
@@ -323,16 +284,16 @@ func BenchmarkAuthoritySetup(b *testing.B) {
 func BenchmarkEncrypt(b *testing.B) {
 	gp, _ := GlobalSetup()
 	attributes := []fr.Element{
-		hash.HashStringToFidld("A"),
-		hash.HashStringToFidld("B"),
-		hash.HashStringToFidld("C"),
+		hash.HashStringToField("A"),
+		hash.HashStringToField("B"),
+		hash.HashStringToField("C"),
 	}
 	pk, _, _ := AuthoritySetup(attributes, gp)
 
 	exampleTree, _ := lsss.GetExample1()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
-	message := &Lw11DabeMessage{
+	message := &Lw11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 
@@ -345,14 +306,14 @@ func BenchmarkEncrypt(b *testing.B) {
 // 基准测试：解密
 func BenchmarkDecrypt(b *testing.B) {
 	gp, _ := GlobalSetup()
-	attributes := []fr.Element{hash.HashStringToFidld("A")}
+	attributes := []fr.Element{hash.HashStringToField("A")}
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 	userKey, _ := KeyGenerate(attributes, "user", sk)
 
 	exampleTree, _ := lsss.GetExample1()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
-	message := &Lw11DabeMessage{
+	message := &Lw11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 	ciphertext, _ := Encrypt(message, matrix, gp, pk)

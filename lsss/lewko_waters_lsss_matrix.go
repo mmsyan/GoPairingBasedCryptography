@@ -64,6 +64,10 @@ func (m *LewkoWatersLsssMatrix) GetL() int {
 	return m.l
 }
 
+func (m *LewkoWatersLsssMatrix) GetN() int {
+	return m.n
+}
+
 func (m *LewkoWatersLsssMatrix) RhoX(row int) fr.Element {
 	return m.attributeRho[row]
 }
@@ -73,7 +77,7 @@ func (m *LewkoWatersLsssMatrix) ComputeVector(x int, v []fr.Element) fr.Element 
 		panic("index out of Lewko Waters Lsss Matrix range")
 	}
 	result := new(fr.Element).SetZero()
-	for i := 0; i < m.l; i++ {
+	for i := 0; i < m.n; i++ {
 		temp := new(fr.Element).Mul(&v[i], new(fr.Element).SetInt64(int64(m.lsssMatrix[x][i])))
 		result.Add(result, temp)
 	}
