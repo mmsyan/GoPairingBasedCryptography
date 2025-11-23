@@ -60,6 +60,26 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 	}
 }
 
+func (m *LewkoWatersLsssMatrix) GetL() int {
+	return m.l
+}
+
+func (m *LewkoWatersLsssMatrix) RhoX(row int) fr.Element {
+	return m.attributeRho[row]
+}
+
+func (m *LewkoWatersLsssMatrix) ComputeVector(x int, v []fr.Element) fr.Element {
+	if x < 0 || x >= m.l {
+		panic("index out of Lewko Waters Lsss Matrix range")
+	}
+	result := new(fr.Element).SetZero()
+	for i := 0; i < m.l; i++ {
+		temp := new(fr.Element).Mul(&v[i], new(fr.Element).SetInt64(int64(m.lsssMatrix[x][i])))
+		result.Add(result, temp)
+	}
+	return *result
+}
+
 func (m *LewkoWatersLsssMatrix) Mi(i int) []fr.Element {
 	if i < 0 || i >= m.l {
 		panic("index out of Lewko Waters Lsss Matrix range")
