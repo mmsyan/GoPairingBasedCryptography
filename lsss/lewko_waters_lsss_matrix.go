@@ -1,5 +1,7 @@
 package lsss
 
+import "github.com/consensys/gnark-crypto/ecc/bn254/fr"
+
 type LewkoWatersLsssMatrix struct {
 	l            int
 	n            int
@@ -21,20 +23,22 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 
 	var recursionFunc func(node *BinaryAccessTree)
 	recursionFunc = func(node *BinaryAccessTree) {
-		if node.Value == "or" {
+		if node.Type == NodeTypeOr {
 			node.Left.Vector = copyVector(node.Vector)
 			node.Right.Vector = copyVector(node.Vector)
-		} else if node.Value == "and" {
-			node.Left.VectorPad(counter)
+		} else if node.Type == NodeTypeAnd {
+			node.Left.VectorPadZero(counter)
 			node.Left.Vector = append(node.Left.Vector, -1)
 			node.Right.Vector = copyVector(node.Vector)
-			node.Right.VectorPad(counter)
+			node.Right.VectorPadZero(counter)
 			node.Right.Vector = append(node.Right.Vector, 1)
 			counter++
-		} else {
+		} else if node.Type == NodeTypeLeave {
 			matrix = append(matrix, copyVector(node.Vector))
 			rho = append(rho, node.Value)
 			return
+		} else {
+			panic("node type error")
 		}
 		recursionFunc(node.Left)
 		recursionFunc(node.Right)
@@ -54,6 +58,17 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 		lsssMatrix:   matrix,
 		attributeRho: rho,
 	}
+}
+
+func (m *LewkoWatersLsssMatrix) Mi(i int) []fr.Element {
+	if i < 0 || i >= m.l {
+		panic("index out of Lewko Waters Lsss Matrix range")
+	}
+	result := make([]fr.Element, m.n)
+	for j := 0; j < m.n; j++ {
+		result[j] = *new(fr.Element).SetInt64(int64(m.lsssMatrix[i][j]))
+	}
+	return result
 }
 
 func isTargetVector(v []int) bool {

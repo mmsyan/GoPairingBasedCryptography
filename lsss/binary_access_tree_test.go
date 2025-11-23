@@ -15,6 +15,6 @@ func TestNewBinaryAccessTree(t *testing.T) {
 	}
 
 	// 示例：使用 VectorPadTo
-	trees[0].VectorPad(5)
+	trees[0].VectorPadZero(5)
 	fmt.Printf("\nTree 0 vector after padding: %v\n", trees[0].Vector)
 }
