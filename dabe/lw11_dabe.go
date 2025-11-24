@@ -31,7 +31,7 @@ type LW11DABEUserKey struct {
 	KIGID          map[fr.Element]bn254.G1Affine
 }
 
-type Lw11DABEMessage struct {
+type LW11DABEMessage struct {
 	Message bn254.GT
 }
 
@@ -102,7 +102,7 @@ func KeyGenerate(attribute []fr.Element, userGid string, attributeSK *LW11DABEAt
 	}, nil
 }
 
-func Encrypt(message *Lw11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *LW11DABEGlobalParams, pk *LW11DABEAttributePK) (*LW11DABECiphertext, error) {
+func Encrypt(message *LW11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *LW11DABEGlobalParams, pk *LW11DABEAttributePK) (*LW11DABECiphertext, error) {
 	var err error
 	n := matrix.GetN()
 	c1xSlice := make([]bn254.GT, n)
@@ -169,7 +169,7 @@ func Encrypt(message *Lw11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *L
 	}, nil
 }
 
-func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11DABEGlobalParams) (*Lw11DABEMessage, error) {
+func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11DABEGlobalParams) (*LW11DABEMessage, error) {
 	hGid := hash.ToG1(userKey.UserGid)
 	xSlice, wSlice := ciphertext.matrix.GetSatisfiedLinearCombination(userKey.UserAttributes)
 	denominator := new(bn254.GT).SetOne()
@@ -193,7 +193,7 @@ func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11D
 
 	message := *new(bn254.GT).Div(&ciphertext.c0, denominator)
 
-	return &Lw11DABEMessage{
+	return &LW11DABEMessage{
 		Message: message,
 	}, nil
 }

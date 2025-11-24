@@ -91,7 +91,7 @@ func TestEncryptDecryptSimple(t *testing.T) {
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
 	// 创建消息
-	message := &Lw11DABEMessage{
+	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 
@@ -143,7 +143,7 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 
 	// 创建随机消息
 	originalMessage, err := new(bn254.GT).SetRandom()
-	message := &Lw11DABEMessage{
+	message := &LW11DABEMessage{
 		Message: *originalMessage,
 	}
 
@@ -187,7 +187,7 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 	exampleTree, _ := lsss.GetExample14()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
-	message := &Lw11DABEMessage{
+	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 
@@ -230,7 +230,7 @@ func TestMultipleUsersWithSameAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
-	message := &Lw11DABEMessage{
+	message := &LW11DABEMessage{
 		Message: *m,
 	}
 
@@ -293,7 +293,7 @@ func BenchmarkEncrypt(b *testing.B) {
 	exampleTree, _ := lsss.GetExample1()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
-	message := &Lw11DABEMessage{
+	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 
@@ -313,7 +313,7 @@ func BenchmarkDecrypt(b *testing.B) {
 	exampleTree, _ := lsss.GetExample1()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
-	message := &Lw11DABEMessage{
+	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
 	}
 	ciphertext, _ := Encrypt(message, matrix, gp, pk)
