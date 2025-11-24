@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GnarkPairingProject/hash"
 	"github.com/mmsyan/GnarkPairingProject/lsss"
 )
@@ -39,7 +38,7 @@ func TestKeyGenerate(t *testing.T) {
 	AElement := hash.ToField("A")
 	BElement := hash.ToField("B")
 	CElement := hash.ToField("C")
-	attributes := []fr.Element{AElement, BElement, CElement}
+	attributes := NewLW11DABEAttributes(AElement, BElement, CElement)
 
 	_, sk, err := AuthoritySetup(attributes, gp)
 	if err != nil {
@@ -48,7 +47,7 @@ func TestKeyGenerate(t *testing.T) {
 
 	// 为用户生成密钥
 	gid := "user001"
-	userAttributes := []fr.Element{AElement, BElement}
+	userAttributes := NewLW11DABEAttributes(AElement, BElement)
 	userKey, err := KeyGenerate(userAttributes, gid, sk)
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -58,12 +57,12 @@ func TestKeyGenerate(t *testing.T) {
 	if userKey.UserGid != gid {
 		t.Errorf("Expected gid %s, got %s", gid, userKey.UserGid)
 	}
-	if len(userKey.KIGID) != len(userAttributes) {
-		t.Errorf("Expected %d keys, got %d", len(userAttributes), len(userKey.KIGID))
+	if len(userKey.KIGID) != len(userAttributes.attributes) {
+		t.Errorf("Expected %d keys, got %d", len(userAttributes.attributes), len(userKey.KIGID))
 	}
 
 	// 验证每个属性都有对应的密钥
-	for _, attr := range userAttributes {
+	for _, attr := range userAttributes.attributes {
 		if key, exists := userKey.KIGID[attr]; !exists {
 			t.Errorf("KIGID for attribute %s not found", attr.String()[:8])
 		} else if key.IsInfinity() {
@@ -79,7 +78,7 @@ func TestEncryptDecryptSimple(t *testing.T) {
 	// 设置
 	gp, _ := GlobalSetup()
 	AElement := hash.ToField("A")
-	attributes := []fr.Element{AElement}
+	attributes := NewLW11DABEAttributes(AElement)
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 
@@ -127,13 +126,13 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 	BElement := hash.ToField("B")
 	CElement := hash.ToField("C")
 	DElement := hash.ToField("D")
-	attributes := []fr.Element{AElement, BElement, CElement, DElement}
+	attributes := NewLW11DABEAttributes(AElement, BElement, CElement, DElement)
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 
 	gid := "user002"
 	// 用户拥有属性 A, B, C
-	userAttributes := []fr.Element{AElement, BElement, CElement}
+	userAttributes := NewLW11DABEAttributes(AElement, BElement, CElement)
 	userKey, _ := KeyGenerate(userAttributes, gid, sk)
 
 	// 创建访问策略：需要 A AND B（假设 Example14 是这样的策略）
@@ -174,13 +173,13 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 	AElement := hash.ToField("A")
 	BElement := hash.ToField("B")
 	CElement := hash.ToField("C")
-	attributes := []fr.Element{AElement, BElement, CElement}
+	attributes := NewLW11DABEAttributes(AElement, BElement, CElement)
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 
 	gid := "user003"
 	// 用户只有属性 A
-	userAttributes := []fr.Element{AElement}
+	userAttributes := NewLW11DABEAttributes(AElement)
 	userKey, _ := KeyGenerate(userAttributes, gid, sk)
 
 	// 创建访问策略：需要 A AND C
@@ -214,13 +213,13 @@ func TestMultipleUsersWithSameAuthority(t *testing.T) {
 	AElement := hash.ToField("A")
 	BElement := hash.ToField("B")
 	CElement := hash.ToField("C")
-	attributes := []fr.Element{AElement, BElement, CElement}
+	attributes := NewLW11DABEAttributes(AElement, BElement, CElement)
 
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 
 	// 创建两个不同的用户
-	user1Key, _ := KeyGenerate([]fr.Element{AElement, BElement}, "user001", sk)
-	user2Key, _ := KeyGenerate([]fr.Element{AElement, CElement}, "user002", sk)
+	user1Key, _ := KeyGenerate(NewLW11DABEAttributes(AElement, BElement), "user001", sk)
+	user2Key, _ := KeyGenerate(NewLW11DABEAttributes(AElement, CElement), "user002", sk)
 
 	// 创建访问策略
 	exampleTree, _ := lsss.GetExample1()
@@ -268,11 +267,10 @@ func BenchmarkGlobalSetup(b *testing.B) {
 // 基准测试：权威机构设置
 func BenchmarkAuthoritySetup(b *testing.B) {
 	gp, _ := GlobalSetup()
-	attributes := []fr.Element{
+	attributes := NewLW11DABEAttributes(
 		hash.ToField("A"),
 		hash.ToField("B"),
-		hash.ToField("C"),
-	}
+		hash.ToField("C"))
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -283,11 +281,10 @@ func BenchmarkAuthoritySetup(b *testing.B) {
 // 基准测试：加密
 func BenchmarkEncrypt(b *testing.B) {
 	gp, _ := GlobalSetup()
-	attributes := []fr.Element{
+	attributes := NewLW11DABEAttributes(
 		hash.ToField("A"),
 		hash.ToField("B"),
-		hash.ToField("C"),
-	}
+		hash.ToField("C"))
 	pk, _, _ := AuthoritySetup(attributes, gp)
 
 	exampleTree, _ := lsss.GetExample1()
@@ -306,7 +303,7 @@ func BenchmarkEncrypt(b *testing.B) {
 // 基准测试：解密
 func BenchmarkDecrypt(b *testing.B) {
 	gp, _ := GlobalSetup()
-	attributes := []fr.Element{hash.ToField("A")}
+	attributes := NewLW11DABEAttributes(hash.ToField("A"))
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 	userKey, _ := KeyGenerate(attributes, "user", sk)
 

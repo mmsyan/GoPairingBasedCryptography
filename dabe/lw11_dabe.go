@@ -15,6 +15,10 @@ type LW11DABEGlobalParams struct {
 	eG1G2 bn254.GT
 }
 
+type LW11DABEAttributes struct {
+	attributes []fr.Element
+}
+
 type LW11DABEAttributePK struct {
 	eG1G2ExpAlphaI map[fr.Element]bn254.GT
 	g2ExpYi        map[fr.Element]bn254.G2Affine
@@ -27,7 +31,7 @@ type LW11DABEAttributeSK struct {
 
 type LW11DABEUserKey struct {
 	UserGid        string
-	UserAttributes []fr.Element
+	UserAttributes *LW11DABEAttributes
 	KIGID          map[fr.Element]bn254.G1Affine
 }
 
@@ -56,7 +60,7 @@ func GlobalSetup() (*LW11DABEGlobalParams, error) {
 	}, nil
 }
 
-func AuthoritySetup(attribute []fr.Element, gp *LW11DABEGlobalParams) (*LW11DABEAttributePK, *LW11DABEAttributeSK, error) {
+func AuthoritySetup(authorityAttributes *LW11DABEAttributes, gp *LW11DABEGlobalParams) (*LW11DABEAttributePK, *LW11DABEAttributeSK, error) {
 	// SK = { αi, yi }
 	skAlphaI := make(map[fr.Element]fr.Element)
 	skYi := make(map[fr.Element]fr.Element)
@@ -64,7 +68,7 @@ func AuthoritySetup(attribute []fr.Element, gp *LW11DABEGlobalParams) (*LW11DABE
 	pkEggAlphaI := make(map[fr.Element]bn254.GT)
 	pkG2Yi := make(map[fr.Element]bn254.G2Affine)
 
-	for _, i := range attribute {
+	for _, i := range authorityAttributes.attributes {
 		alphaI, err := new(fr.Element).SetRandom()
 		yi, err := new(fr.Element).SetRandom()
 		if err != nil {
@@ -82,10 +86,10 @@ func AuthoritySetup(attribute []fr.Element, gp *LW11DABEGlobalParams) (*LW11DABE
 		nil
 }
 
-func KeyGenerate(attribute []fr.Element, userGid string, attributeSK *LW11DABEAttributeSK) (*LW11DABEUserKey, error) {
+func KeyGenerate(grantedAttribute *LW11DABEAttributes, userGid string, attributeSK *LW11DABEAttributeSK) (*LW11DABEUserKey, error) {
 	KIGID := make(map[fr.Element]bn254.G1Affine)
 	// K_{i,GID} = g1^αi*H(GID)^yi
-	for _, i := range attribute {
+	for _, i := range grantedAttribute.attributes {
 		alphaI := attributeSK.alphaI[i]
 		// g1^αi
 		gExpAlphaI := new(bn254.G1Affine).ScalarMultiplicationBase(alphaI.BigInt(new(big.Int)))
@@ -97,7 +101,7 @@ func KeyGenerate(attribute []fr.Element, userGid string, attributeSK *LW11DABEAt
 	}
 	return &LW11DABEUserKey{
 		UserGid:        userGid,
-		UserAttributes: attribute,
+		UserAttributes: grantedAttribute,
 		KIGID:          KIGID,
 	}, nil
 }
@@ -171,7 +175,7 @@ func Encrypt(message *LW11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *L
 
 func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11DABEGlobalParams) (*LW11DABEMessage, error) {
 	hGid := hash.ToG1(userKey.UserGid)
-	xSlice, wSlice := ciphertext.matrix.GetSatisfiedLinearCombination(userKey.UserAttributes)
+	xSlice, wSlice := ciphertext.matrix.GetSatisfiedLinearCombination(userKey.UserAttributes.attributes)
 	denominator := new(bn254.GT).SetOne()
 	for _, x := range xSlice {
 		c1x := ciphertext.c1x[x]
