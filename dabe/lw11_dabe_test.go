@@ -2,6 +2,7 @@ package dabe
 
 import (
 	"fmt"
+	"github.com/mmsyan/GnarkPairingProject/lsss/backend"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
@@ -86,7 +87,7 @@ func TestEncryptDecryptSimple(t *testing.T) {
 	userKey, _ := KeyGenerate(attributes, gid, sk)
 
 	// 创建访问策略：只需要属性 A
-	exampleTree, _ := lsss.GetExample1() // 假设这返回一个简单的单属性策略
+	exampleTree, _ := backend.GetExample1() // 假设这返回一个简单的单属性策略
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
 	// 创建消息
@@ -136,7 +137,7 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 	userKey, _ := KeyGenerate(userAttributes, gid, sk)
 
 	// 创建访问策略：需要 A AND B（假设 Example14 是这样的策略）
-	exampleTree, formula := lsss.GetExample14()
+	exampleTree, formula := backend.GetExample14()
 	fmt.Printf("Testing with access formula: %s\n", formula)
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
@@ -183,7 +184,7 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 	userKey, _ := KeyGenerate(userAttributes, gid, sk)
 
 	// 创建访问策略：需要 A AND C
-	exampleTree, _ := lsss.GetExample14()
+	exampleTree, _ := backend.GetExample14()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
 	message := &LW11DABEMessage{
@@ -222,7 +223,7 @@ func TestMultipleUsersWithSameAuthority(t *testing.T) {
 	user2Key, _ := KeyGenerate(NewLW11DABEAttributes(AElement, CElement), "user002", sk)
 
 	// 创建访问策略
-	exampleTree, _ := lsss.GetExample1()
+	exampleTree, _ := backend.GetExample1()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
 	m, err := new(bn254.GT).SetRandom()
@@ -287,7 +288,7 @@ func BenchmarkEncrypt(b *testing.B) {
 		hash.ToField("C"))
 	pk, _, _ := AuthoritySetup(attributes, gp)
 
-	exampleTree, _ := lsss.GetExample1()
+	exampleTree, _ := backend.GetExample1()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
 	message := &LW11DABEMessage{
@@ -307,7 +308,7 @@ func BenchmarkDecrypt(b *testing.B) {
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 	userKey, _ := KeyGenerate(attributes, "user", sk)
 
-	exampleTree, _ := lsss.GetExample1()
+	exampleTree, _ := backend.GetExample1()
 	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
 
 	message := &LW11DABEMessage{

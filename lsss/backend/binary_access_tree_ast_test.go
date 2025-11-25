@@ -1,6 +1,7 @@
-package lsss
+package backend
 
 import (
+	"github.com/mmsyan/GnarkPairingProject/lsss"
 	"testing"
 
 	"github.com/mmsyan/GnarkPairingProject/hash"
@@ -11,32 +12,32 @@ func TestParseBooleanFormula_SimpleExpressions(t *testing.T) {
 	tests := []struct {
 		name     string
 		formula  string
-		wantType NodeType
+		wantType lsss.NodeType
 	}{
 		{
 			name:     "Simple OR",
 			formula:  "A or B",
-			wantType: NodeTypeOr,
+			wantType: lsss.NodeTypeOr,
 		},
 		{
 			name:     "Simple AND",
 			formula:  "A and B",
-			wantType: NodeTypeAnd,
+			wantType: lsss.NodeTypeAnd,
 		},
 		{
 			name:     "Single attribute",
 			formula:  "A",
-			wantType: NodeTypeLeave,
+			wantType: lsss.NodeTypeLeave,
 		},
 		{
 			name:     "OR with parentheses",
 			formula:  "(A or B)",
-			wantType: NodeTypeOr,
+			wantType: lsss.NodeTypeOr,
 		},
 		{
 			name:     "AND with parentheses",
 			formula:  "(A and B)",
-			wantType: NodeTypeAnd,
+			wantType: lsss.NodeTypeAnd,
 		},
 	}
 
@@ -58,20 +59,20 @@ func TestParseBooleanFormula_OperatorPrecedence(t *testing.T) {
 	tests := []struct {
 		name         string
 		formula      string
-		wantRootType NodeType
-		wantLeftType NodeType
+		wantRootType lsss.NodeType
+		wantLeftType lsss.NodeType
 	}{
 		{
 			name:         "AND has higher precedence than OR",
 			formula:      "A or B and C",
-			wantRootType: NodeTypeOr,
-			wantLeftType: NodeTypeLeave, // A should be left child
+			wantRootType: lsss.NodeTypeOr,
+			wantLeftType: lsss.NodeTypeLeave, // A should be left child
 		},
 		{
 			name:         "Parentheses override precedence",
 			formula:      "(A or B) and C",
-			wantRootType: NodeTypeAnd,
-			wantLeftType: NodeTypeOr,
+			wantRootType: lsss.NodeTypeAnd,
+			wantLeftType: lsss.NodeTypeOr,
 		},
 	}
 
@@ -141,7 +142,7 @@ func TestParseBooleanFormula_AttributeValues(t *testing.T) {
 	}
 
 	// 检查左子节点（A）
-	if tree.Left == nil || tree.Left.Type != NodeTypeLeave {
+	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeLeave {
 		t.Fatal("Left child should be a leaf node")
 	}
 	expectedA := hash.ToField("A")
@@ -150,7 +151,7 @@ func TestParseBooleanFormula_AttributeValues(t *testing.T) {
 	}
 
 	// 检查右子节点（B）
-	if tree.Right == nil || tree.Right.Type != NodeTypeLeave {
+	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeLeave {
 		t.Fatal("Right child should be a leaf node")
 	}
 	expectedB := hash.ToField("B")
@@ -280,8 +281,8 @@ func TestMustParseBooleanFormula_Success(t *testing.T) {
 	if tree == nil {
 		t.Fatal("MustParseBooleanFormula() returned nil")
 	}
-	if tree.Type != NodeTypeOr {
-		t.Errorf("MustParseBooleanFormula() Type = %v, want %v", tree.Type, NodeTypeOr)
+	if tree.Type != lsss.NodeTypeOr {
+		t.Errorf("MustParseBooleanFormula() Type = %v, want %v", tree.Type, lsss.NodeTypeOr)
 	}
 }
 
@@ -310,7 +311,7 @@ func TestParseBooleanFormula_CompareWithExamples(t *testing.T) {
 }
 
 // compareTreeStructure 递归比较两棵树的结构是否相同
-func compareTreeStructure(t1, t2 *BinaryAccessTree) bool {
+func compareTreeStructure(t1, t2 *lsss.BinaryAccessTree) bool {
 	if t1 == nil && t2 == nil {
 		return true
 	}
@@ -320,7 +321,7 @@ func compareTreeStructure(t1, t2 *BinaryAccessTree) bool {
 	if t1.Type != t2.Type {
 		return false
 	}
-	if t1.Type == NodeTypeLeave {
+	if t1.Type == lsss.NodeTypeLeave {
 		return t1.Value == t2.Value
 	}
 	return compareTreeStructure(t1.Left, t2.Left) && compareTreeStructure(t1.Right, t2.Right)

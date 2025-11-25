@@ -1,7 +1,8 @@
-package lsss
+package backend
 
 import (
 	"fmt"
+	"github.com/mmsyan/GnarkPairingProject/lsss"
 	"strings"
 	"unicode"
 
@@ -132,12 +133,12 @@ func (p *Parser) expectPeek(t TokenType) bool {
 }
 
 // Parse 解析表达式
-func (p *Parser) Parse() (*BinaryAccessTree, error) {
+func (p *Parser) Parse() (*lsss.BinaryAccessTree, error) {
 	return p.parseOrExpression()
 }
 
 // parseOrExpression 解析 OR 表达式（最低优先级）
-func (p *Parser) parseOrExpression() (*BinaryAccessTree, error) {
+func (p *Parser) parseOrExpression() (*lsss.BinaryAccessTree, error) {
 	left, err := p.parseAndExpression()
 	if err != nil {
 		return nil, err
@@ -150,14 +151,14 @@ func (p *Parser) parseOrExpression() (*BinaryAccessTree, error) {
 		if err != nil {
 			return nil, err
 		}
-		left = NewBinaryAccessTree(NodeTypeOr, fr.Element{}, left, right)
+		left = lsss.NewBinaryAccessTree(lsss.NodeTypeOr, fr.Element{}, left, right)
 	}
 
 	return left, nil
 }
 
 // parseAndExpression 解析 AND 表达式（较高优先级）
-func (p *Parser) parseAndExpression() (*BinaryAccessTree, error) {
+func (p *Parser) parseAndExpression() (*lsss.BinaryAccessTree, error) {
 	left, err := p.parsePrimary()
 	if err != nil {
 		return nil, err
@@ -170,19 +171,19 @@ func (p *Parser) parseAndExpression() (*BinaryAccessTree, error) {
 		if err != nil {
 			return nil, err
 		}
-		left = NewBinaryAccessTree(NodeTypeAnd, fr.Element{}, left, right)
+		left = lsss.NewBinaryAccessTree(lsss.NodeTypeAnd, fr.Element{}, left, right)
 	}
 
 	return left, nil
 }
 
 // parsePrimary 解析基本表达式（属性或括号表达式）
-func (p *Parser) parsePrimary() (*BinaryAccessTree, error) {
+func (p *Parser) parsePrimary() (*lsss.BinaryAccessTree, error) {
 	switch p.curToken.Type {
 	case TokenAttribute:
 		// 属性节点
 		attrValue := hash.ToField(p.curToken.Value)
-		return NewBinaryAccessTree(NodeTypeLeave, attrValue, nil, nil), nil
+		return lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, attrValue, nil, nil), nil
 
 	case TokenLeftParen:
 		// 括号表达式
@@ -203,13 +204,13 @@ func (p *Parser) parsePrimary() (*BinaryAccessTree, error) {
 
 // ParseBooleanFormula 解析布尔表达式字符串并返回二叉树
 // 示例: "(A and B) or C", "A or (B and C)", "((A or B) and (C or D))"
-func ParseBooleanFormula(formula string) (*BinaryAccessTree, error) {
+func ParseBooleanFormula(formula string) (*lsss.BinaryAccessTree, error) {
 	parser := NewParser(formula)
 	return parser.Parse()
 }
 
 // MustParseBooleanFormula 解析布尔表达式，如果失败则 panic（方便测试使用）
-func MustParseBooleanFormula(formula string) *BinaryAccessTree {
+func MustParseBooleanFormula(formula string) *lsss.BinaryAccessTree {
 	tree, err := ParseBooleanFormula(formula)
 	if err != nil {
 		panic(fmt.Sprintf("failed to parse formula '%s': %v", formula, err))

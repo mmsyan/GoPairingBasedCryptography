@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GnarkPairingProject/hash"
+	"github.com/mmsyan/GnarkPairingProject/lsss/backend"
 	"testing"
 )
 
 func TestLSSSMatrix(t *testing.T) {
-	exampleTrees, formulas := GetExamples()
+	exampleTrees, formulas := backend.GetExamples()
 
 	for i := range exampleTrees {
 		m := NewLSSSMatrixFromTree(exampleTrees[i])
@@ -22,8 +23,40 @@ func TestLSSSMatrix(t *testing.T) {
 	}
 }
 
+func TestTreeDSL(t *testing.T) {
+	tree1, formulas := backend.GetExample15()
+	tree2 := backend.And(
+		backend.Leaf("E"),
+		backend.Or(
+			backend.Or(
+				backend.And(backend.Leaf("A"), backend.Leaf("B")),
+				backend.And(backend.Leaf("C"), backend.Leaf("D")),
+			),
+			backend.And(
+				backend.Or(backend.Leaf("A"), backend.Leaf("B")),
+				backend.Or(backend.Leaf("C"), backend.Leaf("D")),
+			),
+		),
+	)
+	m1 := NewLSSSMatrixFromTree(tree1)
+	m2 := NewLSSSMatrixFromTree(tree2)
+
+	fmt.Printf("Access formula: %s\n", formulas)
+	fmt.Printf("matrix from tree1 \n")
+	fmt.Println("ρ(i)  Matrix")
+	for j := range m1.lsssMatrix {
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m1.attributeRho[j].String()[:4], m1.lsssMatrix[j])
+	}
+	fmt.Println()
+	fmt.Printf("matrix from tree2 \n")
+	fmt.Println("ρ(i)  Matrix")
+	for j := range m2.lsssMatrix {
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m2.attributeRho[j].String()[:4], m2.lsssMatrix[j])
+	}
+}
+
 func TestLewkoWatersLsssMatrix_ComputeVector1(t *testing.T) {
-	exampleTree, formula := GetExample1()
+	exampleTree, formula := backend.GetExample1()
 	m := NewLSSSMatrixFromTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
@@ -40,7 +73,7 @@ func TestLewkoWatersLsssMatrix_ComputeVector1(t *testing.T) {
 }
 
 func TestLewkoWatersLsssMatrix_ComputeVector14(t *testing.T) {
-	exampleTree, formula := GetExample14()
+	exampleTree, formula := backend.GetExample14()
 	m := NewLSSSMatrixFromTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 

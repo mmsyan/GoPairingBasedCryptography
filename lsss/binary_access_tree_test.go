@@ -2,11 +2,12 @@ package lsss
 
 import (
 	"fmt"
+	"github.com/mmsyan/GnarkPairingProject/lsss/backend"
 	"testing"
 )
 
 func TestNewBinaryAccessTree(t *testing.T) {
-	trees, formulas := GetExamples()
+	trees, formulas := backend.GetExamples()
 
 	// 示例：打印所有布尔公式
 	fmt.Println("Boolean Formulas:")

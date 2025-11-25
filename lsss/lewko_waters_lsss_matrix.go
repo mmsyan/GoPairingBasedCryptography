@@ -1,6 +1,8 @@
 package lsss
 
-import "github.com/consensys/gnark-crypto/ecc/bn254/fr"
+import (
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+)
 
 type LewkoWatersLsssMatrix struct {
 	l            int
