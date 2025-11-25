@@ -109,7 +109,7 @@ func TestDABE1(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewLW11DABEMessage failed: %v", err)
 	}
-	fmt.Println(LW11DABEMessageToBytes(message1))
+	fmt.Println(message1.ToBytes())
 
 	ciphertext1, err := Encrypt(message1, accessMatrix1, gp, pk)
 	if err != nil {
@@ -129,8 +129,8 @@ func TestDABE1(t *testing.T) {
 		t.Fatalf("Decrypt failed: %v", err)
 	}
 
-	fmt.Println(LW11DABEMessageToBytes(plaintext1))
-	fmt.Println(LW11DABEMessageToBytes(plaintext2))
+	fmt.Println(plaintext1.ToBytes())
+	fmt.Println(plaintext2.ToBytes())
 }
 
 // 测试简单的加密解密（单属性访问策略）

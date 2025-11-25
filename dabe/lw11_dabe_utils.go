@@ -129,7 +129,7 @@ func NewRandomLW11DABEMessage() (*LW11DABEMessage, error) {
 	}, nil
 }
 
-func LW11DABEMessageToBytes(message *LW11DABEMessage) ([]byte, error) {
+func (message *LW11DABEMessage) ToBytes() ([]byte, error) {
 	result := message.Message.Bytes()
 	return result[:], nil
 }
