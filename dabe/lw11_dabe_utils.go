@@ -1,7 +1,7 @@
 package dabe
 
 import (
-	"errors"
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GnarkPairingProject/hash"
@@ -119,47 +119,61 @@ func (a *LW11DABEAttributes) Append(extra ...fr.Element) *LW11DABEAttributes {
 	}
 }
 
-// NewLW11DABEMessage 使用一个 32 字节的 AES-256 对称密钥构造 LW11DABEMessage。
-//
-// 输入的 key 必须严格为 32 字节。该函数会将这 32 字节直接解释为 bn254.GT 群元素的
-// 规范压缩表示（即消息 M = g^t，其 Marshal() 输出的 32 字节）。若长度不正确或
-// 字节串不是合法的规范编码，则返回错误。
-//
-// 参数：
-//   - key: 长度必须为 32 字节的 AES-256 对称密钥
-//
-// 返回值：
-//   - *LW11DABEMessage: 成功时返回封装了该 GT 元素的 DABE 消息
-//   - error: 成功时为 nil；密钥长度错误或编码非法时返回具体错误
-func NewLW11DABEMessage(key []byte) (*LW11DABEMessage, error) {
-	if len(key) != 32 {
-		return nil, errors.New("AES-256 key must be exactly 32 bytes")
-	}
-	var element bn254.GT
-	err := element.SetBytes(key) // 严格检查：必须 < r，且是规范 32 字节表示
+func NewRandomLW11DABEMessage() (*LW11DABEMessage, error) {
+	element, err := new(bn254.GT).SetRandom()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to generate random lw11 dabe message, %v", err)
 	}
 	return &LW11DABEMessage{
-		Message: element,
+		Message: *element,
 	}, nil
 }
 
-// ExtractLW11DABEMessage 从 LW11DABEMessage 中提取 32 字节 AES-256 对称密钥。
-//
-// 返回的字节串是 bn254.GT.Marshal() 生成的规范 32 字节表示，
-// 如果解密成功，提取的结果应该与当初调用 NewLW11DABEFromAESKey 传入的密钥完全一致。
-//
-// 参数：
-//   - msg: 待提取密钥的消息对象，不能为 nil
-//
-// 返回值：
-//   - []byte: 长度为 32 字节的原始 AES-256 密钥
-//   - error: 成功时为 nil；msg 为 nil 或内部实现异常时返回错误
-func ExtractLW11DABEMessage(message *LW11DABEMessage) ([]byte, error) {
-	key := message.Message.Marshal()
-	if len(key) != 32 {
-		return nil, errors.New("AES-256 key must be exactly 32 bytes")
-	}
-	return key, nil
+func LW11DABEMessageToBytes(message *LW11DABEMessage) ([]byte, error) {
+	result := message.Message.Bytes()
+	return result[:], nil
 }
+
+//// NewLW11DABEMessage 使用一个[]byte构造 LW11DABEMessage。
+////
+//// 输入的 key 的长度必须严格为 384 字节。该函数会将这 384 字节直接解释为 bn254.GT 群元素的
+//// 规范压缩表示）。若长度不正确或字节串不是合法的规范编码，则返回错误。
+////
+//// 参数：
+////   - key: 长度必须为 384 字节的数组
+////
+//// 返回值：
+////   - *LW11DABEMessage: 成功时返回封装了该 GT 元素的 DABE 消息
+////   - error: 成功时为 nil；密钥长度错误或编码非法时返回具体错误
+//func NewLW11DABEMessage(key []byte) (*LW11DABEMessage, error) {
+//	if len(key) != 384 {
+//		return nil, errors.New("message must be exactly 384 bytes")
+//	}
+//	var element bn254.GT
+//	err := element.SetBytes(key) // 严格检查：必须 < r，且是规范 32 字节表示
+//	if err != nil {
+//		return nil, err
+//	}
+//	return &LW11DABEMessage{
+//		Message: element,
+//	}, nil
+//}
+//
+//// ExtractLW11DABEMessage 从 LW11DABEMessage 中提取 384 字节 AES-256 对称密钥。
+////
+//// 返回的字节串是 bn254.GT.Marshal() 生成的规范 384 字节表示，
+//// 如果解密成功，提取的结果应该与当初调用 NewLW11DABEFromAESKey 传入的密钥完全一致。
+////
+//// 参数：
+////   - msg: 待提取密钥的消息对象，不能为 nil
+////
+//// 返回值：
+////   - []byte: 长度为 384 字节的原始 AES-256 密钥
+////   - error: 成功时为 nil；msg 为 nil 或内部实现异常时返回错误
+//func ExtractLW11DABEMessage(message *LW11DABEMessage) ([]byte, error) {
+//	key := message.Message.Marshal()
+//	if len(key) != 384 {
+//		return nil, errors.New("AES-256 key must be exactly 32 bytes")
+//	}
+//	return key, nil
+//}

@@ -74,6 +74,65 @@ func TestKeyGenerate(t *testing.T) {
 	fmt.Println("KeyGenerate test passed")
 }
 
+func TestDABE1(t *testing.T) {
+	gp, err := GlobalSetup()
+	if err != nil {
+		t.Fatalf("GlobalSetup failed: %v", err)
+	}
+
+	attributes1 := NewLW11DABEAttributesFromStrings("alice", "bob", "jack")
+	attributes2 := NewLW11DABEAttributesFromStrings("bob", "jack")
+
+	pk, sk, err := AuthoritySetup(attributes1, gp)
+	if err != nil {
+		t.Fatalf("AuthoritySetup failed: %v", err)
+	}
+
+	gid := "user001"
+	grantedKey, err := KeyGenerate(attributes2, gid, sk)
+	if err != nil {
+		t.Fatalf("KeyGenerate failed: %v", err)
+	}
+
+	accessTree1 := backend.Or(
+		backend.Leaf("bob"),
+		backend.Leaf("alice"),
+	)
+	accessTree2 := backend.And(
+		backend.Leaf("bob"),
+		backend.Leaf("alice"),
+	)
+	accessMatrix1 := lsss.NewLSSSMatrixFromTree(accessTree1)
+	accessMatrix2 := lsss.NewLSSSMatrixFromTree(accessTree2)
+
+	message1, err := NewRandomLW11DABEMessage()
+	if err != nil {
+		t.Fatalf("NewLW11DABEMessage failed: %v", err)
+	}
+	fmt.Println(LW11DABEMessageToBytes(message1))
+
+	ciphertext1, err := Encrypt(message1, accessMatrix1, gp, pk)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+	ciphertext2, err := Encrypt(message1, accessMatrix2, gp, pk)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	plaintext1, err := Decrypt(ciphertext1, grantedKey, gp)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+	plaintext2, err := Decrypt(ciphertext2, grantedKey, gp)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	fmt.Println(LW11DABEMessageToBytes(plaintext1))
+	fmt.Println(LW11DABEMessageToBytes(plaintext2))
+}
+
 // 测试简单的加密解密（单属性访问策略）
 func TestEncryptDecryptSimple(t *testing.T) {
 	// 设置
