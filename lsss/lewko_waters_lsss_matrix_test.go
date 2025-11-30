@@ -14,10 +14,10 @@ func TestLSSSMatrix(t *testing.T) {
 	for i := range exampleTrees {
 		m := NewLSSSMatrixFromTree(exampleTrees[i])
 		fmt.Printf("Access formula: %s\n", formulas[i])
-		fmt.Printf("matrix l: %d, n: %d\n", m.l, m.n)
+		fmt.Printf("matrix rowNumber: %d, columnNumber: %d\columnNumber", m.rowNumber, m.columnNumber)
 		fmt.Println("ρ(i)  Matrix")
-		for j := range m.lsssMatrix {
-			fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.attributeRho[j].String()[:4], m.lsssMatrix[j])
+		for j := range m.accessMatrix {
+			fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
 		}
 		fmt.Println()
 	}
@@ -44,14 +44,14 @@ func TestTreeDSL(t *testing.T) {
 	fmt.Printf("Access formula: %s\n", formulas)
 	fmt.Printf("matrix from tree1 \n")
 	fmt.Println("ρ(i)  Matrix")
-	for j := range m1.lsssMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m1.attributeRho[j].String()[:4], m1.lsssMatrix[j])
+	for j := range m1.accessMatrix {
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m1.rhoRowToAttribute[j].String()[:4], m1.accessMatrix[j])
 	}
 	fmt.Println()
 	fmt.Printf("matrix from tree2 \n")
 	fmt.Println("ρ(i)  Matrix")
-	for j := range m2.lsssMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m2.attributeRho[j].String()[:4], m2.lsssMatrix[j])
+	for j := range m2.accessMatrix {
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m2.rhoRowToAttribute[j].String()[:4], m2.accessMatrix[j])
 	}
 }
 
@@ -64,8 +64,8 @@ func TestLewkoWatersLsssMatrix_ComputeVector1(t *testing.T) {
 	attributes := []fr.Element{AElement}
 
 	rows, wis := m.GetSatisfiedLinearCombination(attributes)
-	for j := range m.lsssMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.attributeRho[j].String()[:4], m.lsssMatrix[j])
+	for j := range m.accessMatrix {
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
 	}
 	for i := range rows {
 		fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())
@@ -82,8 +82,8 @@ func TestLewkoWatersLsssMatrix_ComputeVector14(t *testing.T) {
 	attributes := []fr.Element{AElement, CElement}
 
 	rows, wis := m.GetSatisfiedLinearCombination(attributes)
-	for j := range m.lsssMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.attributeRho[j].String()[:4], m.lsssMatrix[j])
+	for j := range m.accessMatrix {
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
 	}
 	for i := range rows {
 		fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())

@@ -5,16 +5,10 @@ import (
 )
 
 type LewkoWatersLsssMatrix struct {
-	l            int
-	n            int
-	lsssMatrix   [][]int
-	attributeRho []fr.Element
-}
-
-func copyVector(v []int) []int {
-	result := make([]int, len(v))
-	copy(result, v)
-	return result
+	rowNumber         int
+	columnNumber      int
+	accessMatrix      [][]int
+	rhoRowToAttribute []fr.Element
 }
 
 func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
@@ -22,6 +16,13 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 	var matrix [][]int
 	var rho []fr.Element
 	root.Vector = []int{1}
+
+	var copyVector func(v []int) []int
+	copyVector = func(v []int) []int {
+		result := make([]int, len(v))
+		copy(result, v)
+		return result
+	}
 
 	var recursionFunc func(node *BinaryAccessTree)
 	recursionFunc = func(node *BinaryAccessTree) {
@@ -55,32 +56,32 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 	}
 
 	return &LewkoWatersLsssMatrix{
-		l:            len(matrix),
-		n:            len(matrix[0]),
-		lsssMatrix:   matrix,
-		attributeRho: rho,
+		rowNumber:         len(matrix),
+		columnNumber:      len(matrix[0]),
+		accessMatrix:      matrix,
+		rhoRowToAttribute: rho,
 	}
 }
 
-func (m *LewkoWatersLsssMatrix) GetL() int {
-	return m.l
+func (m *LewkoWatersLsssMatrix) RowNumber() int {
+	return m.rowNumber
 }
 
-func (m *LewkoWatersLsssMatrix) GetN() int {
-	return m.n
+func (m *LewkoWatersLsssMatrix) ColumnNumber() int {
+	return m.columnNumber
 }
 
-func (m *LewkoWatersLsssMatrix) RhoX(row int) fr.Element {
-	return m.attributeRho[row]
+func (m *LewkoWatersLsssMatrix) Rho(rowIndex int) fr.Element {
+	return m.rhoRowToAttribute[rowIndex]
 }
 
-func (m *LewkoWatersLsssMatrix) ComputeVector(x int, v []fr.Element) fr.Element {
-	if x < 0 || x >= m.l {
+func (m *LewkoWatersLsssMatrix) ComputeVector(rowIndex int, vector []fr.Element) fr.Element {
+	if rowIndex < 0 || rowIndex >= m.rowNumber {
 		panic("index out of Lewko Waters Lsss Matrix range")
 	}
 	result := new(fr.Element).SetZero()
-	for i := 0; i < m.n; i++ {
-		temp := new(fr.Element).Mul(&v[i], new(fr.Element).SetInt64(int64(m.lsssMatrix[x][i])))
+	for i := 0; i < m.columnNumber; i++ {
+		temp := new(fr.Element).Mul(&vector[i], new(fr.Element).SetInt64(int64(m.accessMatrix[rowIndex][i])))
 		result.Add(result, temp)
 	}
 	return *result
@@ -89,13 +90,17 @@ func (m *LewkoWatersLsssMatrix) ComputeVector(x int, v []fr.Element) fr.Element 
 func (m *LewkoWatersLsssMatrix) GetSatisfiedLinearCombination(attributes []fr.Element) ([]int, []fr.Element) {
 	var satisfiedRows []int
 
-	// 遍历m.attributeRho；如果attributes切片当中有某个元素等于m.attributeRho[i]，则i加入satisfiedRows
-	for i := 0; i < len(m.attributeRho); i++ {
-		for j := 0; j < len(attributes); j++ {
-			if m.attributeRho[i].Equal(&attributes[j]) {
-				satisfiedRows = append(satisfiedRows, i)
-				break
-			}
+	// 遍历m.rhoRowToAttribute；如果attributes切片当中有某个元素等于m.rhoRowToAttribute[i]，则i加入satisfiedRows
+	// 先构建 map
+	attrMap := make(map[fr.Element]bool, len(attributes))
+	for i := range attributes {
+		attrMap[attributes[i]] = true
+	}
+
+	// 单次遍历查找
+	for i := 0; i < len(m.rhoRowToAttribute); i++ {
+		if attrMap[m.rhoRowToAttribute[i]] {
+			satisfiedRows = append(satisfiedRows, i)
 		}
 	}
 
@@ -109,18 +114,18 @@ func (m *LewkoWatersLsssMatrix) GetSatisfiedLinearCombination(attributes []fr.El
 
 	// 使用位掩码穷举所有可能的子集（除了空集）
 	numRows := len(satisfiedRows)
-	maxCombinations := (1 << numRows) - 1 // 2^n - 1, 排除空集
+	maxCombinations := (1 << numRows) - 1 // 2^columnNumber - 1, 排除空集
 
 	for mask := 1; mask <= maxCombinations; mask++ {
 		// 计算当前子集的线性组合
-		combination := make([]int, m.n)
+		combination := make([]int, m.columnNumber)
 
 		for i := 0; i < numRows; i++ {
 			if (mask & (1 << i)) != 0 {
 				rowIdx := satisfiedRows[i]
 				// 将该行加到组合中
-				for j := 0; j < m.n; j++ {
-					combination[j] += m.lsssMatrix[rowIdx][j]
+				for j := 0; j < m.columnNumber; j++ {
+					combination[j] += m.accessMatrix[rowIdx][j]
 				}
 			}
 		}
@@ -149,8 +154,15 @@ func (m *LewkoWatersLsssMatrix) GetSatisfiedLinearCombination(attributes []fr.El
 	return nil, nil
 }
 
+// isTargetVector 检查向量是否为目标向量 (1,0,0,...,0)。
+//
+// 参数：
+//   - v: 待检查的向量
+//
+// 返回值：
+//   - bool: 如果是目标向量返回 true，否则返回 false
 func isTargetVector(v []int) bool {
-	if v[0] != 1 {
+	if len(v) == 0 || v[0] != 1 {
 		return false
 	}
 	for i := 1; i < len(v); i++ {

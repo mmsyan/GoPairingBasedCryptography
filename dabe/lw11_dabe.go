@@ -108,7 +108,7 @@ func KeyGenerate(grantedAttribute *LW11DABEAttributes, userGid string, attribute
 
 func Encrypt(message *LW11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *LW11DABEGlobalParams, pk *LW11DABEAttributePK) (*LW11DABECiphertext, error) {
 	var err error
-	n := matrix.GetN()
+	n := matrix.ColumnNumber()
 	c1xSlice := make([]bn254.GT, n)
 	c2xSlice := make([]bn254.G2Affine, n)
 	c3xSlice := make([]bn254.G2Affine, n)
@@ -143,7 +143,7 @@ func Encrypt(message *LW11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *L
 		}
 		lambdaX := matrix.ComputeVector(x, vectorV)
 		omegaX := matrix.ComputeVector(x, vectorW)
-		rhoX := matrix.RhoX(x)
+		rhoX := matrix.Rho(x)
 
 		eG1G2LambdaX := new(bn254.GT).Exp(gp.eG1G2, lambdaX.BigInt(new(big.Int)))
 		eG1G2AlphaRhoX := pk.eG1G2ExpAlphaI[rhoX]
@@ -184,7 +184,7 @@ func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11D
 			return nil, err
 		}
 
-		rhoX := ciphertext.matrix.RhoX(x)
+		rhoX := ciphertext.matrix.Rho(x)
 		kRho := userKey.KIGID[rhoX]
 		eKRhoC2x, err := bn254.Pair([]bn254.G1Affine{kRho}, []bn254.G2Affine{ciphertext.c2x[x]})
 
