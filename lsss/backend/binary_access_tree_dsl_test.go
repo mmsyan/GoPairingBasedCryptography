@@ -16,8 +16,8 @@ func TestLeaf(t *testing.T) {
 	}
 
 	expectedValue := hash.ToField("Attribute::A")
-	if node.Value != expectedValue {
-		t.Errorf("Leaf() Value mismatch")
+	if node.Attribute != expectedValue {
+		t.Errorf("Leaf() Attribute mismatch")
 	}
 
 	if node.Left != nil || node.Right != nil {

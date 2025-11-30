@@ -147,7 +147,7 @@ package backend
 //		t.Fatal("Left child should be a leaf node")
 //	}
 //	expectedA := hash.ToField("A")
-//	if tree.Left.Value != expectedA {
+//	if tree.Left.Attribute != expectedA {
 //		t.Errorf("Left child value mismatch")
 //	}
 //
@@ -156,7 +156,7 @@ package backend
 //		t.Fatal("Right child should be a leaf node")
 //	}
 //	expectedB := hash.ToField("B")
-//	if tree.Right.Value != expectedB {
+//	if tree.Right.Attribute != expectedB {
 //		t.Errorf("Right child value mismatch")
 //	}
 //}
@@ -323,7 +323,7 @@ package backend
 //		return false
 //	}
 //	if t1.Type == lsss.NodeTypeLeave {
-//		return t1.Value == t2.Value
+//		return t1.Attribute == t2.Attribute
 //	}
 //	return compareTreeStructure(t1.Left, t2.Left) && compareTreeStructure(t1.Right, t2.Right)
 //}

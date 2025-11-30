@@ -4,6 +4,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GnarkPairingProject/hash"
 	"github.com/mmsyan/GnarkPairingProject/lsss"
+	//"github.com/mmsyan/GnarkPairingProject/lsss"
 )
 
 // Leaf 创建一个叶子节点（属性节点）

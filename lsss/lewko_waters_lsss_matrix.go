@@ -37,7 +37,7 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 			counter++
 		} else if node.Type == NodeTypeLeave {
 			matrix = append(matrix, copyVector(node.Vector))
-			rho = append(rho, node.Value)
+			rho = append(rho, node.Attribute)
 			return
 		} else {
 			panic("node type error")

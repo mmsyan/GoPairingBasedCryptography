@@ -13,20 +13,20 @@ const (
 )
 
 type BinaryAccessTree struct {
-	Type   NodeType
-	Value  fr.Element
-	Left   *BinaryAccessTree
-	Right  *BinaryAccessTree
-	Vector []int
+	Type      NodeType
+	Attribute fr.Element
+	Left      *BinaryAccessTree
+	Right     *BinaryAccessTree
+	Vector    []int
 }
 
-func NewBinaryAccessTree(t NodeType, value fr.Element, left, right *BinaryAccessTree) *BinaryAccessTree {
+func NewBinaryAccessTree(nodeType NodeType, attr fr.Element, left, right *BinaryAccessTree) *BinaryAccessTree {
 	return &BinaryAccessTree{
-		Type:   t,
-		Value:  value,
-		Left:   left,
-		Right:  right,
-		Vector: []int{},
+		Type:      nodeType,
+		Attribute: attr,
+		Left:      left,
+		Right:     right,
+		Vector:    []int{},
 	}
 }
 
@@ -42,9 +42,9 @@ func (t *BinaryAccessTree) Copy() *BinaryAccessTree {
 	}
 
 	newTree := &BinaryAccessTree{
-		Type:   t.Type,
-		Value:  t.Value,
-		Vector: make([]int, len(t.Vector)),
+		Type:      t.Type,
+		Attribute: t.Attribute,
+		Vector:    make([]int, len(t.Vector)),
 	}
 	copy(newTree.Vector, t.Vector)
 

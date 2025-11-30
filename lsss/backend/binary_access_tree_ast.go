@@ -26,7 +26,7 @@ package backend
 //// Token 表示一个词法单元
 //type Token struct {
 //	Type  TokenType
-//	Value string
+//	Attribute string
 //}
 //
 //// Lexer 词法分析器
@@ -74,27 +74,27 @@ package backend
 //
 //	switch l.ch {
 //	case '(':
-//		tok = Token{Type: TokenLeftParen, Value: "("}
+//		tok = Token{Type: TokenLeftParen, Attribute: "("}
 //		l.readChar()
 //	case ')':
-//		tok = Token{Type: TokenRightParen, Value: ")"}
+//		tok = Token{Type: TokenRightParen, Attribute: ")"}
 //		l.readChar()
 //	case 0:
-//		tok = Token{Type: TokenEOF, Value: ""}
+//		tok = Token{Type: TokenEOF, Attribute: ""}
 //	default:
 //		if unicode.IsLetter(l.ch) {
 //			ident := l.readIdentifier()
 //			switch strings.ToLower(ident) {
 //			case "and":
-//				tok = Token{Type: TokenAnd, Value: ident}
+//				tok = Token{Type: TokenAnd, Attribute: ident}
 //			case "or":
-//				tok = Token{Type: TokenOr, Value: ident}
+//				tok = Token{Type: TokenOr, Attribute: ident}
 //			default:
-//				tok = Token{Type: TokenAttribute, Value: ident}
+//				tok = Token{Type: TokenAttribute, Attribute: ident}
 //			}
 //			return tok
 //		}
-//		tok = Token{Type: TokenEOF, Value: ""}
+//		tok = Token{Type: TokenEOF, Attribute: ""}
 //	}
 //
 //	return tok
@@ -183,7 +183,7 @@ package backend
 //	switch p.curToken.Type {
 //	case TokenAttribute:
 //		// 属性节点
-//		attrValue := hash.ToField(p.curToken.Value)
+//		attrValue := hash.ToField(p.curToken.Attribute)
 //		return lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, attrValue, nil, nil), nil
 //
 //	case TokenLeftParen:
