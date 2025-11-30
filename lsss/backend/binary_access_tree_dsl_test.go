@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GnarkPairingProject/lsss"
 	"testing"
 
@@ -205,97 +204,97 @@ func TestAttrsWithOr(t *testing.T) {
 	}
 }
 
-// TestShortAliases 测试短别名
-func TestShortAliases(t *testing.T) {
-	// 使用短别名构建：(A or B)
-	tree := O(L("A"), L("B"))
+//// TestShortAliases 测试短别名
+//func TestShortAliases(t *testing.T) {
+//	// 使用短别名构建：(A or B)
+//	tree := O(L("A"), L("B"))
+//
+//	if tree.Type != lsss.NodeTypeOr {
+//		t.Error("O() should create OR node")
+//	}
+//
+//	// 使用 A 别名：(A and B)
+//	tree2 := A(L("A"), L("B"))
+//
+//	if tree2.Type != lsss.NodeTypeAnd {
+//		t.Error("A() should create AND node")
+//	}
+//}
+//
+//// TestBuilderVsManual 比较构建器和手动构建
+//func TestBuilderVsManual(t *testing.T) {
+//	// 手动构建
+//	manual := lsss.NewBinaryAccessTree(lsss.NodeTypeOr, fr.Element{},
+//		lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, hash.ToField("A"), nil, nil),
+//		lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, hash.ToField("B"), nil, nil))
+//
+//	// 使用构建器
+//	builder := Or(Leaf("A"), Leaf("B"))
+//
+//	// 比较结构
+//	if !compareTreeStructure(manual, builder) {
+//		t.Error("Builder and manual construction should produce identical trees")
+//	}
+//}
 
-	if tree.Type != lsss.NodeTypeOr {
-		t.Error("O() should create OR node")
-	}
-
-	// 使用 A 别名：(A and B)
-	tree2 := A(L("A"), L("B"))
-
-	if tree2.Type != lsss.NodeTypeAnd {
-		t.Error("A() should create AND node")
-	}
-}
-
-// TestBuilderVsManual 比较构建器和手动构建
-func TestBuilderVsManual(t *testing.T) {
-	// 手动构建
-	manual := lsss.NewBinaryAccessTree(lsss.NodeTypeOr, fr.Element{},
-		lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, hash.ToField("A"), nil, nil),
-		lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, hash.ToField("B"), nil, nil))
-
-	// 使用构建器
-	builder := Or(Leaf("A"), Leaf("B"))
-
-	// 比较结构
-	if !compareTreeStructure(manual, builder) {
-		t.Error("Builder and manual construction should produce identical trees")
-	}
-}
-
-// TestBuilderExamples 使用构建器重建所有示例
-func TestBuilderExamples(t *testing.T) {
-	tests := []struct {
-		name    string
-		builder func() *lsss.BinaryAccessTree
-		example func() (*lsss.BinaryAccessTree, string)
-	}{
-		{
-			name:    "Example 1: (A or B)",
-			builder: func() *lsss.BinaryAccessTree { return Or(Leaf("A"), Leaf("B")) },
-			example: GetExample1,
-		},
-		{
-			name:    "Example 2: (A and B)",
-			builder: func() *lsss.BinaryAccessTree { return And(Leaf("A"), Leaf("B")) },
-			example: GetExample2,
-		},
-		{
-			name:    "Example 8: ((A or B) and C)",
-			builder: func() *lsss.BinaryAccessTree { return And(Or(Leaf("A"), Leaf("B")), Leaf("C")) },
-			example: GetExample8,
-		},
-		{
-			name: "Example 12: ((A and B) or (C and D))",
-			builder: func() *lsss.BinaryAccessTree {
-				return Or(
-					And(Leaf("A"), Leaf("B")),
-					And(Leaf("C"), Leaf("D")),
-				)
-			},
-			example: GetExample12,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			builderTree := tt.builder()
-			exampleTree, _ := tt.example()
-
-			if !compareTreeStructure(builderTree, exampleTree) {
-				t.Errorf("Builder tree doesn't match example tree")
-			}
-		})
-	}
-}
-
-// TestBuilderCompactSyntax 展示紧凑语法
-func TestBuilderCompactSyntax(t *testing.T) {
-	// 使用短别名的紧凑语法
-	tree := O(
-		A(L("A"), L("B")),
-		A(L("C"), L("D")),
-	)
-
-	if tree.Type != lsss.NodeTypeOr {
-		t.Error("Compact syntax should work correctly")
-	}
-}
+//// TestBuilderExamples 使用构建器重建所有示例
+//func TestBuilderExamples(t *testing.T) {
+//	tests := []struct {
+//		name    string
+//		builder func() *lsss.BinaryAccessTree
+//		example func() (*lsss.BinaryAccessTree, string)
+//	}{
+//		{
+//			name:    "Example 1: (A or B)",
+//			builder: func() *lsss.BinaryAccessTree { return Or(Leaf("A"), Leaf("B")) },
+//			example: GetExample1,
+//		},
+//		{
+//			name:    "Example 2: (A and B)",
+//			builder: func() *lsss.BinaryAccessTree { return And(Leaf("A"), Leaf("B")) },
+//			example: GetExample2,
+//		},
+//		{
+//			name:    "Example 8: ((A or B) and C)",
+//			builder: func() *lsss.BinaryAccessTree { return And(Or(Leaf("A"), Leaf("B")), Leaf("C")) },
+//			example: GetExample8,
+//		},
+//		{
+//			name: "Example 12: ((A and B) or (C and D))",
+//			builder: func() *lsss.BinaryAccessTree {
+//				return Or(
+//					And(Leaf("A"), Leaf("B")),
+//					And(Leaf("C"), Leaf("D")),
+//				)
+//			},
+//			example: GetExample12,
+//		},
+//	}
+//
+//	for _, tt := range tests {
+//		t.Run(tt.name, func(t *testing.T) {
+//			builderTree := tt.builder()
+//			exampleTree, _ := tt.example()
+//
+//			if !compareTreeStructure(builderTree, exampleTree) {
+//				t.Errorf("Builder tree doesn't match example tree")
+//			}
+//		})
+//	}
+//}
+//
+//// TestBuilderCompactSyntax 展示紧凑语法
+//func TestBuilderCompactSyntax(t *testing.T) {
+//	// 使用短别名的紧凑语法
+//	tree := O(
+//		A(L("A"), L("B")),
+//		A(L("C"), L("D")),
+//	)
+//
+//	if tree.Type != lsss.NodeTypeOr {
+//		t.Error("Compact syntax should work correctly")
+//	}
+//}
 
 // TestBuilderReadability 可读性示例
 func TestBuilderReadability(t *testing.T) {

@@ -95,16 +95,16 @@ func Attrs(names ...string) []*lsss.BinaryAccessTree {
 	return nodes
 }
 
-// 预定义的别名，提供更短的函数名
-var (
-	// L 是 Leaf 的简写
-	L = Leaf
-	// A 是 And 的简写
-	A = And
-	// O 是 Or 的简写
-	O = Or
-	// AR 是 AndRight 的简写
-	AR = AndRight
-	// OR 是 OrRight 的简写
-	OR = OrRight
-)
+//// 预定义的别名，提供更短的函数名
+//var (
+//	// L 是 Leaf 的简写
+//	L = Leaf
+//	// A 是 And 的简写
+//	A = And
+//	// O 是 Or 的简写
+//	O = Or
+//	// AR 是 AndRight 的简写
+//	AR = AndRight
+//	// OR 是 OrRight 的简写
+//	OR = OrRight
+//)
