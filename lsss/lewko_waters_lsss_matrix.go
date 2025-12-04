@@ -1,6 +1,7 @@
 package lsss
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
@@ -152,6 +153,18 @@ func (m *LewkoWatersLsssMatrix) GetSatisfiedLinearCombination(attributes []fr.El
 
 	// 没有找到满足的线性组合
 	return nil, nil
+}
+
+func (m *LewkoWatersLsssMatrix) Print() {
+	fmt.Println()
+	fmt.Println("------------------------------------------------")
+	fmt.Printf("matrix rowNumber: %d, columnNumber: %d \n", m.rowNumber, m.columnNumber)
+	fmt.Println("ρ(i)  Matrix")
+	for j := range m.accessMatrix {
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String(), m.accessMatrix[j])
+	}
+	fmt.Println("------------------------------------------------")
+	fmt.Println()
 }
 
 // isTargetVector 检查向量是否为目标向量 (1,0,0,...,0)。

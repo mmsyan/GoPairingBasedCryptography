@@ -4,37 +4,37 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GnarkPairingProject/hash"
-	"github.com/mmsyan/GnarkPairingProject/lsss/backend"
 	"testing"
 )
 
 func TestLSSSMatrix(t *testing.T) {
-	exampleTrees, formulas := backend.GetExamples()
+	exampleTrees, formulas := GetExamples()
 
 	for i := range exampleTrees {
 		m := NewLSSSMatrixFromTree(exampleTrees[i])
 		fmt.Printf("Access formula: %s\n", formulas[i])
-		fmt.Printf("matrix rowNumber: %d, columnNumber: %d", m.rowNumber, m.columnNumber)
-		fmt.Println("ρ(i)  Matrix")
-		for j := range m.accessMatrix {
-			fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
-		}
-		fmt.Println()
+		m.Print()
+		//fmt.Printf("matrix rowNumber: %d, columnNumber: %d", m.rowNumber, m.columnNumber)
+		//fmt.Println("ρ(i)  Matrix")
+		//for j := range m.accessMatrix {
+		//	fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
+		//}
+		//fmt.Println()
 	}
 }
 
 func TestTreeDSL(t *testing.T) {
-	tree1, formulas := backend.GetExample15()
-	tree2 := backend.And(
-		backend.LeafFromString("E"),
-		backend.Or(
-			backend.Or(
-				backend.And(backend.LeafFromString("A"), backend.LeafFromString("B")),
-				backend.And(backend.LeafFromString("C"), backend.LeafFromString("D")),
+	tree1, formulas := GetExample15()
+	tree2 := And(
+		LeafFromString("E"),
+		Or(
+			Or(
+				And(LeafFromString("A"), LeafFromString("B")),
+				And(LeafFromString("C"), LeafFromString("D")),
 			),
-			backend.And(
-				backend.Or(backend.LeafFromString("A"), backend.LeafFromString("B")),
-				backend.Or(backend.LeafFromString("C"), backend.LeafFromString("D")),
+			And(
+				Or(LeafFromString("A"), LeafFromString("B")),
+				Or(LeafFromString("C"), LeafFromString("D")),
 			),
 		),
 	)
@@ -56,24 +56,23 @@ func TestTreeDSL(t *testing.T) {
 }
 
 func TestLewkoWatersLsssMatrix_ComputeVector1(t *testing.T) {
-	exampleTree, formula := backend.GetExample1()
+	exampleTree, formula := GetExample1()
 	m := NewLSSSMatrixFromTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
 	attributes := []fr.Element{AElement}
 
+	m.Print()
+
 	rows, wis := m.GetSatisfiedLinearCombination(attributes)
-	for j := range m.accessMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
-	}
 	for i := range rows {
 		fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())
 	}
 }
 
 func TestLewkoWatersLsssMatrix_ComputeVector14(t *testing.T) {
-	exampleTree, formula := backend.GetExample14()
+	exampleTree, formula := GetExample14()
 	m := NewLSSSMatrixFromTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
@@ -81,10 +80,9 @@ func TestLewkoWatersLsssMatrix_ComputeVector14(t *testing.T) {
 	CElement := hash.ToField("C")
 	attributes := []fr.Element{AElement, CElement}
 
+	m.Print()
+
 	rows, wis := m.GetSatisfiedLinearCombination(attributes)
-	for j := range m.accessMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
-	}
 	for i := range rows {
 		fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())
 	}

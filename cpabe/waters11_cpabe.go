@@ -148,7 +148,6 @@ func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, ac
 
 	// e(g1, g2)^(alpha*s)
 	eG1G2ExpAlphaS := new(bn254.GT).Exp(pp.eG1G2ExpAlpha, s.BigInt(new(big.Int)))
-	fmt.Printf("Encrypt eG1G2ExpAlphaS: %v\n", *eG1G2ExpAlphaS)
 
 	// c = message * e(g1, g2)^(alpha*s)
 	c := new(bn254.GT).Mul(eG1G2ExpAlphaS, &message.Message)
@@ -189,11 +188,10 @@ func (instance *Waters11CPABEInstance) Decrypt(ciphertext *Waters11CPABECipherte
 	if err != nil {
 		return nil, fmt.Errorf("decrypt failed: %v", err)
 	}
-	fmt.Printf("usk.Attributes: %v\n", usk.userAttributes)
-	fmt.Printf("access matrix: %v\n", ciphertext.accessMatrix)
 	iSlice, wSlice := ciphertext.accessMatrix.GetSatisfiedLinearCombination(usk.userAttributes)
-	fmt.Printf("iSlice: %v\n", iSlice)
-	fmt.Printf("wSlice: %v\n", wSlice)
+	if iSlice == nil || wSlice == nil {
+		return nil, fmt.Errorf("decrypt failed: access policy is not satisfied")
+	}
 	denominator := new(bn254.GT).SetOne()
 	for _, i := range iSlice {
 		ci := ciphertext.cx[i]
@@ -223,7 +221,6 @@ func (instance *Waters11CPABEInstance) Decrypt(ciphertext *Waters11CPABECipherte
 	}
 
 	eG1G2ExpAlphaS := new(bn254.GT).Div(&eCPrimeK, denominator)
-	fmt.Printf("Decrypt eG1G2ExpAlphaS: %v\n", *eG1G2ExpAlphaS)
 	message := *new(bn254.GT).Div(&ciphertext.c, eG1G2ExpAlphaS)
 
 	return &Waters11CPABEMessage{Message: message}, nil

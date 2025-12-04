@@ -1,7 +1,6 @@
-package backend
+package lsss
 
 import (
-	"github.com/mmsyan/GnarkPairingProject/lsss"
 	"testing"
 
 	"github.com/mmsyan/GnarkPairingProject/hash"
@@ -11,8 +10,8 @@ import (
 func TestLeaf(t *testing.T) {
 	node := LeafFromString("Attribute::A")
 
-	if node.Type != lsss.NodeTypeLeave {
-		t.Errorf("LeafFromString() Type = %v, want %v", node.Type, lsss.NodeTypeLeave)
+	if node.Type != NodeTypeLeave {
+		t.Errorf("LeafFromString() Type = %v, want %v", node.Type, NodeTypeLeave)
 	}
 
 	expectedValue := hash.ToField("Attribute::A")
@@ -29,15 +28,15 @@ func TestLeaf(t *testing.T) {
 func TestOr_TwoNodes(t *testing.T) {
 	tree := Or(LeafFromString("A"), LeafFromString("B"))
 
-	if tree.Type != lsss.NodeTypeOr {
-		t.Errorf("Or() Type = %v, want %v", tree.Type, lsss.NodeTypeOr)
+	if tree.Type != NodeTypeOr {
+		t.Errorf("Or() Type = %v, want %v", tree.Type, NodeTypeOr)
 	}
 
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeLeave {
+	if tree.Left == nil || tree.Left.Type != NodeTypeLeave {
 		t.Error("Or() left child should be a leaf")
 	}
 
-	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeLeave {
+	if tree.Right == nil || tree.Right.Type != NodeTypeLeave {
 		t.Error("Or() right child should be a leaf")
 	}
 }
@@ -46,15 +45,15 @@ func TestOr_TwoNodes(t *testing.T) {
 func TestAnd_TwoNodes(t *testing.T) {
 	tree := And(LeafFromString("A"), LeafFromString("B"))
 
-	if tree.Type != lsss.NodeTypeAnd {
-		t.Errorf("And() Type = %v, want %v", tree.Type, lsss.NodeTypeAnd)
+	if tree.Type != NodeTypeAnd {
+		t.Errorf("And() Type = %v, want %v", tree.Type, NodeTypeAnd)
 	}
 
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeLeave {
+	if tree.Left == nil || tree.Left.Type != NodeTypeLeave {
 		t.Error("And() left child should be a leaf")
 	}
 
-	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeLeave {
+	if tree.Right == nil || tree.Right.Type != NodeTypeLeave {
 		t.Error("And() right child should be a leaf")
 	}
 }
@@ -64,25 +63,25 @@ func TestOr_MultipleNodes(t *testing.T) {
 	// ((A or B) or C)
 	tree := Or(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
-	if tree.Type != lsss.NodeTypeOr {
-		t.Errorf("Or() Type = %v, want %v", tree.Type, lsss.NodeTypeOr)
+	if tree.Type != NodeTypeOr {
+		t.Errorf("Or() Type = %v, want %v", tree.Type, NodeTypeOr)
 	}
 
 	// 根节点的右子节点应该是 C
-	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeLeave {
+	if tree.Right == nil || tree.Right.Type != NodeTypeLeave {
 		t.Error("Or() right child should be C")
 	}
 
 	// 根节点的左子节点应该是 (A or B)
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeOr {
+	if tree.Left == nil || tree.Left.Type != NodeTypeOr {
 		t.Error("Or() left child should be (A or B)")
 	}
 
 	// (A or B) 的子节点应该都是叶子
-	if tree.Left.Left == nil || tree.Left.Left.Type != lsss.NodeTypeLeave {
+	if tree.Left.Left == nil || tree.Left.Left.Type != NodeTypeLeave {
 		t.Error("Or() nested left should be A")
 	}
-	if tree.Left.Right == nil || tree.Left.Right.Type != lsss.NodeTypeLeave {
+	if tree.Left.Right == nil || tree.Left.Right.Type != NodeTypeLeave {
 		t.Error("Or() nested right should be B")
 	}
 }
@@ -92,12 +91,12 @@ func TestAnd_MultipleNodes(t *testing.T) {
 	// ((A and B) and C)
 	tree := And(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
-	if tree.Type != lsss.NodeTypeAnd {
-		t.Errorf("And() Type = %v, want %v", tree.Type, lsss.NodeTypeAnd)
+	if tree.Type != NodeTypeAnd {
+		t.Errorf("And() Type = %v, want %v", tree.Type, NodeTypeAnd)
 	}
 
 	// 检查是左结合
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeAnd {
+	if tree.Left == nil || tree.Left.Type != NodeTypeAnd {
 		t.Error("And() should be left-associative")
 	}
 }
@@ -107,17 +106,17 @@ func TestOrRight(t *testing.T) {
 	// (A or (B or C))
 	tree := OrRight(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
-	if tree.Type != lsss.NodeTypeOr {
-		t.Errorf("OrRight() Type = %v, want %v", tree.Type, lsss.NodeTypeOr)
+	if tree.Type != NodeTypeOr {
+		t.Errorf("OrRight() Type = %v, want %v", tree.Type, NodeTypeOr)
 	}
 
 	// 根节点的左子节点应该是 A
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeLeave {
+	if tree.Left == nil || tree.Left.Type != NodeTypeLeave {
 		t.Error("OrRight() left child should be A")
 	}
 
 	// 根节点的右子节点应该是 (B or C)
-	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeOr {
+	if tree.Right == nil || tree.Right.Type != NodeTypeOr {
 		t.Error("OrRight() right child should be (B or C)")
 	}
 }
@@ -127,12 +126,12 @@ func TestAndRight(t *testing.T) {
 	// (A and (B and C))
 	tree := AndRight(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
-	if tree.Type != lsss.NodeTypeAnd {
-		t.Errorf("AndRight() Type = %v, want %v", tree.Type, lsss.NodeTypeAnd)
+	if tree.Type != NodeTypeAnd {
+		t.Errorf("AndRight() Type = %v, want %v", tree.Type, NodeTypeAnd)
 	}
 
 	// 检查是右结合
-	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeAnd {
+	if tree.Right == nil || tree.Right.Type != NodeTypeAnd {
 		t.Error("AndRight() should be right-associative")
 	}
 }
@@ -145,15 +144,15 @@ func TestNestedExpressions(t *testing.T) {
 		LeafFromString("C"),
 	)
 
-	if tree.Type != lsss.NodeTypeAnd {
+	if tree.Type != NodeTypeAnd {
 		t.Error("Root should be AND")
 	}
 
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeOr {
+	if tree.Left == nil || tree.Left.Type != NodeTypeOr {
 		t.Error("Left child should be OR")
 	}
 
-	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeLeave {
+	if tree.Right == nil || tree.Right.Type != NodeTypeLeave {
 		t.Error("Right child should be leaf C")
 	}
 }
@@ -166,15 +165,15 @@ func TestComplexExpression(t *testing.T) {
 		And(LeafFromString("C"), LeafFromString("D")),
 	)
 
-	if tree.Type != lsss.NodeTypeOr {
+	if tree.Type != NodeTypeOr {
 		t.Error("Root should be OR")
 	}
 
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeAnd {
+	if tree.Left == nil || tree.Left.Type != NodeTypeAnd {
 		t.Error("Left child should be AND")
 	}
 
-	if tree.Right == nil || tree.Right.Type != lsss.NodeTypeAnd {
+	if tree.Right == nil || tree.Right.Type != NodeTypeAnd {
 		t.Error("Right child should be AND")
 	}
 }
@@ -188,8 +187,8 @@ func TestAttrs(t *testing.T) {
 	}
 
 	for i, node := range nodes {
-		if node.Type != lsss.NodeTypeLeave {
-			t.Errorf("Attrs()[%d] Type = %v, want %v", i, node.Type, lsss.NodeTypeLeave)
+		if node.Type != NodeTypeLeave {
+			t.Errorf("Attrs()[%d] Type = %v, want %v", i, node.Type, NodeTypeLeave)
 		}
 	}
 }
@@ -199,7 +198,7 @@ func TestAttrsWithOr(t *testing.T) {
 	// ((A or B) or C)
 	tree := Or(Attrs("A", "B", "C")...)
 
-	if tree.Type != lsss.NodeTypeOr {
+	if tree.Type != NodeTypeOr {
 		t.Error("Root should be OR")
 	}
 }
@@ -312,12 +311,12 @@ func TestBuilderReadability(t *testing.T) {
 		LeafFromString("Active_User"),
 	)
 
-	if tree.Type != lsss.NodeTypeAnd {
+	if tree.Type != NodeTypeAnd {
 		t.Error("Root should be AND")
 	}
 
 	// 验证结构
-	if tree.Left == nil || tree.Left.Type != lsss.NodeTypeOr {
+	if tree.Left == nil || tree.Left.Type != NodeTypeOr {
 		t.Error("Left should be OR node")
 	}
 }
