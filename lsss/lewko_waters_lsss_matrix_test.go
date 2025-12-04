@@ -26,15 +26,15 @@ func TestLSSSMatrix(t *testing.T) {
 func TestTreeDSL(t *testing.T) {
 	tree1, formulas := backend.GetExample15()
 	tree2 := backend.And(
-		backend.Leaf("E"),
+		backend.LeafFromString("E"),
 		backend.Or(
 			backend.Or(
-				backend.And(backend.Leaf("A"), backend.Leaf("B")),
-				backend.And(backend.Leaf("C"), backend.Leaf("D")),
+				backend.And(backend.LeafFromString("A"), backend.LeafFromString("B")),
+				backend.And(backend.LeafFromString("C"), backend.LeafFromString("D")),
 			),
 			backend.And(
-				backend.Or(backend.Leaf("A"), backend.Leaf("B")),
-				backend.Or(backend.Leaf("C"), backend.Leaf("D")),
+				backend.Or(backend.LeafFromString("A"), backend.LeafFromString("B")),
+				backend.Or(backend.LeafFromString("C"), backend.LeafFromString("D")),
 			),
 		),
 	)

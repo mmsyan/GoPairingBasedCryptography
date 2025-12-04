@@ -7,11 +7,15 @@ import (
 	//"github.com/mmsyan/GnarkPairingProject/lsss"
 )
 
-// Leaf 创建一个叶子节点（属性节点）
+// LeafFromString 创建一个叶子节点（属性节点）
 // 参数 attr 是属性名称，如 "A", "B", "UserRole" 等
-func Leaf(attr string) *lsss.BinaryAccessTree {
+func LeafFromString(attr string) *lsss.BinaryAccessTree {
 	attrValue := hash.ToField(attr)
 	return lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, attrValue, nil, nil)
+}
+
+func Leaf(attr fr.Element) *lsss.BinaryAccessTree {
+	return lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, attr, nil, nil)
 }
 
 // Or 创建一个 OR 节点
@@ -91,15 +95,15 @@ func AndRight(nodes ...*lsss.BinaryAccessTree) *lsss.BinaryAccessTree {
 func Attrs(names ...string) []*lsss.BinaryAccessTree {
 	nodes := make([]*lsss.BinaryAccessTree, len(names))
 	for i, name := range names {
-		nodes[i] = Leaf(name)
+		nodes[i] = LeafFromString(name)
 	}
 	return nodes
 }
 
 //// 预定义的别名，提供更短的函数名
 //var (
-//	// L 是 Leaf 的简写
-//	L = Leaf
+//	// L 是 LeafFromString 的简写
+//	L = LeafFromString
 //	// A 是 And 的简写
 //	A = And
 //	// O 是 Or 的简写

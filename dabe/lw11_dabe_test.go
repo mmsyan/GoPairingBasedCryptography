@@ -95,12 +95,12 @@ func TestDABE1(t *testing.T) {
 	}
 
 	accessTree1 := backend.Or(
-		backend.Leaf("bob"),
-		backend.Leaf("alice"),
+		backend.LeafFromString("bob"),
+		backend.LeafFromString("alice"),
 	)
 	accessTree2 := backend.And(
-		backend.Leaf("bob"),
-		backend.Leaf("alice"),
+		backend.LeafFromString("bob"),
+		backend.LeafFromString("alice"),
 	)
 	accessMatrix1 := lsss.NewLSSSMatrixFromTree(accessTree1)
 	accessMatrix2 := lsss.NewLSSSMatrixFromTree(accessTree2)

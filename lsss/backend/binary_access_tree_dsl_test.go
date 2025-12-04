@@ -9,25 +9,25 @@ import (
 
 // TestLeaf 测试叶子节点创建
 func TestLeaf(t *testing.T) {
-	node := Leaf("Attribute::A")
+	node := LeafFromString("Attribute::A")
 
 	if node.Type != lsss.NodeTypeLeave {
-		t.Errorf("Leaf() Type = %v, want %v", node.Type, lsss.NodeTypeLeave)
+		t.Errorf("LeafFromString() Type = %v, want %v", node.Type, lsss.NodeTypeLeave)
 	}
 
 	expectedValue := hash.ToField("Attribute::A")
 	if node.Attribute != expectedValue {
-		t.Errorf("Leaf() Attribute mismatch")
+		t.Errorf("LeafFromString() Attribute mismatch")
 	}
 
 	if node.Left != nil || node.Right != nil {
-		t.Errorf("Leaf() should have no children")
+		t.Errorf("LeafFromString() should have no children")
 	}
 }
 
 // TestOr_TwoNodes 测试两节点 OR
 func TestOr_TwoNodes(t *testing.T) {
-	tree := Or(Leaf("A"), Leaf("B"))
+	tree := Or(LeafFromString("A"), LeafFromString("B"))
 
 	if tree.Type != lsss.NodeTypeOr {
 		t.Errorf("Or() Type = %v, want %v", tree.Type, lsss.NodeTypeOr)
@@ -44,7 +44,7 @@ func TestOr_TwoNodes(t *testing.T) {
 
 // TestAnd_TwoNodes 测试两节点 AND
 func TestAnd_TwoNodes(t *testing.T) {
-	tree := And(Leaf("A"), Leaf("B"))
+	tree := And(LeafFromString("A"), LeafFromString("B"))
 
 	if tree.Type != lsss.NodeTypeAnd {
 		t.Errorf("And() Type = %v, want %v", tree.Type, lsss.NodeTypeAnd)
@@ -62,7 +62,7 @@ func TestAnd_TwoNodes(t *testing.T) {
 // TestOr_MultipleNodes 测试多节点 OR（左结合）
 func TestOr_MultipleNodes(t *testing.T) {
 	// ((A or B) or C)
-	tree := Or(Leaf("A"), Leaf("B"), Leaf("C"))
+	tree := Or(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
 	if tree.Type != lsss.NodeTypeOr {
 		t.Errorf("Or() Type = %v, want %v", tree.Type, lsss.NodeTypeOr)
@@ -90,7 +90,7 @@ func TestOr_MultipleNodes(t *testing.T) {
 // TestAnd_MultipleNodes 测试多节点 AND（左结合）
 func TestAnd_MultipleNodes(t *testing.T) {
 	// ((A and B) and C)
-	tree := And(Leaf("A"), Leaf("B"), Leaf("C"))
+	tree := And(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
 	if tree.Type != lsss.NodeTypeAnd {
 		t.Errorf("And() Type = %v, want %v", tree.Type, lsss.NodeTypeAnd)
@@ -105,7 +105,7 @@ func TestAnd_MultipleNodes(t *testing.T) {
 // TestOrRight 测试右结合 OR
 func TestOrRight(t *testing.T) {
 	// (A or (B or C))
-	tree := OrRight(Leaf("A"), Leaf("B"), Leaf("C"))
+	tree := OrRight(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
 	if tree.Type != lsss.NodeTypeOr {
 		t.Errorf("OrRight() Type = %v, want %v", tree.Type, lsss.NodeTypeOr)
@@ -125,7 +125,7 @@ func TestOrRight(t *testing.T) {
 // TestAndRight 测试右结合 AND
 func TestAndRight(t *testing.T) {
 	// (A and (B and C))
-	tree := AndRight(Leaf("A"), Leaf("B"), Leaf("C"))
+	tree := AndRight(LeafFromString("A"), LeafFromString("B"), LeafFromString("C"))
 
 	if tree.Type != lsss.NodeTypeAnd {
 		t.Errorf("AndRight() Type = %v, want %v", tree.Type, lsss.NodeTypeAnd)
@@ -141,8 +141,8 @@ func TestAndRight(t *testing.T) {
 func TestNestedExpressions(t *testing.T) {
 	// ((A or B) and C)
 	tree := And(
-		Or(Leaf("A"), Leaf("B")),
-		Leaf("C"),
+		Or(LeafFromString("A"), LeafFromString("B")),
+		LeafFromString("C"),
 	)
 
 	if tree.Type != lsss.NodeTypeAnd {
@@ -162,8 +162,8 @@ func TestNestedExpressions(t *testing.T) {
 func TestComplexExpression(t *testing.T) {
 	// ((A and B) or (C and D))
 	tree := Or(
-		And(Leaf("A"), Leaf("B")),
-		And(Leaf("C"), Leaf("D")),
+		And(LeafFromString("A"), LeafFromString("B")),
+		And(LeafFromString("C"), LeafFromString("D")),
 	)
 
 	if tree.Type != lsss.NodeTypeOr {
@@ -229,7 +229,7 @@ func TestAttrsWithOr(t *testing.T) {
 //		lsss.NewBinaryAccessTree(lsss.NodeTypeLeave, hash.ToField("B"), nil, nil))
 //
 //	// 使用构建器
-//	builder := Or(Leaf("A"), Leaf("B"))
+//	builder := Or(LeafFromString("A"), LeafFromString("B"))
 //
 //	// 比较结构
 //	if !compareTreeStructure(manual, builder) {
@@ -246,25 +246,25 @@ func TestAttrsWithOr(t *testing.T) {
 //	}{
 //		{
 //			name:    "Example 1: (A or B)",
-//			builder: func() *lsss.BinaryAccessTree { return Or(Leaf("A"), Leaf("B")) },
+//			builder: func() *lsss.BinaryAccessTree { return Or(LeafFromString("A"), LeafFromString("B")) },
 //			example: GetExample1,
 //		},
 //		{
 //			name:    "Example 2: (A and B)",
-//			builder: func() *lsss.BinaryAccessTree { return And(Leaf("A"), Leaf("B")) },
+//			builder: func() *lsss.BinaryAccessTree { return And(LeafFromString("A"), LeafFromString("B")) },
 //			example: GetExample2,
 //		},
 //		{
 //			name:    "Example 8: ((A or B) and C)",
-//			builder: func() *lsss.BinaryAccessTree { return And(Or(Leaf("A"), Leaf("B")), Leaf("C")) },
+//			builder: func() *lsss.BinaryAccessTree { return And(Or(LeafFromString("A"), LeafFromString("B")), LeafFromString("C")) },
 //			example: GetExample8,
 //		},
 //		{
 //			name: "Example 12: ((A and B) or (C and D))",
 //			builder: func() *lsss.BinaryAccessTree {
 //				return Or(
-//					And(Leaf("A"), Leaf("B")),
-//					And(Leaf("C"), Leaf("D")),
+//					And(LeafFromString("A"), LeafFromString("B")),
+//					And(LeafFromString("C"), LeafFromString("D")),
 //				)
 //			},
 //			example: GetExample12,
@@ -303,13 +303,13 @@ func TestBuilderReadability(t *testing.T) {
 
 	tree := And(
 		Or(
-			Leaf("Admin"),
+			LeafFromString("Admin"),
 			And(
-				Leaf("Manager"),
-				Leaf("Department_Head"),
+				LeafFromString("Manager"),
+				LeafFromString("Department_Head"),
 			),
 		),
-		Leaf("Active_User"),
+		LeafFromString("Active_User"),
 	)
 
 	if tree.Type != lsss.NodeTypeAnd {
@@ -324,21 +324,21 @@ func TestBuilderReadability(t *testing.T) {
 
 // ExampleOr 示例：创建 OR 表达式
 func ExampleOr() {
-	tree := Or(Leaf("A"), Leaf("B"))
+	tree := Or(LeafFromString("A"), LeafFromString("B"))
 	_ = tree // (A or B)
 }
 
 // ExampleAnd 示例：创建 AND 表达式
 func ExampleAnd() {
-	tree := And(Leaf("A"), Leaf("B"))
+	tree := And(LeafFromString("A"), LeafFromString("B"))
 	_ = tree // (A and B)
 }
 
 //// ExampleNestedExpression 示例：嵌套表达式
 //func ExampleNestedExpression() {
 //	tree := And(
-//		Or(Leaf("A"), Leaf("B")),
-//		Leaf("C"),
+//		Or(LeafFromString("A"), LeafFromString("B")),
+//		LeafFromString("C"),
 //	)
 //	_ = tree // ((A or B) and C)
 //}
@@ -361,7 +361,7 @@ func ExampleAttrs() {
 // BenchmarkBuilder_Simple 简单表达式性能测试
 func BenchmarkBuilder_Simple(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = Or(Leaf("A"), Leaf("B"))
+		_ = Or(LeafFromString("A"), LeafFromString("B"))
 	}
 }
 
@@ -369,8 +369,8 @@ func BenchmarkBuilder_Simple(b *testing.B) {
 func BenchmarkBuilder_Complex(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = Or(
-			And(Leaf("A"), Leaf("B")),
-			And(Leaf("C"), Leaf("D")),
+			And(LeafFromString("A"), LeafFromString("B")),
+			And(LeafFromString("C"), LeafFromString("D")),
 		)
 	}
 }
