@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/mmsyan/GnarkPairingProject/lsss"
+	"github.com/mmsyan/GnarkPairingProject/access/lsss"
 	"math/big"
 )
 

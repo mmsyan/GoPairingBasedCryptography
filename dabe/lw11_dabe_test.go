@@ -2,11 +2,11 @@ package dabe
 
 import (
 	"fmt"
+	lsss2 "github.com/mmsyan/GnarkPairingProject/access/lsss"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/mmsyan/GnarkPairingProject/hash"
-	"github.com/mmsyan/GnarkPairingProject/lsss"
 )
 
 // 测试全局参数设置
@@ -93,16 +93,16 @@ func TestDABE1(t *testing.T) {
 		t.Fatalf("KeyGenerate failed: %v", err)
 	}
 
-	accessTree1 := lsss.Or(
-		lsss.LeafFromString("bob"),
-		lsss.LeafFromString("alice"),
+	accessTree1 := lsss2.Or(
+		lsss2.LeafFromString("bob"),
+		lsss2.LeafFromString("alice"),
 	)
-	accessTree2 := lsss.And(
-		lsss.LeafFromString("bob"),
-		lsss.LeafFromString("alice"),
+	accessTree2 := lsss2.And(
+		lsss2.LeafFromString("bob"),
+		lsss2.LeafFromString("alice"),
 	)
-	accessMatrix1 := lsss.NewLSSSMatrixFromTree(accessTree1)
-	accessMatrix2 := lsss.NewLSSSMatrixFromTree(accessTree2)
+	accessMatrix1 := lsss2.NewLSSSMatrixFromTree(accessTree1)
+	accessMatrix2 := lsss2.NewLSSSMatrixFromTree(accessTree2)
 
 	message1, err := NewRandomLW11DABEMessage()
 	if err != nil {
@@ -145,8 +145,8 @@ func TestEncryptDecryptSimple(t *testing.T) {
 	userKey, _ := KeyGenerate(attributes, gid, sk)
 
 	// 创建访问策略：只需要属性 A
-	exampleTree, _ := lsss.GetExample1() // 假设这返回一个简单的单属性策略
-	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
+	exampleTree, _ := lsss2.GetExample1() // 假设这返回一个简单的单属性策略
+	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
 
 	// 创建消息
 	message := &LW11DABEMessage{
@@ -195,9 +195,9 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 	userKey, _ := KeyGenerate(userAttributes, gid, sk)
 
 	// 创建访问策略：需要 A AND B（假设 Example14 是这样的策略）
-	exampleTree, formula := lsss.GetExample14()
+	exampleTree, formula := lsss2.GetExample14()
 	fmt.Printf("Testing with access formula: %s\n", formula)
-	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
+	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
 
 	// 创建随机消息
 	originalMessage, err := new(bn254.GT).SetRandom()
@@ -242,8 +242,8 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 	userKey, _ := KeyGenerate(userAttributes, gid, sk)
 
 	// 创建访问策略：需要 A AND C
-	exampleTree, _ := lsss.GetExample14()
-	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
+	exampleTree, _ := lsss2.GetExample14()
+	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
 
 	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
@@ -281,8 +281,8 @@ func TestMultipleUsersWithSameAuthority(t *testing.T) {
 	user2Key, _ := KeyGenerate(NewLW11DABEAttributes(AElement, CElement), "user002", sk)
 
 	// 创建访问策略
-	exampleTree, _ := lsss.GetExample1()
-	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
+	exampleTree, _ := lsss2.GetExample1()
+	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
 
 	m, err := new(bn254.GT).SetRandom()
 	if err != nil {
@@ -346,8 +346,8 @@ func BenchmarkEncrypt(b *testing.B) {
 		hash.ToField("C"))
 	pk, _, _ := AuthoritySetup(attributes, gp)
 
-	exampleTree, _ := lsss.GetExample1()
-	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
+	exampleTree, _ := lsss2.GetExample1()
+	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
 
 	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
@@ -366,8 +366,8 @@ func BenchmarkDecrypt(b *testing.B) {
 	pk, sk, _ := AuthoritySetup(attributes, gp)
 	userKey, _ := KeyGenerate(attributes, "user", sk)
 
-	exampleTree, _ := lsss.GetExample1()
-	matrix := lsss.NewLSSSMatrixFromTree(exampleTree)
+	exampleTree, _ := lsss2.GetExample1()
+	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
 
 	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),

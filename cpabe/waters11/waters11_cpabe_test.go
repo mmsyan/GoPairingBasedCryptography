@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/mmsyan/GnarkPairingProject/lsss"
+	lsss2 "github.com/mmsyan/GnarkPairingProject/access/lsss"
 	"testing"
 )
 
@@ -22,12 +22,12 @@ func TestWatersCPABE1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	accessTree1 := lsss.And(
-		lsss.Leaf(fr.NewElement(1)),
-		lsss.Leaf(fr.NewElement(2)),
+	accessTree1 := lsss2.And(
+		lsss2.Leaf(fr.NewElement(1)),
+		lsss2.Leaf(fr.NewElement(2)),
 		//lsss.Leaf(fr.NewElement(3)),
 	)
-	accessMatrix1 := lsss.NewLSSSMatrixFromTree(accessTree1)
+	accessMatrix1 := lsss2.NewLSSSMatrixFromTree(accessTree1)
 	ap := &Waters11CPABEAccessPolicy{
 		matrix: accessMatrix1,
 	}
@@ -76,12 +76,12 @@ func TestWatersCPABE2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	accessTree1 := lsss.And(
-		lsss.Leaf(fr.NewElement(1)),
-		lsss.Leaf(fr.NewElement(2)),
-		lsss.Leaf(fr.NewElement(3)),
+	accessTree1 := lsss2.And(
+		lsss2.Leaf(fr.NewElement(1)),
+		lsss2.Leaf(fr.NewElement(2)),
+		lsss2.Leaf(fr.NewElement(3)),
 	)
-	accessMatrix1 := lsss.NewLSSSMatrixFromTree(accessTree1)
+	accessMatrix1 := lsss2.NewLSSSMatrixFromTree(accessTree1)
 	ap := &Waters11CPABEAccessPolicy{
 		matrix: accessMatrix1,
 	}
