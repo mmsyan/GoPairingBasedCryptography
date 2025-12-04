@@ -15,13 +15,13 @@ type Waters11CPABEInstance struct {
 type Waters11CPABEPublicParameters struct {
 	g1            bn254.G1Affine
 	g2            bn254.G2Affine
-	g1ExpA        bn254.G1Affine
-	eG1G2ExpAlpha bn254.GT
+	g1ExpA        bn254.G1Affine // g1^a
+	eG1G2ExpAlpha bn254.GT       // e(g1, g2)^alpha
 	h             map[fr.Element]bn254.G1Affine
 }
 
 type Waters11CPABEMasterSecretKey struct {
-	g1ExpAlpha bn254.G1Affine
+	g1ExpAlpha bn254.G1Affine // g1^alpha
 }
 
 type Waters11CPABEAttributes struct {
@@ -57,7 +57,7 @@ func NewWaters11CPABEInstance(universe []fr.Element) (*Waters11CPABEInstance, er
 		attributesUniverse[u] = struct{}{}
 	}
 	return &Waters11CPABEInstance{
-		universe: nil,
+		universe: attributesUniverse,
 	}, nil
 }
 
@@ -104,9 +104,13 @@ func (instance *Waters11CPABEInstance) KeyGenerate(userAttributes *Waters11CPABE
 	if err != nil {
 		return nil, fmt.Errorf("could not set up alpha Waters11CPABEPublicParameters")
 	}
-	gExpAT := new(bn254.G1Affine).ScalarMultiplication(&pp.g1ExpA, t.BigInt(new(big.Int)))
-	k := *new(bn254.G1Affine).Add(&msk.g1ExpAlpha, gExpAT)
+	// g1^(at)
+	g1ExpAT := new(bn254.G1Affine).ScalarMultiplication(&pp.g1ExpA, t.BigInt(new(big.Int)))
+	// k = g1^alpha * g1^(at)
+	k := *new(bn254.G1Affine).Add(&msk.g1ExpAlpha, g1ExpAT)
+	// l = g2^t
 	l := *new(bn254.G2Affine).ScalarMultiplicationBase(t.BigInt(new(big.Int)))
+	// kx = hx^t
 	kx := make(map[fr.Element]bn254.G1Affine, len(instance.universe))
 	for _, x := range userAttributes.Attributes {
 		hx := pp.h[x]
@@ -114,9 +118,10 @@ func (instance *Waters11CPABEInstance) KeyGenerate(userAttributes *Waters11CPABE
 	}
 
 	return &Waters11CPABEUserSecretKey{
-		k:  k,
-		l:  l,
-		kx: kx,
+		userAttributes: userAttributes.Attributes,
+		k:              k,
+		l:              l,
+		kx:             kx,
 	}, nil
 }
 
@@ -133,7 +138,6 @@ func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, ac
 
 	vectorV := make([]fr.Element, n)
 	vectorV[0] = *s
-
 	for i := 1; i < n; i++ {
 		vi, err := new(fr.Element).SetRandom()
 		if err != nil {
@@ -142,9 +146,13 @@ func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, ac
 		vectorV[i] = *vi
 	}
 
+	// e(g1, g2)^(alpha*s)
 	eG1G2ExpAlphaS := new(bn254.GT).Exp(pp.eG1G2ExpAlpha, s.BigInt(new(big.Int)))
-	c := new(bn254.GT).Mul(eG1G2ExpAlphaS, &message.Message)
+	fmt.Printf("Encrypt eG1G2ExpAlphaS: %v\n", *eG1G2ExpAlphaS)
 
+	// c = message * e(g1, g2)^(alpha*s)
+	c := new(bn254.GT).Mul(eG1G2ExpAlphaS, &message.Message)
+	// c' = g2^s
 	cPrime := new(bn254.G2Affine).ScalarMultiplicationBase(s.BigInt(new(big.Int)))
 
 	for i := 0; i < n; i++ {
@@ -155,9 +163,11 @@ func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, ac
 		lambdaI := accessPolicy.matrix.ComputeVector(i, vectorV)
 		rhoI := accessPolicy.matrix.Rho(i)
 
+		// (g1^a)^lambdaI
 		g1ExpALambdaI := new(bn254.G1Affine).ScalarMultiplication(&pp.g1ExpA, lambdaI.BigInt(new(big.Int)))
 		hRhoI := pp.h[rhoI]
 		negRi := new(fr.Element).Neg(ri)
+		// h_rho(i)^(-ri)
 		hRhoIExpNegRi := new(bn254.G1Affine).ScalarMultiplication(&hRhoI, negRi.BigInt(new(big.Int)))
 
 		cx[i] = *new(bn254.G1Affine).Add(g1ExpALambdaI, hRhoIExpNegRi)
@@ -179,8 +189,11 @@ func (instance *Waters11CPABEInstance) Decrypt(ciphertext *Waters11CPABECipherte
 	if err != nil {
 		return nil, fmt.Errorf("decrypt failed: %v", err)
 	}
+	fmt.Printf("usk.Attributes: %v\n", usk.userAttributes)
+	fmt.Printf("access matrix: %v\n", ciphertext.accessMatrix)
 	iSlice, wSlice := ciphertext.accessMatrix.GetSatisfiedLinearCombination(usk.userAttributes)
-
+	fmt.Printf("iSlice: %v\n", iSlice)
+	fmt.Printf("wSlice: %v\n", wSlice)
 	denominator := new(bn254.GT).SetOne()
 	for _, i := range iSlice {
 		ci := ciphertext.cx[i]
@@ -209,7 +222,9 @@ func (instance *Waters11CPABEInstance) Decrypt(ciphertext *Waters11CPABECipherte
 
 	}
 
-	message := *new(bn254.GT).Div(&eCPrimeK, denominator)
+	eG1G2ExpAlphaS := new(bn254.GT).Div(&eCPrimeK, denominator)
+	fmt.Printf("Decrypt eG1G2ExpAlphaS: %v\n", *eG1G2ExpAlphaS)
+	message := *new(bn254.GT).Div(&ciphertext.c, eG1G2ExpAlphaS)
 
 	return &Waters11CPABEMessage{Message: message}, nil
 }

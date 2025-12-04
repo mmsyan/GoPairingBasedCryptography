@@ -14,7 +14,7 @@ func TestLSSSMatrix(t *testing.T) {
 	for i := range exampleTrees {
 		m := NewLSSSMatrixFromTree(exampleTrees[i])
 		fmt.Printf("Access formula: %s\n", formulas[i])
-		fmt.Printf("matrix rowNumber: %d, columnNumber: %d\columnNumber", m.rowNumber, m.columnNumber)
+		fmt.Printf("matrix rowNumber: %d, columnNumber: %d", m.rowNumber, m.columnNumber)
 		fmt.Println("ρ(i)  Matrix")
 		for j := range m.accessMatrix {
 			fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
