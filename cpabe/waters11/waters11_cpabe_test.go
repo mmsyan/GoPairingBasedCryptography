@@ -1,4 +1,4 @@
-package cpabe
+package waters11
 
 import (
 	"fmt"
@@ -55,7 +55,7 @@ func TestWatersCPABE1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	recoveredMessage, err := instance.Decrypt(ciphertext, usk, pp)
+	recoveredMessage, err := instance.Decrypt(ciphertext, usk)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestWatersCPABE2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	recoveredMessage, err := instance.Decrypt(ciphertext, usk, pp)
+	recoveredMessage, err := instance.Decrypt(ciphertext, usk)
 	if err != nil {
 		t.Fatal(err)
 	}
