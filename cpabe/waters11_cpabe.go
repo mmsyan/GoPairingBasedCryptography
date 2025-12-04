@@ -1,5 +1,23 @@
 package cpabe
 
+// 作者: mmsyan
+// 日期: 2025-12-04
+// 参考论文:
+// Waters, B. (2011). Ciphertext-Policy Attribute-Based Encryption: An Expressive, Efficient, and Provably Secure Realization.
+// In: Catalano, D., Fazio, N., Gennaro, R., Nicolosi, A. (eds) Public Key Cryptography – PKC 2011. PKC 2011.
+// Lecture Notes in Computer Science, vol 6571. Springer, Berlin, Heidelberg.
+// https://doi.org/10.1007/978-3-642-19379-8_4
+//
+// section 3 Our Most Efficient Construction
+//
+// full version: https://eprint.iacr.org/2008/290.pdf
+//
+// 该实现基于BN254椭圆曲线和配对运算,提供了完整的 Waters 2011 CP-ABE 系统功能,包括:
+//   - 系统初始化 (SetUp)
+//   - 密钥生成 (KeyGenerate)
+//   - 加密 (Encrypt)
+//   - 解密 (Decrypt)
+
 import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
@@ -51,6 +69,16 @@ type Waters11CPABECiphertext struct {
 	dx           []bn254.G2Affine
 }
 
+// SetUp 执行 CP-ABE 方案的系统初始化，生成公共参数 (PP) 和主密钥 (MSK)。
+// 步骤:
+// 1. 选取随机指数 $\alpha, a \in \mathbb{Z}_p$。
+// 2. 计算 $g_1^a, g_1^\alpha, e(g_1, g_2)^\alpha$。
+// 3. 对属性宇宙中的每个属性 $u$，随机选取 $\tau_u \in \mathbb{Z}_p$，计算 $h_u = g_1^{\tau_u}$。
+//
+// 返回值:
+//   - *Waters11CPABEPublicParameters: 生成的公共参数 PP
+//   - *Waters11CPABEMasterSecretKey: 生成的主密钥 MSK
+//   - error: 如果随机数生成或配对操作失败，返回错误信息
 func (instance *Waters11CPABEInstance) SetUp() (*Waters11CPABEPublicParameters, *Waters11CPABEMasterSecretKey, error) {
 	_, _, g1, g2 := bn254.Generators()
 	alpha, err := new(fr.Element).SetRandom()
@@ -89,6 +117,21 @@ func (instance *Waters11CPABEInstance) SetUp() (*Waters11CPABEPublicParameters, 
 		}, nil
 }
 
+// KeyGenerate 根据用户属性集 $S$ 为用户生成私钥 (SK)。
+// 步骤:
+// 1. 选取随机值 $t \in \mathbb{Z}_p$。
+// 2. 计算 $K = g_1^\alpha \cdot (g_1^a)^t = g_1^{\alpha + at}$。
+// 3. 计算 $L = g_2^t$。
+// 4. 对每个属性 $x \in S$，计算 $K_x = h_x^t$。
+//
+// 参数:
+//   - userAttributes: 用户的属性集合 $S$
+//   - msk: 系统主密钥 MSK
+//   - pp: 系统公共参数 PP
+//
+// 返回值:
+//   - *Waters11CPABEUserSecretKey: 生成的用户私钥
+//   - error: 如果属性不在宇宙中或随机数生成失败，返回错误信息
 func (instance *Waters11CPABEInstance) KeyGenerate(userAttributes *Waters11CPABEAttributes, msk *Waters11CPABEMasterSecretKey, pp *Waters11CPABEPublicParameters) (*Waters11CPABEUserSecretKey, error) {
 	check := instance.checkAttributes(userAttributes.Attributes)
 	if !check {
@@ -120,6 +163,16 @@ func (instance *Waters11CPABEInstance) KeyGenerate(userAttributes *Waters11CPABE
 	}, nil
 }
 
+// Encrypt 使用访问策略A=(M, \rho)对消息M进行加密。
+//
+// 参数:
+//   - message: 要加密的明文消息M
+//   - accessPolicy: 访问策略A=(M, \rho)
+//   - pp: 系统公共参数 PP
+//
+// 返回值:
+//   - *Waters11CPABECiphertext: 生成的密文
+//   - error: 如果加密失败，返回错误信息
 func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, accessPolicy *Waters11CPABEAccessPolicy, pp *Waters11CPABEPublicParameters) (*Waters11CPABECiphertext, error) {
 	check := instance.checkAttributes(accessPolicy.matrix.Attributes())
 	if !check {
@@ -136,6 +189,7 @@ func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, ac
 		return nil, fmt.Errorf("encrypt failed: %vectorV", err)
 	}
 
+	// v = [s, r2, r3, ..., rn]
 	vectorV := make([]fr.Element, n)
 	vectorV[0] = *s
 	for i := 1; i < n; i++ {
@@ -182,7 +236,16 @@ func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, ac
 	}, nil
 }
 
-func (instance *Waters11CPABEInstance) Decrypt(ciphertext *Waters11CPABECiphertext, usk *Waters11CPABEUserSecretKey, gp *Waters11CPABEPublicParameters) (*Waters11CPABEMessage, error) {
+// Decrypt 使用用户私钥对密文进行解密。
+// 仅当用户属性集S满足密文的访问策略时才能成功解密。
+// 参数:
+//   - ciphertext: 要解密的密文
+//   - usk: 用户的私钥
+//
+// 返回值:
+//   - *Waters11CPABEMessage: 解密后的明文消息
+//   - error: 如果解密失败或属性不满足策略，返回错误信息
+func (instance *Waters11CPABEInstance) Decrypt(ciphertext *Waters11CPABECiphertext, usk *Waters11CPABEUserSecretKey) (*Waters11CPABEMessage, error) {
 	// e(K, C')
 	eCPrimeK, err := bn254.Pair([]bn254.G1Affine{usk.k}, []bn254.G2Affine{ciphertext.cPrime})
 	if err != nil {
