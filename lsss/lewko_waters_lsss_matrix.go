@@ -76,6 +76,10 @@ func (m *LewkoWatersLsssMatrix) Rho(rowIndex int) fr.Element {
 	return m.rhoRowToAttribute[rowIndex]
 }
 
+func (m *LewkoWatersLsssMatrix) Attributes() []fr.Element {
+	return m.rhoRowToAttribute
+}
+
 func (m *LewkoWatersLsssMatrix) ComputeVector(rowIndex int, vector []fr.Element) fr.Element {
 	if rowIndex < 0 || rowIndex >= m.rowNumber {
 		panic("index out of Lewko Waters Lsss Matrix range")

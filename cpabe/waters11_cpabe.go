@@ -51,16 +51,6 @@ type Waters11CPABECiphertext struct {
 	dx           []bn254.G2Affine
 }
 
-func NewWaters11CPABEInstance(universe []fr.Element) (*Waters11CPABEInstance, error) {
-	attributesUniverse := make(map[fr.Element]struct{}, len(universe))
-	for _, u := range universe {
-		attributesUniverse[u] = struct{}{}
-	}
-	return &Waters11CPABEInstance{
-		universe: attributesUniverse,
-	}, nil
-}
-
 func (instance *Waters11CPABEInstance) SetUp() (*Waters11CPABEPublicParameters, *Waters11CPABEMasterSecretKey, error) {
 	_, _, g1, g2 := bn254.Generators()
 	alpha, err := new(fr.Element).SetRandom()
@@ -100,6 +90,11 @@ func (instance *Waters11CPABEInstance) SetUp() (*Waters11CPABEPublicParameters, 
 }
 
 func (instance *Waters11CPABEInstance) KeyGenerate(userAttributes *Waters11CPABEAttributes, msk *Waters11CPABEMasterSecretKey, pp *Waters11CPABEPublicParameters) (*Waters11CPABEUserSecretKey, error) {
+	check := instance.checkAttributes(userAttributes.Attributes)
+	if !check {
+		return nil, fmt.Errorf("failed to pass attribute check")
+	}
+
 	t, err := new(fr.Element).SetRandom()
 	if err != nil {
 		return nil, fmt.Errorf("could not set up alpha Waters11CPABEPublicParameters")
@@ -126,6 +121,11 @@ func (instance *Waters11CPABEInstance) KeyGenerate(userAttributes *Waters11CPABE
 }
 
 func (instance *Waters11CPABEInstance) Encrypt(message *Waters11CPABEMessage, accessPolicy *Waters11CPABEAccessPolicy, pp *Waters11CPABEPublicParameters) (*Waters11CPABECiphertext, error) {
+	check := instance.checkAttributes(accessPolicy.matrix.Attributes())
+	if !check {
+		return nil, fmt.Errorf("failed to pass attribute check. contains invalid ciphertext attributes")
+	}
+
 	n := accessPolicy.matrix.ColumnNumber()
 
 	cx := make([]bn254.G1Affine, n)
