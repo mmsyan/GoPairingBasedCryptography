@@ -364,3 +364,71 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight14(t *testing.T) {
 		fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())
 	}
 }
+
+func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial1(t *testing.T) {
+	m := [][]fr.Element{
+		{fr.NewElement(1), fr.NewElement(1)},
+		{fr.NewElement(1), fr.NewElement(2)},
+		{fr.NewElement(1), fr.NewElement(3)},
+		{fr.NewElement(1), fr.NewElement(4)},
+	}
+	attr := []fr.Element{hash.ToField("A"), hash.ToField("B"), hash.ToField("C"), hash.ToField("D")}
+	lsss := &LewkoWatersLsssMatrix{
+		rowNumber:         len(m),
+		columnNumber:      len(m[0]),
+		accessMatrix:      m,
+		rhoRowToAttribute: attr,
+	}
+
+	userAttributes := []fr.Element{hash.ToField("B"), hash.ToField("D")}
+
+	lsss.Print()
+
+	for _, a := range userAttributes {
+		fmt.Printf("attributes: %s", a.String())
+		fmt.Println()
+	}
+	rows, wis := lsss.FindLinearCombinationWeight(userAttributes)
+	for i := range rows {
+		fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())
+	}
+}
+
+func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial2(t *testing.T) {
+	m := [][]fr.Element{
+		{fr.NewElement(1), fr.NewElement(1), fr.NewElement(0)},
+		{fr.NewElement(1), fr.NewElement(2), fr.NewElement(1)},
+		{fr.NewElement(1), fr.NewElement(2), fr.NewElement(2)},
+		{fr.NewElement(1), fr.NewElement(2), fr.NewElement(3)},
+		{fr.NewElement(1), fr.NewElement(2), fr.NewElement(4)},
+	}
+	AElement := hash.ToField("A")
+	BElement := hash.ToField("B")
+	CElement := hash.ToField("C")
+	DElement := hash.ToField("D")
+	EElement := hash.ToField("E")
+	attr := []fr.Element{EElement, AElement, BElement, CElement, DElement}
+	lsss := &LewkoWatersLsssMatrix{
+		rowNumber:         len(m),
+		columnNumber:      len(m[0]),
+		accessMatrix:      m,
+		rhoRowToAttribute: attr,
+	}
+
+	userAttributes := []fr.Element{EElement, CElement, DElement}
+
+	lsss.Print()
+
+	for _, a := range userAttributes {
+		fmt.Printf("attributes: %s", a.String())
+		fmt.Println()
+	}
+	rows, wis := lsss.FindLinearCombinationWeight(userAttributes)
+	if rows != nil || wis != nil {
+		for i := range rows {
+			fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())
+		}
+	} else {
+		fmt.Println("rows and wis are nil")
+	}
+}
