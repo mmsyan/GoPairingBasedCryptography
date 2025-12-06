@@ -101,8 +101,8 @@ func TestDABE1(t *testing.T) {
 		lsss2.LeafFromString("bob"),
 		lsss2.LeafFromString("alice"),
 	)
-	accessMatrix1 := lsss2.NewLSSSMatrixFromTree(accessTree1)
-	accessMatrix2 := lsss2.NewLSSSMatrixFromTree(accessTree2)
+	accessMatrix1 := lsss2.NewLSSSMatrixFromBinaryTree(accessTree1)
+	accessMatrix2 := lsss2.NewLSSSMatrixFromBinaryTree(accessTree2)
 
 	message1, err := NewRandomLW11DABEMessage()
 	if err != nil {
@@ -146,7 +146,7 @@ func TestEncryptDecryptSimple(t *testing.T) {
 
 	// 创建访问策略：只需要属性 A
 	exampleTree, _ := lsss2.GetExample1() // 假设这返回一个简单的单属性策略
-	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
+	matrix := lsss2.NewLSSSMatrixFromBinaryTree(exampleTree)
 
 	// 创建消息
 	message := &LW11DABEMessage{
@@ -197,7 +197,7 @@ func TestEncryptDecryptComplexAND(t *testing.T) {
 	// 创建访问策略：需要 A AND B（假设 Example14 是这样的策略）
 	exampleTree, formula := lsss2.GetExample14()
 	fmt.Printf("Testing with access formula: %s\n", formula)
-	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
+	matrix := lsss2.NewLSSSMatrixFromBinaryTree(exampleTree)
 
 	// 创建随机消息
 	originalMessage, err := new(bn254.GT).SetRandom()
@@ -243,7 +243,7 @@ func TestDecryptWithInsufficientAttributes(t *testing.T) {
 
 	// 创建访问策略：需要 A AND C
 	exampleTree, _ := lsss2.GetExample14()
-	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
+	matrix := lsss2.NewLSSSMatrixFromBinaryTree(exampleTree)
 
 	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
@@ -282,7 +282,7 @@ func TestMultipleUsersWithSameAuthority(t *testing.T) {
 
 	// 创建访问策略
 	exampleTree, _ := lsss2.GetExample1()
-	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
+	matrix := lsss2.NewLSSSMatrixFromBinaryTree(exampleTree)
 
 	m, err := new(bn254.GT).SetRandom()
 	if err != nil {
@@ -347,7 +347,7 @@ func BenchmarkEncrypt(b *testing.B) {
 	pk, _, _ := AuthoritySetup(attributes, gp)
 
 	exampleTree, _ := lsss2.GetExample1()
-	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
+	matrix := lsss2.NewLSSSMatrixFromBinaryTree(exampleTree)
 
 	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),
@@ -367,7 +367,7 @@ func BenchmarkDecrypt(b *testing.B) {
 	userKey, _ := KeyGenerate(attributes, "user", sk)
 
 	exampleTree, _ := lsss2.GetExample1()
-	matrix := lsss2.NewLSSSMatrixFromTree(exampleTree)
+	matrix := lsss2.NewLSSSMatrixFromBinaryTree(exampleTree)
 
 	message := &LW11DABEMessage{
 		Message: *new(bn254.GT).SetOne(),

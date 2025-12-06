@@ -11,7 +11,7 @@ func TestLSSSMatrix(t *testing.T) {
 	exampleTrees, formulas := GetExamples()
 
 	for i := range exampleTrees {
-		m := NewLSSSMatrixFromTree(exampleTrees[i])
+		m := NewLSSSMatrixFromBinaryTree(exampleTrees[i])
 		fmt.Printf("Access formula: %s\n", formulas[i])
 		m.Print()
 		//fmt.Printf("matrix rowNumber: %d, columnNumber: %d", m.rowNumber, m.columnNumber)
@@ -38,8 +38,8 @@ func TestTreeDSL(t *testing.T) {
 			),
 		),
 	)
-	m1 := NewLSSSMatrixFromTree(tree1)
-	m2 := NewLSSSMatrixFromTree(tree2)
+	m1 := NewLSSSMatrixFromBinaryTree(tree1)
+	m2 := NewLSSSMatrixFromBinaryTree(tree2)
 
 	fmt.Printf("Access formula: %s\n", formulas)
 	fmt.Printf("matrix from tree1 \n")
@@ -57,7 +57,7 @@ func TestTreeDSL(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight1(t *testing.T) {
 	exampleTree, formula := GetExample1()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -77,7 +77,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight1(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight2(t *testing.T) {
 	exampleTree, formula := GetExample2()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -98,7 +98,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight2(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight3(t *testing.T) {
 	exampleTree, formula := GetExample3()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -122,7 +122,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight3(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight4(t *testing.T) {
 	exampleTree, formula := GetExample4()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -143,7 +143,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight4(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight5(t *testing.T) {
 	exampleTree, formula := GetExample5()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -167,7 +167,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight5(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight6(t *testing.T) {
 	exampleTree, formula := GetExample6()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	DElement := hash.ToField("D")
@@ -190,7 +190,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight6(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight7(t *testing.T) {
 	exampleTree, formula := GetExample7()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -212,7 +212,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight7(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight8(t *testing.T) {
 	exampleTree, formula := GetExample8()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -234,7 +234,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight8(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight9(t *testing.T) {
 	exampleTree, formula := GetExample9()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	BElement := hash.ToField("B")
@@ -257,7 +257,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight9(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight10(t *testing.T) {
 	exampleTree, formula := GetExample10()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	BElement := hash.ToField("B")
@@ -278,7 +278,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight10(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight11(t *testing.T) {
 	exampleTree, formula := GetExample11()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	CElement := hash.ToField("C")
@@ -301,7 +301,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight11(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight12(t *testing.T) {
 	exampleTree, formula := GetExample12()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -325,7 +325,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight12(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight13(t *testing.T) {
 	exampleTree, formula := GetExample13()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")
@@ -346,7 +346,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight13(t *testing.T) {
 
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight14(t *testing.T) {
 	exampleTree, formula := GetExample14()
-	m := NewLSSSMatrixFromTree(exampleTree)
+	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
 
 	AElement := hash.ToField("A")

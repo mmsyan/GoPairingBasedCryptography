@@ -27,7 +27,7 @@ func TestWatersCPABE1(t *testing.T) {
 		lsss2.Leaf(fr.NewElement(2)),
 		//lsss.Leaf(fr.NewElement(3)),
 	)
-	accessMatrix1 := lsss2.NewLSSSMatrixFromTree(accessTree1)
+	accessMatrix1 := lsss2.NewLSSSMatrixFromBinaryTree(accessTree1)
 	ap := &Waters11CPABEAccessPolicy{
 		matrix: accessMatrix1,
 	}
@@ -81,7 +81,7 @@ func TestWatersCPABE2(t *testing.T) {
 		lsss2.Leaf(fr.NewElement(2)),
 		lsss2.Leaf(fr.NewElement(3)),
 	)
-	accessMatrix1 := lsss2.NewLSSSMatrixFromTree(accessTree1)
+	accessMatrix1 := lsss2.NewLSSSMatrixFromBinaryTree(accessTree1)
 	ap := &Waters11CPABEAccessPolicy{
 		matrix: accessMatrix1,
 	}
