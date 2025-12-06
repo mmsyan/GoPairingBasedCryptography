@@ -115,6 +115,14 @@ func (instance *CPABEInstance) KeyGenerate(attr *CPABEUserAttributes, msk *CPABE
 }
 
 func (instance *CPABEInstance) Encrypt(message *CPABEMessage, accessPolicy *CPABEAccessPolicy, pp *CPABEPublicParameters) (*CPABECiphertext, error) {
+	s, err := new(fr.Element).SetRandom()
+	if err != nil {
+		return nil, fmt.Errorf("error setting random: %v", err)
+	}
+	// e(g,g)^(alpha*s)
+	eG1G2ExpAlphaS := new(bn254.GT).Exp(pp.eG1G2ExpAlpha, s.BigInt(new(big.Int)))
+	cTilde := new(bn254.GT).Mul(eG1G2ExpAlphaS, &message.Message)
+	c := new(bn254.G1Affine).ScalarMultiplication(&pp.h, s.BigInt(new(big.Int)))
 }
 
 func (instance *CPABEInstance) Decrypt(ciphertext *CPABECiphertext, usk *CPABEUserSecretKey) (*CPABEMessage, error) {

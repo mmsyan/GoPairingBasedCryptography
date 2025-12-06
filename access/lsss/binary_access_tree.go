@@ -4,23 +4,23 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
-type NodeType string
+type nodeType string
 
 const (
-	NodeTypeOr    NodeType = "or"
-	NodeTypeAnd   NodeType = "and"
-	NodeTypeLeave NodeType = "leave"
+	NodeTypeOr    nodeType = "or"
+	NodeTypeAnd   nodeType = "and"
+	NodeTypeLeave nodeType = "leave"
 )
 
 type BinaryAccessTree struct {
-	Type      NodeType
+	Type      nodeType
 	Attribute fr.Element
 	Left      *BinaryAccessTree
 	Right     *BinaryAccessTree
 	Vector    []int
 }
 
-func NewBinaryAccessTree(nodeType NodeType, attr fr.Element, left, right *BinaryAccessTree) *BinaryAccessTree {
+func NewBinaryAccessTree(nodeType nodeType, attr fr.Element, left, right *BinaryAccessTree) *BinaryAccessTree {
 	return &BinaryAccessTree{
 		Type:      nodeType,
 		Attribute: attr,
