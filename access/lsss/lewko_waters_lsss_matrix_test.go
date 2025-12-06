@@ -17,7 +17,7 @@ func TestLSSSMatrix(t *testing.T) {
 		//fmt.Printf("matrix rowNumber: %d, columnNumber: %d", m.rowNumber, m.columnNumber)
 		//fmt.Println("ρ(i)  Matrix")
 		//for j := range m.accessMatrix {
-		//	fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String()[:4], m.accessMatrix[j])
+		//	fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rho[j].String()[:4], m.accessMatrix[j])
 		//}
 		//fmt.Println()
 	}
@@ -45,13 +45,13 @@ func TestTreeDSL(t *testing.T) {
 	fmt.Printf("matrix from tree1 \n")
 	fmt.Println("ρ(i)  Matrix")
 	for j := range m1.accessMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m1.rhoRowToAttribute[j].String()[:4], m1.accessMatrix[j])
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m1.rho[j].String()[:4], m1.accessMatrix[j])
 	}
 	fmt.Println()
 	fmt.Printf("matrix from tree2 \n")
 	fmt.Println("ρ(i)  Matrix")
 	for j := range m2.accessMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m2.rhoRowToAttribute[j].String()[:4], m2.accessMatrix[j])
+		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m2.rho[j].String()[:4], m2.accessMatrix[j])
 	}
 }
 
@@ -374,10 +374,10 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial1(t *testing.T)
 	}
 	attr := []fr.Element{hash.ToField("A"), hash.ToField("B"), hash.ToField("C"), hash.ToField("D")}
 	lsss := &LewkoWatersLsssMatrix{
-		rowNumber:         len(m),
-		columnNumber:      len(m[0]),
-		accessMatrix:      m,
-		rhoRowToAttribute: attr,
+		rowNumber:    len(m),
+		columnNumber: len(m[0]),
+		accessMatrix: m,
+		rho:          attr,
 	}
 
 	userAttributes := []fr.Element{hash.ToField("B"), hash.ToField("D")}
@@ -409,10 +409,10 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial2(t *testing.T)
 	EElement := hash.ToField("E")
 	attr := []fr.Element{EElement, AElement, BElement, CElement, DElement}
 	lsss := &LewkoWatersLsssMatrix{
-		rowNumber:         len(m),
-		columnNumber:      len(m[0]),
-		accessMatrix:      m,
-		rhoRowToAttribute: attr,
+		rowNumber:    len(m),
+		columnNumber: len(m[0]),
+		accessMatrix: m,
+		rho:          attr,
 	}
 
 	userAttributes := []fr.Element{EElement, CElement, DElement}

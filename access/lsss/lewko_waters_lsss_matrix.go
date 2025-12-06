@@ -10,10 +10,10 @@ import (
 // 该结构体实现了基于访问树的属性基加密(ABE)中的LSSS矩阵。
 // 矩阵的每一行对应一个属性，通过线性组合可以重构秘密。
 type LewkoWatersLsssMatrix struct {
-	rowNumber         int
-	columnNumber      int
-	accessMatrix      [][]fr.Element
-	rhoRowToAttribute []fr.Element
+	rowNumber    int            // 矩阵行数
+	columnNumber int            // 矩阵列数
+	accessMatrix [][]fr.Element // 访问矩阵，每行是一个向量
+	rho          []fr.Element   // 行索引到属性的映射，rho[i]表示第i行对应的属性
 }
 
 // NewLSSSMatrixFromBinaryTree 从二叉访问树构造LSSS矩阵
@@ -22,6 +22,9 @@ type LewkoWatersLsssMatrix struct {
 //   - OR门：左右子节点继承父节点的向量
 //   - AND门：左子节点追加-1，右子节点追加1，并增加列维度
 //   - 叶子节点：成为矩阵的一行
+//
+// 参考：https://eprint.iacr.org/2010/351.pdf
+// <Decentralizing Attribute-Based Encryption> Appendix G
 //
 // 参数：
 //   - root: 访问树的根节点
@@ -76,10 +79,10 @@ func NewLSSSMatrixFromBinaryTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix 
 	}
 
 	return &LewkoWatersLsssMatrix{
-		rowNumber:         len(matrix),
-		columnNumber:      len(matrix[0]),
-		accessMatrix:      matrix,
-		rhoRowToAttribute: rho,
+		rowNumber:    len(matrix),
+		columnNumber: len(matrix[0]),
+		accessMatrix: matrix,
+		rho:          rho,
 	}
 }
 
@@ -101,7 +104,7 @@ func (m *LewkoWatersLsssMatrix) ColumnNumber() int {
 // 返回值：
 //   - fr.Element: 该行对应的属性值
 func (m *LewkoWatersLsssMatrix) Rho(rowIndex int) fr.Element {
-	return m.rhoRowToAttribute[rowIndex]
+	return m.rho[rowIndex]
 }
 
 // Attributes 返回所有行对应的属性列表
@@ -109,7 +112,7 @@ func (m *LewkoWatersLsssMatrix) Rho(rowIndex int) fr.Element {
 // 返回值：
 //   - []fr.Element: 属性列表，索引i对应第i行的属性
 func (m *LewkoWatersLsssMatrix) Attributes() []fr.Element {
-	return m.rhoRowToAttribute
+	return m.rho
 }
 
 // ComputeVector 计算指定行向量与给定向量的内积
@@ -171,8 +174,8 @@ func (m *LewkoWatersLsssMatrix) FindLinearCombinationWeight(attributes []fr.Elem
 	}
 
 	// 找到所有满足的行
-	for i := 0; i < len(m.rhoRowToAttribute); i++ {
-		if attrMap[m.rhoRowToAttribute[i]] {
+	for i := 0; i < len(m.rho); i++ {
+		if attrMap[m.rho[i]] {
 			satisfiedRows = append(satisfiedRows, i)
 		}
 	}
@@ -228,7 +231,7 @@ func (m *LewkoWatersLsssMatrix) Print() {
 	fmt.Printf("matrix rowNumber: %d, columnNumber: %d \n", m.rowNumber, m.columnNumber)
 	fmt.Println("ρ(i)  Matrix")
 	for i := range m.accessMatrix {
-		fmt.Printf("index %d || attribute: %s ||  ", i, m.rhoRowToAttribute[i].String())
+		fmt.Printf("index %d || attribute: %s ||  ", i, m.rho[i].String())
 		for j := range m.accessMatrix[i] {
 			fmt.Printf(" %s ", (m.accessMatrix[i][j]).String())
 		}
