@@ -251,7 +251,7 @@ func (instance *Waters11CPABEInstance) Decrypt(ciphertext *Waters11CPABECipherte
 	if err != nil {
 		return nil, fmt.Errorf("decrypt failed: %v", err)
 	}
-	iSlice, wSlice := ciphertext.accessMatrix.GetSatisfiedLinearCombination(usk.userAttributes)
+	iSlice, wSlice := ciphertext.accessMatrix.FindLinearCombinationWeight(usk.userAttributes)
 	if iSlice == nil || wSlice == nil {
 		return nil, fmt.Errorf("decrypt failed: access policy is not satisfied")
 	}

@@ -175,7 +175,7 @@ func Encrypt(message *LW11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *L
 
 func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11DABEGlobalParams) (*LW11DABEMessage, error) {
 	hGid := hash.ToG1(userKey.UserGid)
-	xSlice, wSlice := ciphertext.matrix.GetSatisfiedLinearCombination(userKey.UserAttributes.attributes)
+	xSlice, wSlice := ciphertext.matrix.FindLinearCombinationWeight(userKey.UserAttributes.attributes)
 	denominator := new(bn254.GT).SetOne()
 	for _, x := range xSlice {
 		c1x := ciphertext.c1x[x]

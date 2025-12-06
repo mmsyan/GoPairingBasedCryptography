@@ -8,19 +8,22 @@ import (
 type LewkoWatersLsssMatrix struct {
 	rowNumber         int
 	columnNumber      int
-	accessMatrix      [][]int
+	accessMatrix      [][]fr.Element
 	rhoRowToAttribute []fr.Element
 }
 
 func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 	counter := 1
-	var matrix [][]int
+	var matrix [][]fr.Element
 	var rho []fr.Element
-	root.Vector = []int{1}
+	oneElement := fr.NewElement(1)
+	zeroElement := fr.NewElement(0)
+	minusOneElement := *new(fr.Element).Sub(&zeroElement, &oneElement)
+	root.Vector = []fr.Element{oneElement}
 
-	var copyVector func(v []int) []int
-	copyVector = func(v []int) []int {
-		result := make([]int, len(v))
+	var copyVector func(v []fr.Element) []fr.Element
+	copyVector = func(v []fr.Element) []fr.Element {
+		result := make([]fr.Element, len(v))
 		copy(result, v)
 		return result
 	}
@@ -32,10 +35,10 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 			node.Right.Vector = copyVector(node.Vector)
 		} else if node.Type == NodeTypeAnd {
 			node.Left.VectorPadZero(counter)
-			node.Left.Vector = append(node.Left.Vector, -1)
+			node.Left.Vector = append(node.Left.Vector, minusOneElement)
 			node.Right.Vector = copyVector(node.Vector)
 			node.Right.VectorPadZero(counter)
-			node.Right.Vector = append(node.Right.Vector, 1)
+			node.Right.Vector = append(node.Right.Vector, oneElement)
 			counter++
 		} else if node.Type == NodeTypeLeave {
 			matrix = append(matrix, copyVector(node.Vector))
@@ -52,7 +55,7 @@ func NewLSSSMatrixFromTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix {
 	// 填充所有行到相同长度
 	for i := range matrix {
 		for j := len(matrix[i]); j < counter; j++ {
-			matrix[i] = append(matrix[i], 0)
+			matrix[i] = append(matrix[i], zeroElement)
 		}
 	}
 
@@ -86,13 +89,13 @@ func (m *LewkoWatersLsssMatrix) ComputeVector(rowIndex int, vector []fr.Element)
 	}
 	result := new(fr.Element).SetZero()
 	for i := 0; i < m.columnNumber; i++ {
-		temp := new(fr.Element).Mul(&vector[i], new(fr.Element).SetInt64(int64(m.accessMatrix[rowIndex][i])))
+		temp := new(fr.Element).Mul(&vector[i], &m.accessMatrix[rowIndex][i])
 		result.Add(result, temp)
 	}
 	return *result
 }
 
-func (m *LewkoWatersLsssMatrix) GetSatisfiedLinearCombination(attributes []fr.Element) ([]int, []fr.Element) {
+func (m *LewkoWatersLsssMatrix) FindLinearCombinationWeight(attributes []fr.Element) ([]int, []fr.Element) {
 	var satisfiedRows []int
 
 	// 遍历m.rhoRowToAttribute；如果attributes切片当中有某个元素等于m.rhoRowToAttribute[i]，则i加入satisfiedRows
@@ -123,14 +126,14 @@ func (m *LewkoWatersLsssMatrix) GetSatisfiedLinearCombination(attributes []fr.El
 
 	for mask := 1; mask <= maxCombinations; mask++ {
 		// 计算当前子集的线性组合
-		combination := make([]int, m.columnNumber)
+		combination := make([]fr.Element, m.columnNumber)
 
 		for i := 0; i < numRows; i++ {
 			if (mask & (1 << i)) != 0 {
 				rowIdx := satisfiedRows[i]
 				// 将该行加到组合中
 				for j := 0; j < m.columnNumber; j++ {
-					combination[j] += m.accessMatrix[rowIdx][j]
+					combination[j] = *new(fr.Element).Add(&combination[j], &m.accessMatrix[rowIdx][j])
 				}
 			}
 		}
@@ -164,8 +167,12 @@ func (m *LewkoWatersLsssMatrix) Print() {
 	fmt.Println("------------------------------------------------")
 	fmt.Printf("matrix rowNumber: %d, columnNumber: %d \n", m.rowNumber, m.columnNumber)
 	fmt.Println("ρ(i)  Matrix")
-	for j := range m.accessMatrix {
-		fmt.Printf("index %d || attribute: %s ||  %v\n", j, m.rhoRowToAttribute[j].String(), m.accessMatrix[j])
+	for i := range m.accessMatrix {
+		fmt.Printf("index %d || attribute: %s ||  ", i, m.rhoRowToAttribute[i].String())
+		for j := range m.accessMatrix[i] {
+			fmt.Printf(" %s ", (m.accessMatrix[i][j]).String())
+		}
+		fmt.Println()
 	}
 	fmt.Println("------------------------------------------------")
 	fmt.Println()
@@ -178,12 +185,12 @@ func (m *LewkoWatersLsssMatrix) Print() {
 //
 // 返回值：
 //   - bool: 如果是目标向量返回 true，否则返回 false
-func isTargetVector(v []int) bool {
-	if len(v) == 0 || v[0] != 1 {
+func isTargetVector(v []fr.Element) bool {
+	if len(v) == 0 || !v[0].IsOne() {
 		return false
 	}
 	for i := 1; i < len(v); i++ {
-		if v[i] != 0 {
+		if !v[i].IsZero() {
 			return false
 		}
 	}

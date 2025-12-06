@@ -17,7 +17,7 @@ type BinaryAccessTree struct {
 	Attribute fr.Element
 	Left      *BinaryAccessTree
 	Right     *BinaryAccessTree
-	Vector    []int
+	Vector    []fr.Element
 }
 
 func NewBinaryAccessTree(nodeType nodeType, attr fr.Element, left, right *BinaryAccessTree) *BinaryAccessTree {
@@ -26,13 +26,13 @@ func NewBinaryAccessTree(nodeType nodeType, attr fr.Element, left, right *Binary
 		Attribute: attr,
 		Left:      left,
 		Right:     right,
-		Vector:    []int{},
+		Vector:    []fr.Element{},
 	}
 }
 
 func (t *BinaryAccessTree) VectorPadZero(counter int) {
 	for i := len(t.Vector); i < counter; i++ {
-		t.Vector = append(t.Vector, 0)
+		t.Vector = append(t.Vector, fr.NewElement(0))
 	}
 }
 
@@ -44,7 +44,7 @@ func (t *BinaryAccessTree) Copy() *BinaryAccessTree {
 	newTree := &BinaryAccessTree{
 		Type:      t.Type,
 		Attribute: t.Attribute,
-		Vector:    make([]int, len(t.Vector)),
+		Vector:    make([]fr.Element, len(t.Vector)),
 	}
 	copy(newTree.Vector, t.Vector)
 
