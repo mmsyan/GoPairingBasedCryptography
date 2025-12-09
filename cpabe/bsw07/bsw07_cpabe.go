@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/mmsyan/GnarkPairingProject/access/tree"
+	"github.com/mmsyan/GnarkPairingProject/utils"
 	"math/big"
 )
 
@@ -28,18 +30,27 @@ type CPABEUserAttributes struct {
 }
 
 type CPABEUserSecretKey struct {
-	d       bn254.G2Affine
-	dj      map[fr.Element]bn254.G2Affine
-	djPrime map[fr.Element]bn254.G2Affine
+	attributes []fr.Element
+	d          bn254.G2Affine
+	dj         map[fr.Element]bn254.G2Affine
+	djPrime    map[fr.Element]bn254.G2Affine
 }
 
 type CPABEMessage struct {
 	Message bn254.GT
 }
 
-type CPABEAccessPolicy struct{}
+type CPABEAccessPolicy struct {
+	accessTree tree.AccessTreeNode
+}
 
-type CPABECiphertext struct{}
+type CPABECiphertext struct {
+	accessPolicy *CPABEAccessPolicy
+	cTilde       bn254.GT
+	c            bn254.G1Affine
+	cy           map[int]bn254.G1Affine
+	cyPrime      map[int]bn254.G1Affine
+}
 
 func (instance *CPABEInstance) SetUp() (*CPABEPublicParameters, *CPABEMasterSecretKey, error) {
 	_, _, g1, g2 := bn254.Generators()
@@ -101,16 +112,17 @@ func (instance *CPABEInstance) KeyGenerate(attr *CPABEUserAttributes, msk *CPABE
 			return nil, fmt.Errorf("error setting random: %v", err)
 		}
 		g2ExpR := new(bn254.G2Affine).ScalarMultiplicationBase(r.BigInt(new(big.Int)))
-		hj := HashBSw07(j)
+		hj := Hash2BSw07(j)
 		hjExpRj := new(bn254.G2Affine).ScalarMultiplication(&hj, rj.BigInt(new(big.Int)))
 		dj[j] = *new(bn254.G2Affine).Add(g2ExpR, hjExpRj)
 		djPrime[j] = *new(bn254.G2Affine).ScalarMultiplicationBase(rj.BigInt(new(big.Int)))
 	}
 
 	return &CPABEUserSecretKey{
-		d:       *d,
-		dj:      dj,
-		djPrime: djPrime,
+		attributes: attr.Attributes,
+		d:          *d,
+		dj:         dj,
+		djPrime:    djPrime,
 	}, nil
 }
 
@@ -119,14 +131,53 @@ func (instance *CPABEInstance) Encrypt(message *CPABEMessage, accessPolicy *CPAB
 	if err != nil {
 		return nil, fmt.Errorf("error setting random: %v", err)
 	}
+
+	// 🔧 修复1：生成叶子节点ID（必须在 ShareSecret 之前调用）
+	accessPolicy.accessTree.GenerateLeafID()
+
+	// 🔧 修复2：调用 ShareSecret 来分发秘密值到所有节点
+	accessPolicy.accessTree.ShareSecret(*s)
+
 	// e(g,g)^(alpha*s)
 	eG1G2ExpAlphaS := new(bn254.GT).Exp(pp.eG1G2ExpAlpha, s.BigInt(new(big.Int)))
 	cTilde := new(bn254.GT).Mul(eG1G2ExpAlphaS, &message.Message)
+	// c = h^s
 	c := new(bn254.G1Affine).ScalarMultiplication(&pp.h, s.BigInt(new(big.Int)))
+
+	leafNodes := accessPolicy.accessTree.GetLeafNodes()
+	cy := make(map[int]bn254.G1Affine)
+	cyPrime := make(map[int]bn254.G1Affine)
+	for _, n := range leafNodes {
+		qy0 := utils.ComputePolynomialValue(n.Poly, fr.NewElement(0))
+		cy[n.LeafId] = *new(bn254.G1Affine).ScalarMultiplicationBase(qy0.BigInt(new(big.Int)))
+		h_attr_y := Hash1BSw07(n.Attribute)
+		cyPrime[n.LeafId] = *new(bn254.G1Affine).ScalarMultiplication(&h_attr_y, qy0.BigInt(new(big.Int)))
+	}
+
+	return &CPABECiphertext{
+		accessPolicy: accessPolicy,
+		cTilde:       *cTilde,
+		c:            *c,
+		cy:           cy,
+		cyPrime:      cyPrime,
+	}, nil
 }
 
 func (instance *CPABEInstance) Decrypt(ciphertext *CPABECiphertext, usk *CPABEUserSecretKey) (*CPABEMessage, error) {
-}
+	attributes := usk.attributes
+	attributesMap := make(map[fr.Element]struct{}, len(attributes))
+	for _, j := range attributes {
+		attributesMap[j] = struct{}{}
+	}
+	A := ciphertext.accessPolicy.accessTree.DecryptNode(attributesMap, usk.dj, usk.djPrime, ciphertext.cy, ciphertext.cyPrime)
+	eCD, err := bn254.Pair([]bn254.G1Affine{ciphertext.c}, []bn254.G2Affine{usk.d})
+	if err != nil {
+		return nil, err
+	}
+	eCDDivA := new(bn254.GT).Div(&eCD, &A)
+	M := *new(bn254.GT).Div(&ciphertext.cTilde, eCDDivA)
+	return &CPABEMessage{
+		Message: M,
+	}, nil
 
-func (instance *CPABEInstance) Delegate(usk *CPABEUserSecretKey, subsetAttr *CPABEUserAttributes) (*CPABEUserSecretKey, error) {
 }
