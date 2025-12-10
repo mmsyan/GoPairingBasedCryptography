@@ -243,7 +243,7 @@ func (instance *SW05FIBEInstance) Encrypt(messageAttributes *SW05FIBEAttributes,
 	// 选择一个随机数 s <- Zq。
 	s, err := new(fr.Element).SetRandom()
 	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt Message")
+		return nil, fmt.Errorf("failed to encrypt MessageBytes")
 	}
 
 	// 计算 Y^s = (e(g1, g2)^y)^s。
@@ -309,7 +309,7 @@ func (instance *SW05FIBEInstance) Decrypt(userSecretKey *SW05FIBESecretKey, ciph
 		// 计算配对 e(D_i, E_i) = e(g1^(q(i)/t_i), g2^(t_i * s)) = e(g1, g2)^(q(i) * s)。
 		eDiEi, err := bn254.Pair([]bn254.G1Affine{di}, []bn254.G2Affine{ei})
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt Message")
+			return nil, fmt.Errorf("failed to decrypt MessageBytes")
 		}
 
 		// 计算拉格朗日基多项式 Δ_{0, S}(i) = ∏_{j ∈ S, j ≠ i} (0 - j) / (i - j)。

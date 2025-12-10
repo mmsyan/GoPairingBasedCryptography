@@ -185,7 +185,7 @@ func (instance *BB04IBEInstance) Encrypt(identity *BB04IBEIdentity, message *BB0
 	// 得到 K = e(g1, g2)^{alpha*t}
 	eG1AlphaG2ExpT := new(bn254.GT).Exp(eG1AlphaG2, t.BigInt(new(big.Int)))
 
-	// 密文 a (密钥封装) = Message * K
+	// 密文 a (密钥封装) = MessageBytes * K
 	a := *new(bn254.GT).Mul(eG1AlphaG2ExpT, &message.Message)
 
 	// 密文 b = g1^t

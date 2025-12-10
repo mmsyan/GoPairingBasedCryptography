@@ -39,3 +39,11 @@ func ToG2(str string) bn254.G2Affine {
 	}
 	return result
 }
+
+func BytesToG2(b []byte) bn254.G2Affine {
+	result, err := bn254.HashToG2(b, []byte("Hash Bytes To Element In G2"))
+	if err != nil {
+		panic(fmt.Errorf("failed to hash string to g2: %v", err))
+	}
+	return result
+}
