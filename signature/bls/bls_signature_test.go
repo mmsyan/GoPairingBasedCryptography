@@ -19,7 +19,7 @@ func TestBLSFlow(t *testing.T) {
 	}
 
 	// 3. 签名
-	message := []byte("This is a test message for bls signature.")
+	message := []byte("This is a test message for signature signature.")
 	signature, err := Sign(*params, keyPair.PrivateKey, message)
 	if err != nil {
 		t.Fatalf("Sign failed: %v", err)

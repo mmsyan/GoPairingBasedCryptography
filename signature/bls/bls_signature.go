@@ -29,7 +29,7 @@ func SetUp() (*BLSParams, error) {
 	_, _, g1, _ := bn254.Generators()
 	return &BLSParams{
 		G1Generator: g1,
-		DST:         []byte("bls Signature"),
+		DST:         []byte("signature Signature"),
 	}, nil
 }
 
@@ -59,7 +59,7 @@ func Sign(blsParams BLSParams, privateKey *big.Int, message []byte) (*BLSSignatu
 	// compute h(m)^x
 	hmx.ScalarMultiplication(&hm, privateKey)
 
-	// bls signature: (m, h(m)^x)
+	// signature signature: (m, h(m)^x)
 	return &BLSSignature{
 		Message:   message,
 		Signature: hmx,
