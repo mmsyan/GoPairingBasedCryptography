@@ -108,7 +108,7 @@ func KeyGenerate(grantedAttribute *LW11DABEAttributes, userGid string, attribute
 
 func Encrypt(message *LW11DABEMessage, matrix *lsss.LewkoWatersLsssMatrix, gp *LW11DABEGlobalParams, pk *LW11DABEAttributePK) (*LW11DABECiphertext, error) {
 	var err error
-	n := matrix.ColumnNumber()
+	n := matrix.RowNumber()
 	c1xSlice := make([]bn254.GT, n)
 	c2xSlice := make([]bn254.G2Affine, n)
 	c3xSlice := make([]bn254.G2Affine, n)
@@ -177,7 +177,13 @@ func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11D
 	hGid := hash.ToG1(userKey.UserGid)
 	xSlice, wSlice := ciphertext.matrix.FindLinearCombinationWeight(userKey.UserAttributes.attributes)
 	denominator := new(bn254.GT).SetOne()
-	for _, x := range xSlice {
+
+	weightsMap := make(map[int]fr.Element)
+	for i := 0; i < len(xSlice); i++ {
+		weightsMap[xSlice[i]] = wSlice[i]
+	}
+
+	for x, w := range weightsMap {
 		c1x := ciphertext.c1x[x]
 		eHGidC3x, err := bn254.Pair([]bn254.G1Affine{hGid}, []bn254.G2Affine{ciphertext.c3x[x]})
 		if err != nil {
@@ -192,7 +198,7 @@ func Decrypt(ciphertext *LW11DABECiphertext, userKey *LW11DABEUserKey, gp *LW11D
 		denominator.Mul(denominator, &eHGidC3x)
 		denominator.Div(denominator, &eKRhoC2x)
 
-		denominator.Exp(*denominator, wSlice[x].BigInt(new(big.Int)))
+		denominator.Exp(*denominator, w.BigInt(new(big.Int)))
 	}
 
 	message := *new(bn254.GT).Div(&ciphertext.c0, denominator)
