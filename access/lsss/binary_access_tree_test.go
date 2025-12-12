@@ -18,3 +18,9 @@ func TestNewBinaryAccessTree(t *testing.T) {
 	trees[0].VectorPadZero(5)
 	fmt.Printf("\nTree 0 vector after padding: %v\n", trees[0].Vector)
 }
+
+func TestBinaryAccessTree_Print(t *testing.T) {
+	tree15, formulas := GetExample15()
+	fmt.Println("Boolean Formulas:", formulas)
+	tree15.Print()
+}
