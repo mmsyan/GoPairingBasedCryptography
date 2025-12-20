@@ -53,11 +53,22 @@ func NewLSSSMatrixFromBinaryTree(root *BinaryAccessTree) *LewkoWatersLsssMatrix 
 			node.Left.Vector = copyVector(node.Vector)
 			node.Right.Vector = copyVector(node.Vector)
 		} else if node.Type == NodeTypeAnd {
+			// we pad v with 0’s at the end (if necessary) to make it of length c.
+			node.VectorPadZero(counter)
+
+			// Then we label one of its children with the vector v|1 (where|denotes concatenation)
+			// and the other with the vector (0, . . . , 0)|− 1, where (0, . . . , 0) denotes the zero vector of length c.
+			// Note that these two vectors sum to v|0.
+
+			// node left: 0_counter | -1
 			node.Left.VectorPadZero(counter)
 			node.Left.Vector = append(node.Left.Vector, minusOneElement)
+
+			// node right: v | 1
 			node.Right.Vector = copyVector(node.Vector)
-			node.Right.VectorPadZero(counter)
 			node.Right.Vector = append(node.Right.Vector, oneElement)
+
+			// // We now increment the value of c by 1. counter++
 			counter++
 		} else if node.Type == NodeTypeLeave {
 			matrix = append(matrix, copyVector(node.Vector))
@@ -179,6 +190,8 @@ func (m *LewkoWatersLsssMatrix) FindLinearCombinationWeight(attributes []fr.Elem
 			satisfiedRows = append(satisfiedRows, i)
 		}
 	}
+
+	fmt.Println("satisfiedRows: ", satisfiedRows)
 
 	// 如果没有满足的行，返回nil
 	if len(satisfiedRows) == 0 {

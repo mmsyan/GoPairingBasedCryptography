@@ -348,10 +348,12 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight14(t *testing.T) {
 	exampleTree, formula := GetExample14()
 	m := NewLSSSMatrixFromBinaryTree(exampleTree)
 	fmt.Printf("Access formula: %s\n", formula)
-
+	exampleTree.Print()
 	AElement := hash.ToField("A")
+	BElement := hash.ToField("B")
 	CElement := hash.ToField("C")
-	attributes := []fr.Element{AElement, CElement}
+	DElement := hash.ToField("D")
+	attributes := []fr.Element{AElement, BElement, CElement, DElement}
 
 	m.Print()
 
