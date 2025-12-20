@@ -445,6 +445,7 @@ func getTietaAttributes() (*LW11DABEAttributes, *lsss2.BinaryAccessTree) {
 		),
 		lsss2.And(
 			lsss2.Leaf(attr16),
+			lsss2.Leaf(attr11),
 		),
 	)
 

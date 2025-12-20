@@ -265,7 +265,6 @@ func (m *LewkoWatersLsssMatrix) Print() {
 //   - []fr.Element: 长度为m的权重数组
 //   - 如果无解返回nil
 func findWeightsGaussian(vectors [][]fr.Element, n int) []fr.Element {
-
 	if len(vectors) == 0 {
 		return nil
 	}
@@ -273,14 +272,12 @@ func findWeightsGaussian(vectors [][]fr.Element, n int) []fr.Element {
 	m := len(vectors) // 向量个数（行数）
 
 	// 构造增广矩阵 [A^T | b]
-	// A^T 是 n×m 矩阵，其中 A^T[i][j] = vectors[j][i]
 	augmented := make([][]fr.Element, n)
 	for i := 0; i < n; i++ {
 		augmented[i] = make([]fr.Element, m+1)
 		for j := 0; j < m; j++ {
 			augmented[i][j] = vectors[j][i]
 		}
-		// 目标向量 b = (1, 0, 0, ..., 0)
 		if i == 0 {
 			augmented[i][m].SetOne()
 		} else {
@@ -288,12 +285,19 @@ func findWeightsGaussian(vectors [][]fr.Element, n int) []fr.Element {
 		}
 	}
 
+	// 记录每一行的主元列位置
+	pivotCol := make([]int, n)
+	for i := range pivotCol {
+		pivotCol[i] = -1
+	}
+
 	// 高斯消元法 - 前向消元
-	for pivot := 0; pivot < min(n, m); pivot++ {
-		// 部分主元选取：找到该列第一个非零元素
+	currentRow := 0
+	for col := 0; col < m && currentRow < n; col++ {
+		// 找到该列第一个非零元素
 		maxRow := -1
-		for row := pivot; row < n; row++ {
-			if !augmented[row][pivot].IsZero() {
+		for row := currentRow; row < n; row++ {
+			if !augmented[row][col].IsZero() {
 				maxRow = row
 				break
 			}
@@ -303,45 +307,40 @@ func findWeightsGaussian(vectors [][]fr.Element, n int) []fr.Element {
 			continue // 该列全为0，跳过
 		}
 
+		// 记录主元位置
+		pivotCol[currentRow] = col
+
 		// 交换行
-		if maxRow != pivot {
-			augmented[pivot], augmented[maxRow] = augmented[maxRow], augmented[pivot]
+		if maxRow != currentRow {
+			augmented[currentRow], augmented[maxRow] = augmented[maxRow], augmented[currentRow]
 		}
 
 		// 计算主元的逆元
 		var pivotInv fr.Element
-		pivotInv.Inverse(&augmented[pivot][pivot])
+		pivotInv.Inverse(&augmented[currentRow][col])
 
-		// 消元：将pivot列下方的元素变为0
-		for row := pivot + 1; row < n; row++ {
-			if augmented[row][pivot].IsZero() {
+		// 消元：将该列下方的元素变为0
+		for row := currentRow + 1; row < n; row++ {
+			if augmented[row][col].IsZero() {
 				continue
 			}
 
-			// factor = augmented[row][pivot] / augmented[pivot][pivot]
 			var factor fr.Element
-			factor.Mul(&augmented[row][pivot], &pivotInv)
+			factor.Mul(&augmented[row][col], &pivotInv)
 
-			// 更新该行的所有元素
-			for col := pivot; col <= m; col++ {
-				// augmented[row][col] -= factor * augmented[pivot][col]
+			for c := col; c <= m; c++ {
 				var temp fr.Element
-				temp.Mul(&factor, &augmented[pivot][col])
-				augmented[row][col].Sub(&augmented[row][col], &temp)
+				temp.Mul(&factor, &augmented[currentRow][c])
+				augmented[row][c].Sub(&augmented[row][c], &temp)
 			}
 		}
+
+		currentRow++
 	}
 
-	// 检查是否有矛盾方程（左侧全0但右侧非0）
-	for i := 0; i < n; i++ {
-		allZero := true
-		for j := 0; j < m; j++ {
-			if !augmented[i][j].IsZero() {
-				allZero = false
-				break
-			}
-		}
-		if allZero && !augmented[i][m].IsZero() {
+	// 检查是否有矛盾方程
+	for i := currentRow; i < n; i++ {
+		if !augmented[i][m].IsZero() {
 			return nil // 无解
 		}
 	}
@@ -349,59 +348,28 @@ func findWeightsGaussian(vectors [][]fr.Element, n int) []fr.Element {
 	// 回代求解
 	w := make([]fr.Element, m)
 	for i := 0; i < m; i++ {
-		w[i].SetZero()
+		w[i].SetZero() // 自由变量默认设为0
 	}
 
-	// 从下往上回代
-	for i := min(n, m) - 1; i >= 0; i-- {
-		if augmented[i][i].IsZero() {
-			// 寻找该行是否有其他非零元素
-			hasNonZero := false
-			for j := i; j < m; j++ {
-				if !augmented[i][j].IsZero() {
-					hasNonZero = true
-					break
-				}
-			}
-			if !hasNonZero {
-				continue
-			}
-			// 如果有非零元素但对角线为0，说明需要特殊处理
-			// 这种情况在欠定系统中可能出现，我们寻找一个特解
-			for j := i; j < m; j++ {
-				if !augmented[i][j].IsZero() {
-					// 设置这个变量为 (右侧值 / 系数)
-					var inv fr.Element
-					inv.Inverse(&augmented[i][j])
-
-					sum := augmented[i][m]
-					for k := j + 1; k < m; k++ {
-						var temp fr.Element
-						temp.Mul(&augmented[i][k], &w[k])
-						sum.Sub(&sum, &temp)
-					}
-
-					w[j].Mul(&sum, &inv)
-					break
-				}
-			}
+	// 从下往上回代，只处理有主元的行
+	for i := currentRow - 1; i >= 0; i-- {
+		col := pivotCol[i]
+		if col == -1 {
 			continue
 		}
 
-		// sum = augmented[i][m]
+		// sum = augmented[i][m] - Σ(augmented[i][j] * w[j]) for j > col
 		sum := augmented[i][m]
-
-		// sum -= Σ(augmented[i][j] * w[j]) for j > i
-		for j := i + 1; j < m; j++ {
+		for j := col + 1; j < m; j++ {
 			var temp fr.Element
 			temp.Mul(&augmented[i][j], &w[j])
 			sum.Sub(&sum, &temp)
 		}
 
-		// w[i] = sum / augmented[i][i]
+		// w[col] = sum / augmented[i][col]
 		var diagInv fr.Element
-		diagInv.Inverse(&augmented[i][i])
-		w[i].Mul(&sum, &diagInv)
+		diagInv.Inverse(&augmented[i][col])
+		w[col].Mul(&sum, &diagInv)
 	}
 
 	// 验证解的正确性
@@ -415,7 +383,6 @@ func findWeightsGaussian(vectors [][]fr.Element, n int) []fr.Element {
 		}
 	}
 
-	// 检查是否等于 (1, 0, 0, ..., 0)
 	if !result[0].IsOne() {
 		return nil
 	}

@@ -365,6 +365,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeight14(t *testing.T) {
 	}
 }
 
+// <Efficient Generation of Linear Secret Sharing Scheme Matrices from Threshold Access Trees> Page 7
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial1(t *testing.T) {
 	m := [][]fr.Element{
 		{fr.NewElement(1), fr.NewElement(1)},
@@ -394,6 +395,7 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial1(t *testing.T)
 	}
 }
 
+// <Efficient Generation of Linear Secret Sharing Scheme Matrices from Threshold Access Trees> Page 3
 func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial2(t *testing.T) {
 	m := [][]fr.Element{
 		{fr.NewElement(1), fr.NewElement(1), fr.NewElement(0)},
@@ -430,5 +432,78 @@ func TestLewkoWatersLsssMatrix_FindLinearCombinationWeightSpecial2(t *testing.T)
 		}
 	} else {
 		fmt.Println("rows and wis are nil")
+	}
+}
+
+func TestNewLSSSMatrixFromBinaryTree(t *testing.T) {
+
+	// === 铁塔基础属性（10个）===
+	attr1 := hash.ToField("TowerID:SH-2025-0731")
+	attr2 := hash.ToField("Province:Shanghai")
+	attr3 := hash.ToField("City:Pudong")
+	attr4 := hash.ToField("District:Xinqu")
+	attr5 := hash.ToField("TowerType:5G_BaseStation")
+	attr6 := hash.ToField("Height:45m")
+	attr7 := hash.ToField("Owner:ChinaMobile")
+	attr8 := hash.ToField("VoltageLevel:220kV")
+	attr9 := hash.ToField("BuildYear:2023")
+	attr10 := hash.ToField("MaintenanceCompany:Huaxin")
+
+	// === 无人机权限属性（10个）===
+	attr11 := hash.ToField("DroneID:DJI-M300-2025X")
+	attr12 := hash.ToField("DroneLicense:SH-UAV-951")
+	attr13 := hash.ToField("Pilot:ZhangSan")
+	attr14 := hash.ToField("FlightPermission:Level_A")
+	attr15 := hash.ToField("MaxAltitude:120m")
+	attr16 := hash.ToField("Camera:Zenmuse_H20T")
+	attr17 := hash.ToField("MissionType:TowerInspection")
+	attr18 := hash.ToField("FlightDate:2025-12-11")
+	attr19 := hash.ToField("TimeWindow:08:00-18:00")
+	attr20 := hash.ToField("Company:PowerGrid_DroneTeam")
+
+	policyTree := And(
+		//And(
+		//	Leaf(attr3),
+		//	Leaf(attr4),
+		//	Leaf(attr3),
+		//	Leaf(attr4),
+		//	Leaf(attr5),
+		//	Leaf(attr6),
+		//	And(
+		//		Leaf(attr17),
+		//		Leaf(attr18),
+		//	),
+		//),
+		//Leaf(attr9),
+		And(
+			Leaf(attr1),
+			Leaf(attr2),
+			Or(
+				Leaf(attr3),
+				Leaf(attr5),
+			),
+		),
+		And(
+			Leaf(attr16),
+			Leaf(attr11),
+		),
+	)
+	m := NewLSSSMatrixFromBinaryTree(policyTree)
+
+	attributes := []fr.Element{attr1, attr2, attr3, attr4, attr5, attr6, attr7, attr8, attr9, attr10,
+		attr11, attr12, attr13, attr14, attr15, attr16, attr17, attr18, attr19, attr20}
+
+	m.Print()
+
+	for _, a := range attributes {
+		fmt.Printf("attributes: %s", a.String())
+		fmt.Println()
+	}
+	rows, wis := m.FindLinearCombinationWeight(attributes)
+	if rows == nil || wis == nil {
+		t.Fatal("rows and wis shouldn't be nil")
+	}
+	for i := range rows {
+		fmt.Printf("row: %d || wi: %s \n", rows[i], wis[i].String())
 	}
 }
