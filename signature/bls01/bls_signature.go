@@ -8,6 +8,10 @@ import (
 	"math/big"
 )
 
+type PublicParams struct {
+	G1 bn254.G1Affine
+}
+
 type PrivateKey struct {
 	PrivateKey fr.Element
 }
@@ -21,8 +25,14 @@ type Message struct {
 }
 
 type Signature struct {
-	MessageBytes   []byte
 	SigmaSignature bn254.G2Affine
+}
+
+func ParamsGenerate() (*PublicParams, error) {
+	_, _, g1, _ := bn254.Generators()
+	return &PublicParams{
+		G1: g1,
+	}, nil
 }
 
 func KeyGenerate() (*PublicKey, *PrivateKey, error) {
@@ -54,15 +64,14 @@ func Sign(sk *PrivateKey, m *Message) (*Signature, error) {
 
 	// signature format: (m, h(m)^x)
 	return &Signature{
-		MessageBytes:   m.MessageBytes,
 		SigmaSignature: hmx,
 	}, nil
 }
 
-func Verify(pk *PublicKey, sigma *Signature) (bool, error) {
+func Verify(pk *PublicKey, m *Message, sigma *Signature, pp *PublicParams) (bool, error) {
 	// compute h(m): m to point
-	hm := hash.BytesToG2(sigma.MessageBytes)
-	_, _, g1, _ := bn254.Generators()
+	hm := hash.BytesToG2(m.MessageBytes)
+
 	// -sigma = inverse of sigma (bn254.G2 is add-group)
 	inverseSigma := *new(bn254.G2Affine).Neg(&sigma.SigmaSignature)
 
@@ -70,7 +79,7 @@ func Verify(pk *PublicKey, sigma *Signature) (bool, error) {
 	// e(pk, hm) =?= e(g1, sigma)
 	// e(pk, hm) * e(g1, inverseSigma) =?= 1
 	isValid, err := bn254.PairingCheck(
-		[]bn254.G1Affine{pk.PublicKey, g1},
+		[]bn254.G1Affine{pk.PublicKey, pp.G1},
 		[]bn254.G2Affine{hm, inverseSigma},
 	)
 	if err != nil {

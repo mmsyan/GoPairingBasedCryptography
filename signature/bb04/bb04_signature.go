@@ -29,6 +29,18 @@ import (
 	"math/big"
 )
 
+// PublicParams 表示 BB04 签名方案的系统公共参数。
+// 这些参数在系统初始化时生成一次,可以被所有用户共享使用。
+//
+// 公共参数包含基础生成元的配对值,用于加速签名验证过程。
+// 通过预计算 e(G1, G2),验证时只需要计算一次配对运算。
+type PublicParams struct {
+	// eG1G2 是基础生成元 G1 和 G2 的配对值,即 e(G1, G2)。
+	// 这是 GT 群中的一个元素,用于签名验证。
+	// 预计算此值可以显著提高验证效率。
+	eG1G2 bn254.GT
+}
+
 // PrivateKey 表示 BB04 签名方案中的签名密钥(私钥)。
 // 它由两个随机域元素(alpha 和 beta)组成,必须严格保密。
 // 该方案的安全性依赖于保持这些值的机密性。
@@ -85,6 +97,53 @@ type Signature struct {
 	// alpha 和 beta 是私钥分量,
 	// r 是随机值 R,m 是消息。
 	Sigma bn254.G1Affine
+}
+
+// ParamsGenerate 生成 BB04 签名方案的系统公共参数。
+//
+// 该函数计算基础生成元 G1 和 G2 的配对值 e(G1, G2),
+// 并将其作为公共参数。这个预计算的配对值可以被所有用户共享,
+// 用于加速签名验证过程。
+//
+// 算法流程:
+//  1. 获取 BN254 曲线的标准生成元 G1 和 G2
+//  2. 计算配对 e(G1, G2) 得到 GT 群中的元素
+//  3. 将配对结果作为公共参数返回
+//
+// 返回值:
+//   - *PublicParams: 生成的公共参数,包含 e(G1, G2)
+//   - error: 如果配对计算失败则返回错误
+//
+// 性能说明:
+//   - 该函数通常在系统初始化时调用一次
+//   - 配对运算是开销较大的操作,但只需要执行一次
+//   - 生成的公共参数可以被持久化存储,避免重复计算
+//
+// 注意事项:
+//   - 公共参数对所有用户是相同的
+//   - 参数可以公开发布,不包含任何秘密信息
+//   - 验证者必须使用正确的公共参数,否则验证会失败
+//
+// 示例:
+//
+//	pp, err := ParamsGenerate()
+//	if err != nil {
+//	    return fmt.Errorf("生成公共参数失败: %w", err)
+//	}
+//	// pp 可以被所有用户共享使用
+func ParamsGenerate() (*PublicParams, error) {
+	// 获取 BN254 曲线的标准生成元
+	_, _, g1, g2 := bn254.Generators()
+
+	// 计算基础配对 e(G1, G2)
+	eG1G2, err := bn254.Pair([]bn254.G1Affine{g1}, []bn254.G2Affine{g2})
+	if err != nil {
+		return nil, err
+	}
+
+	return &PublicParams{
+		eG1G2: eG1G2,
+	}, nil
 }
 
 // KeyGenerate 为 BB04 签名方案生成新的公钥/私钥对。
@@ -186,8 +245,6 @@ func Sign(sk *PrivateKey, m *Message) (*Signature, error) {
 //
 //	e(sigma, Y + r*Z + m*G2) = e(G1, G2)
 //
-// 其中 e 是 BN254 上的双线性配对函数,为了效率使用配对乘积检查来验证方程。
-//
 // 参数:
 //   - pk: 用于验证的公钥(不能为 nil)
 //   - m: 被声称已签名的消息(不能为 nil)
@@ -205,7 +262,7 @@ func Sign(sk *PrivateKey, m *Message) (*Signature, error) {
 //
 // 示例:
 //
-//	valid, err := Verify(publicKey, msg, sig)
+//	valid, err := Verify(publicKey, msg, sig, pp)
 //	if err != nil {
 //	    return fmt.Errorf("验证失败: %w", err)
 //	}
@@ -213,26 +270,28 @@ func Sign(sk *PrivateKey, m *Message) (*Signature, error) {
 //	    return fmt.Errorf("无效签名")
 //	}
 //	// 签名有效
-func Verify(pk *PublicKey, m *Message, sign *Signature) (bool, error) {
-	_, _, g1, g2 := bn254.Generators()
-
-	// 计算 -sigma 用于配对检查
-	negSigma := new(bn254.G1Affine).Neg(&sign.Sigma)
-
+func Verify(pk *PublicKey, m *Message, sign *Signature, pp *PublicParams) (bool, error) {
 	// 计算 Y + r*Z + m*G2
 	rMulZ := new(bn254.G2Affine).ScalarMultiplication(&pk.Z, sign.R.BigInt(new(big.Int)))
 	g2ExpM := new(bn254.G2Affine).ScalarMultiplicationBase(m.MessageFr.BigInt(new(big.Int)))
-	temp := new(bn254.G2Affine).Add(rMulZ, g2ExpM)
-	temp.Add(&pk.Y, temp)
+	rMulZAddg2ExpM := new(bn254.G2Affine).Add(rMulZ, g2ExpM)
+	temp := *new(bn254.G2Affine).Add(&pk.Y, rMulZAddg2ExpM)
 
-	// 检查 e(-sigma, Y + r*Z + m*G2) * e(G1, G2) = 1
+	// 计算 e(sigma, Y + r*Z + m*G2)
 	// 这等价于检查 e(sigma, Y + r*Z + m*G2) = e(G1, G2)
-	isValid, err := bn254.PairingCheck(
-		[]bn254.G1Affine{*negSigma, g1},
-		[]bn254.G2Affine{*temp, g2},
+	pairLeft, err := bn254.Pair(
+		[]bn254.G1Affine{sign.Sigma},
+		[]bn254.G2Affine{temp},
 	)
 	if err != nil {
 		return false, err
 	}
-	return isValid, nil
+
+	// 检查 e(sigma, Y + r*Z + m*G2) = e(G1, G2)
+	// 如果相等,则签名有效
+	if pairLeft.Equal(&pp.eG1G2) {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("invalid signature")
+	}
 }

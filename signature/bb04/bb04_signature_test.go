@@ -66,6 +66,11 @@ func TestKeyGenerateMultiple(t *testing.T) {
 
 // TestSignBasic tests basic signing functionality
 func TestSignBasic(t *testing.T) {
+	pp, err := ParamsGenerate()
+	if err != nil {
+		t.Fatalf("ParamsGenerate failed: %v", err)
+	}
+
 	pk, sk, err := KeyGenerate()
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -95,7 +100,7 @@ func TestSignBasic(t *testing.T) {
 	}
 
 	// Verify the signature
-	valid, err := Verify(pk, msg, sig)
+	valid, err := Verify(pk, msg, sig, pp)
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}
@@ -107,6 +112,11 @@ func TestSignBasic(t *testing.T) {
 
 // TestSignVerifyZeroMessage tests signing and verifying a zero message
 func TestSignVerifyZeroMessage(t *testing.T) {
+	pp, err := ParamsGenerate()
+	if err != nil {
+		t.Fatalf("ParamsGenerate failed: %v", err)
+	}
+
 	pk, sk, err := KeyGenerate()
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -120,7 +130,7 @@ func TestSignVerifyZeroMessage(t *testing.T) {
 		t.Fatalf("Sign failed: %v", err)
 	}
 
-	valid, err := Verify(pk, msg, sig)
+	valid, err := Verify(pk, msg, sig, pp)
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}
@@ -132,6 +142,11 @@ func TestSignVerifyZeroMessage(t *testing.T) {
 
 // TestSignVerifyLargeMessage tests signing with a large message value
 func TestSignVerifyLargeMessage(t *testing.T) {
+	pp, err := ParamsGenerate()
+	if err != nil {
+		t.Fatalf("ParamsGenerate failed: %v", err)
+	}
+
 	pk, sk, err := KeyGenerate()
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -146,7 +161,7 @@ func TestSignVerifyLargeMessage(t *testing.T) {
 		t.Fatalf("Sign failed: %v", err)
 	}
 
-	valid, err := Verify(pk, msg, sig)
+	valid, err := Verify(pk, msg, sig, pp)
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}
@@ -158,6 +173,11 @@ func TestSignVerifyLargeMessage(t *testing.T) {
 
 // TestVerifyWrongMessage tests that verification fails with wrong message
 func TestVerifyWrongMessage(t *testing.T) {
+	pp, err := ParamsGenerate()
+	if err != nil {
+		t.Fatalf("ParamsGenerate failed: %v", err)
+	}
+
 	pk, sk, err := KeyGenerate()
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -175,11 +195,7 @@ func TestVerifyWrongMessage(t *testing.T) {
 	msg2 := &Message{}
 	msg2.MessageFr.SetUint64(43)
 
-	valid, err := Verify(pk, msg2, sig)
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
-
+	valid, err := Verify(pk, msg2, sig, pp)
 	if valid {
 		t.Error("Signature verified with wrong message")
 	}
@@ -187,6 +203,11 @@ func TestVerifyWrongMessage(t *testing.T) {
 
 // TestVerifyWrongKey tests that verification fails with wrong public key
 func TestVerifyWrongKey(t *testing.T) {
+	pp, err := ParamsGenerate()
+	if err != nil {
+		t.Fatalf("ParamsGenerate failed: %v", err)
+	}
+
 	pk1, sk1, err := KeyGenerate()
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -206,7 +227,7 @@ func TestVerifyWrongKey(t *testing.T) {
 	}
 
 	// Verify with correct key should succeed
-	valid, err := Verify(pk1, msg, sig)
+	valid, err := Verify(pk1, msg, sig, pp)
 	if err != nil {
 		t.Fatalf("Verify failed: %v", err)
 	}
@@ -215,10 +236,7 @@ func TestVerifyWrongKey(t *testing.T) {
 	}
 
 	// Verify with wrong key should fail
-	valid, err = Verify(pk2, msg, sig)
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
+	valid, err = Verify(pk2, msg, sig, pp)
 	if valid {
 		t.Error("Signature verified with wrong public key")
 	}
@@ -256,6 +274,10 @@ func TestMultipleSignatures(t *testing.T) {
 
 // TestSignVerifyMultipleMessages tests signing and verifying multiple different messages
 func TestSignVerifyMultipleMessages(t *testing.T) {
+	pp, err := ParamsGenerate()
+	if err != nil {
+		t.Fatalf("ParamsGenerate failed: %v", err)
+	}
 	pk, sk, err := KeyGenerate()
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -272,7 +294,7 @@ func TestSignVerifyMultipleMessages(t *testing.T) {
 			t.Fatalf("Sign failed for message %d: %v", msgVal, err)
 		}
 
-		valid, err := Verify(pk, msg, sig)
+		valid, err := Verify(pk, msg, sig, pp)
 		if err != nil {
 			t.Fatalf("Verify failed for message %d: %v", msgVal, err)
 		}
@@ -285,6 +307,10 @@ func TestSignVerifyMultipleMessages(t *testing.T) {
 
 // TestModifiedSignature tests that verification fails with modified signature
 func TestModifiedSignature(t *testing.T) {
+	pp, err := ParamsGenerate()
+	if err != nil {
+		t.Fatalf("ParamsGenerate failed: %v", err)
+	}
 	pk, sk, err := KeyGenerate()
 	if err != nil {
 		t.Fatalf("KeyGenerate failed: %v", err)
@@ -305,10 +331,10 @@ func TestModifiedSignature(t *testing.T) {
 	}
 	modifiedSig.R.Add(&modifiedSig.R, new(fr.Element).SetOne())
 
-	valid, err := Verify(pk, msg, modifiedSig)
-	if err != nil {
-		t.Fatalf("Verify failed: %v", err)
-	}
+	valid, err := Verify(pk, msg, modifiedSig, pp)
+	//if err != nil {
+	//	t.Fatalf("Verify failed: %v", err)
+	//}
 
 	if valid {
 		t.Error("Modified signature passed verification")
@@ -336,6 +362,7 @@ func BenchmarkSign(b *testing.B) {
 
 // BenchmarkVerify benchmarks signature verification
 func BenchmarkVerify(b *testing.B) {
+	pp, _ := ParamsGenerate()
 	pk, sk, _ := KeyGenerate()
 	msg := &Message{}
 	msg.MessageFr.SetUint64(42)
@@ -343,6 +370,6 @@ func BenchmarkVerify(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = Verify(pk, msg, sig)
+		_, _ = Verify(pk, msg, sig, pp)
 	}
 }
