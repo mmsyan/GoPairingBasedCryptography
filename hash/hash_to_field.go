@@ -37,3 +37,12 @@ func ToField(str string) fr.Element {
 	result.SetBytes(hashBytes)
 	return result
 }
+
+func BytesToField(data []byte) fr.Element {
+	sha256 := sha256.New()
+	sha256.Write(data)
+	hashBytes := sha256.Sum(nil)
+	var result fr.Element
+	result.SetBytes(hashBytes)
+	return result
+}
