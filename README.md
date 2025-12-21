@@ -5,7 +5,12 @@ We implement some pairing-based crypto algorithms.
 
 pairing-library: https://github.com/Consensys/gnark
 
-## bls signature
+## Digital Signature
+| Scheme Abbr.      | Paper Title                                                                 | Paper Link | Core Chapter                              | Code Repository                                                                                           | Security Assumption         |
+|:------------------|:----------------------------------------------------------------------------| :--- |:------------------------------------------|:----------------------------------------------------------------------------------------------------------|:----------------------------|
+| **BLS Signature** | *Short Signatures from the Weil Pairing*                                    | [Link](https://link.springer.com/chapter/10.1007/3-540-45682-1_30) | §2.2 The GDH Signature Scheme             | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/bf01_ibe/bls01/bls_signature.go) | Random Oracle Model         |
+| **ZSS Signature** | *An Efficient Signature Scheme from Bilinear Pairings and Its Applications* | [Link](https://link.springer.com/chapter/10.1007/978-3-540-24632-9_20) | §3.1 The Basic Signature Scheme           | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/zss04/zss04_signature.go)        | Random Oracle Model         |
+| **BB Signature**  | *Short Signatures Without Random Oracles*                                   | [Link](https://link.springer.com/chapter/10.1007/978-3-540-24676-3_4) | §3 Short Signatures Without Random Oracles| [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/bb04/bb04_signature.go)          | Standard Model |
 
 ## Identity Based Encryption Implementation
 | Scheme Abbr. | Paper Title | Paper Link | Core Chapter | Code Repository                                                                                          | Security Assumption               |
