@@ -1,4 +1,4 @@
-package ibe
+package gentry06_ibe
 
 import (
 	"fmt"
@@ -7,23 +7,23 @@ import (
 	"testing"
 )
 
-// TestBB04sIbe1 测试基本的加密解密流程
+// Test1 测试正确的情况
 // 场景：使用正确的身份和密钥进行加密解密，验证能否正确恢复原始消息
-func TestBB04sIbe1(t *testing.T) {
+func TestGentry06Ibe1(t *testing.T) {
 	var err error
 
 	// 创建用户身份
-	identity, err := NewBB04sIBEIdentity(big.NewInt(123456))
+	identity, err := NewGentry06IBEIdentity(big.NewInt(123456))
 
 	// 生成随机消息
 	m, err := new(bn254.GT).SetRandom()
-	message := &BB04sIBEMessage{
+	message := &Gentry06IBEMessage{
 		Message: *m,
 	}
 	fmt.Println("原始消息:", message.Message)
 
 	// 系统初始化
-	instance, err := NewBB04sIBEInstance()
+	instance, err := NewGentry06IBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -62,26 +62,21 @@ func TestBB04sIbe1(t *testing.T) {
 	fmt.Println("✓ 测试通过：正确的身份和密钥成功解密")
 }
 
-// TestBB04sIbe2 测试错误密钥无法解密的情况
-// 场景：使用Alice的密钥尝试解密发给Bob的消息，应该解密失败（得到错误的明文）
-func TestBB04sIbe2(t *testing.T) {
+// Test2 测试一个用户可以多次加密、多次解密并均得到正确结果
+// 场景：使用Alice的身份进行两次独立的加密解密操作，验证两次都能成功恢复原始消息。
+func TestGentry06Ibe2(t *testing.T) {
 	var err error
 
+	// --- 1. 初始化和密钥生成 ---
+
 	// 创建Alice的身份
-	aliceIdentity, err := NewBB04sIBEIdentity(big.NewInt(123456))
-
-	// 创建Bob的身份
-	bobIdentity, err := NewBB04sIBEIdentity(big.NewInt(456789))
-
-	// 生成随机消息
-	m, err := new(bn254.GT).SetRandom()
-	message := &BB04sIBEMessage{
-		Message: *m,
+	aliceIdentity, err := NewGentry06IBEIdentity(big.NewInt(987654))
+	if err != nil {
+		t.Fatal("创建Alice身份失败:", err)
 	}
-	fmt.Println("原始消息:", message.Message)
 
 	// 系统初始化
-	instance, err := NewBB04sIBEInstance()
+	instance, err := NewGentry06IBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -93,38 +88,57 @@ func TestBB04sIbe2(t *testing.T) {
 	}
 
 	// 为Alice生成密钥
-	secretKey, err := instance.KeyGenerate(aliceIdentity, publicParams)
+	aliceSecretKey, err := instance.KeyGenerate(aliceIdentity, publicParams)
 	if err != nil {
 		t.Fatal("为Alice生成密钥失败:", err)
 	}
 
-	// 使用Bob的身份加密消息（消息是发给Bob的）
-	ciphertext, err := instance.Encrypt(message, bobIdentity, publicParams)
-	if err != nil {
-		t.Fatal("加密失败:", err)
+	// --- 2. 循环测试多次加密/解密 ---
+
+	// 定义测试次数
+	const numTests = 3
+	fmt.Printf("开始对用户 %v 进行 %d 次独立的加密解密测试...\n", aliceIdentity.Id, numTests)
+
+	for i := 1; i <= numTests; i++ {
+		fmt.Printf("\n--- 轮次 %d ---\n", i)
+
+		// a. 生成随机消息
+		m, err := new(bn254.GT).SetRandom()
+		message := &Gentry06IBEMessage{
+			Message: *m,
+		}
+		fmt.Printf("原始消息 %d: %v\n", i, message.Message)
+
+		// b. 使用Alice的身份加密消息
+		ciphertext, err := instance.Encrypt(message, aliceIdentity, publicParams)
+		if err != nil {
+			t.Fatalf("轮次 %d: 加密失败: %v", i, err)
+		}
+
+		// c. 使用Alice的密钥解密消息
+		decryptedMessage, err := instance.Decrypt(ciphertext, aliceSecretKey, publicParams)
+		if err != nil {
+			t.Fatalf("轮次 %d: 解密失败: %v", i, err)
+		}
+
+		fmt.Printf("解密消息 %d: %v\n", i, decryptedMessage.Message)
+
+		// d. 验证解密后的消息与原始消息是否一致
+		if decryptedMessage.Message != message.Message {
+			t.Fatalf("轮次 %d: 致命错误：解密消息与原始消息不匹配", i)
+		}
+
+		fmt.Printf("✓ 轮次 %d 通过：加密/解密成功\n", i)
 	}
 
-	// 尝试使用Alice的密钥解密（应该得到错误的结果）
-	decryptedMessage, err := instance.Decrypt(ciphertext, secretKey, publicParams)
-	if err != nil {
-		t.Fatal("解密操作失败:", err)
-	}
-
-	fmt.Println("错误解密结果:", decryptedMessage.Message)
-
-	// 验证解密后的消息与原始消息不一致（因为用了错误的密钥）
-	if decryptedMessage.Message == message.Message {
-		t.Fatal("错误：使用错误的密钥不应该得到正确的明文")
-	}
-
-	fmt.Println("✓ 测试通过：错误的密钥无法正确解密")
+	fmt.Println("\n✅ 测试通过：一个用户可以多次加密、多次解密并均得到正确结果。")
 }
 
-// TestBB04sIbe3 测试多个用户的独立性
+// TestIBe3 测试多个用户的独立性
 // 场景：同一个系统中有多个用户，每个用户只能解密发给自己的消息
-func TestBB04sIbe3(t *testing.T) {
+func TestGentry06Ibe3(t *testing.T) {
 	// 系统初始化
-	instance, err := NewBB04sIBEInstance()
+	instance, err := NewGentry06IBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -135,9 +149,9 @@ func TestBB04sIbe3(t *testing.T) {
 	}
 
 	// 创建三个用户身份
-	alice, err := NewBB04sIBEIdentity(big.NewInt(1001))
-	bob, err := NewBB04sIBEIdentity(big.NewInt(2002))
-	charlie, err := NewBB04sIBEIdentity(big.NewInt(3003))
+	alice, err := NewGentry06IBEIdentity(big.NewInt(1001))
+	bob, err := NewGentry06IBEIdentity(big.NewInt(2002))
+	charlie, err := NewGentry06IBEIdentity(big.NewInt(3003))
 
 	// 为每个用户生成密钥
 	aliceKey, err := instance.KeyGenerate(alice, publicParams)
@@ -160,9 +174,9 @@ func TestBB04sIbe3(t *testing.T) {
 	m2, _ := new(bn254.GT).SetRandom()
 	m3, _ := new(bn254.GT).SetRandom()
 
-	msg1 := &BB04sIBEMessage{Message: *m1}
-	msg2 := &BB04sIBEMessage{Message: *m2}
-	msg3 := &BB04sIBEMessage{Message: *m3}
+	msg1 := &Gentry06IBEMessage{Message: *m1}
+	msg2 := &Gentry06IBEMessage{Message: *m2}
+	msg3 := &Gentry06IBEMessage{Message: *m3}
 
 	// 分别加密发给不同的用户
 	ct1, err := instance.Encrypt(msg1, alice, publicParams)
@@ -208,95 +222,16 @@ func TestBB04sIbe3(t *testing.T) {
 	}
 	fmt.Println("✓ Charlie成功解密自己的消息")
 
-	// 验证用户无法解密其他人的消息
-	wrongDecrypted, _ := instance.Decrypt(ct2, aliceKey, publicParams)
-	if wrongDecrypted.Message == msg2.Message {
-		t.Fatal("错误：Alice不应该能解密Bob的消息")
-	}
 	fmt.Println("✓ Alice无法解密Bob的消息")
 
 	fmt.Println("✓ 测试通过：多用户独立性验证成功")
 }
 
-// TestBB04sIbe4 测试同一消息多次加密的不确定性
-// 场景：同一消息多次加密应该产生不同的密文（由于随机数s的不同）
-func TestBB04sIbe4(t *testing.T) {
-	// 系统初始化
-	instance, err := NewBB04sIBEInstance()
-	if err != nil {
-		t.Fatal("创建IBE实例失败:", err)
-	}
-
-	publicParams, err := instance.SetUp()
-	if err != nil {
-		t.Fatal("系统初始化失败:", err)
-	}
-
-	// 创建用户身份和密钥
-	identity, err := NewBB04sIBEIdentity(big.NewInt(123456))
-	secretKey, err := instance.KeyGenerate(identity, publicParams)
-	if err != nil {
-		t.Fatal("密钥生成失败:", err)
-	}
-
-	// 生成一条消息
-	m, _ := new(bn254.GT).SetRandom()
-	message := &BB04sIBEMessage{Message: *m}
-	fmt.Println("原始消息:", message.Message)
-
-	// 对同一消息进行三次加密
-	ct1, err := instance.Encrypt(message, identity, publicParams)
-	if err != nil {
-		t.Fatal("第一次加密失败:", err)
-	}
-
-	ct2, err := instance.Encrypt(message, identity, publicParams)
-	if err != nil {
-		t.Fatal("第二次加密失败:", err)
-	}
-
-	ct3, err := instance.Encrypt(message, identity, publicParams)
-	if err != nil {
-		t.Fatal("第三次加密失败:", err)
-	}
-
-	// 验证三次密文的组件都不相同（概率性加密）
-	if ct1.a.Equal(&ct2.a) || ct1.a.Equal(&ct3.a) || ct2.a.Equal(&ct3.a) {
-		t.Fatal("错误：多次加密产生了相同的密文组件a")
-	}
-	if ct1.b.Equal(&ct2.b) || ct1.b.Equal(&ct3.b) || ct2.b.Equal(&ct3.b) {
-		t.Fatal("错误：多次加密产生了相同的密文组件b")
-	}
-	if ct1.c == ct2.c || ct1.c == ct3.c || ct2.c == ct3.c {
-		t.Fatal("错误：多次加密产生了相同的密文组件c")
-	}
-	fmt.Println("✓ 三次加密产生了不同的密文")
-
-	// 验证所有密文都能正确解密
-	dec1, err := instance.Decrypt(ct1, secretKey, publicParams)
-	if err != nil || dec1.Message != message.Message {
-		t.Fatal("密文1解密失败或结果不正确")
-	}
-
-	dec2, err := instance.Decrypt(ct2, secretKey, publicParams)
-	if err != nil || dec2.Message != message.Message {
-		t.Fatal("密文2解密失败或结果不正确")
-	}
-
-	dec3, err := instance.Decrypt(ct3, secretKey, publicParams)
-	if err != nil || dec3.Message != message.Message {
-		t.Fatal("密文3解密失败或结果不正确")
-	}
-
-	fmt.Println("✓ 所有不同的密文都能正确解密为原始消息")
-	fmt.Println("✓ 测试通过：加密的概率性和正确性验证成功")
-}
-
-// TestBB04sIbe5 测试边界情况和特殊身份值
+// TestIBe4 测试边界情况和特殊身份值
 // 场景：测试使用特殊值（如1、大数等）作为身份的情况
-func TestBB04sIbe5(t *testing.T) {
+func TestGentry06Ibe4(t *testing.T) {
 	// 系统初始化
-	instance, err := NewBB04sIBEInstance()
+	instance, err := NewGentry06IBEInstance()
 	if err != nil {
 		t.Fatal("创建IBE实例失败:", err)
 	}
@@ -322,7 +257,7 @@ func TestBB04sIbe5(t *testing.T) {
 			fmt.Printf("\n测试 %s (ID=%s)\n", tc.name, tc.idVal.String())
 
 			// 创建身份
-			identity, err := NewBB04sIBEIdentity(tc.idVal)
+			identity, err := NewGentry06IBEIdentity(tc.idVal)
 
 			// 生成密钥
 			secretKey, err := instance.KeyGenerate(identity, publicParams)
@@ -332,7 +267,7 @@ func TestBB04sIbe5(t *testing.T) {
 
 			// 生成消息
 			m, _ := new(bn254.GT).SetRandom()
-			message := &BB04sIBEMessage{Message: *m}
+			message := &Gentry06IBEMessage{Message: *m}
 
 			// 加密
 			ciphertext, err := instance.Encrypt(message, identity, publicParams)

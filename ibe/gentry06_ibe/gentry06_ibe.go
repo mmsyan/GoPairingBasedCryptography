@@ -1,4 +1,4 @@
-package ibe
+package gentry06_ibe
 
 // 作者: mmsyan
 // 日期: 2025-11-13
