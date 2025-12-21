@@ -1,18 +1,38 @@
 # GNARK Based Pairing Crypto Algorithms
 
 ## Introduction
-We implement some pairing-based crypto algorithms.
+This repository implements a collection of cryptographic schemes based on bilinear pairings.
 
-pairing-library: https://github.com/Consensys/gnark
+We utilize the **BN254** pairing implementation from the [gnark](https://github.com/Consensys/gnark) library (specifically the pairing-library module) as our underlying bilinear pairing primitive.
+
+Implemented Schemes includes: 
+- Digital signatures
+- Identity-Based Encryption (IBE)
+- Fuzzy Identity-Based Encryption (Fuzzy IBE)
+- Ciphertext-Policy Attribute-Based Encryption (CP-ABE)
+- Key-Policy Attribute-Based Encryption (KP-ABE)
 
 ## Digital Signature
+
+We have implemented three classic pairing-based digital signature schemes:
+
+- **BLS Signature**: The most well-known and classic scheme, but it relies on a "map-to-curve-point" operation (hashing arbitrary messages directly to points on the G1 curve), which results in relatively slower performance.
+- **ZSS Signature**: This scheme eliminates the need for map-to-curve-point, requiring only mapping to a field element, leading to significantly improved performance.
+- **BB Signature**: Achieves security in the **standard model** (without relying on the random oracle assumption).
+
+The first two schemes (BLS and ZSS) are proven secure in the **random oracle model**, while the third (BB) provides security in the more rigorous **standard model**.
+
+
 | Scheme Abbr.      | Paper Title                                                                 | Paper Link | Core Chapter                              | Code Repository                                                                                           | Security Assumption         |
 |:------------------|:----------------------------------------------------------------------------| :--- |:------------------------------------------|:----------------------------------------------------------------------------------------------------------|:----------------------------|
-| **BLS Signature** | *Short Signatures from the Weil Pairing*                                    | [Link](https://link.springer.com/chapter/10.1007/3-540-45682-1_30) | §2.2 The GDH Signature Scheme             | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/bf01_ibe/bls01/bls_signature.go) | Random Oracle Model         |
-| **ZSS Signature** | *An Efficient Signature Scheme from Bilinear Pairings and Its Applications* | [Link](https://link.springer.com/chapter/10.1007/978-3-540-24632-9_20) | §3.1 The Basic Signature Scheme           | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/zss04/zss04_signature.go)        | Random Oracle Model         |
-| **BB Signature**  | *Short Signatures Without Random Oracles*                                   | [Link](https://link.springer.com/chapter/10.1007/978-3-540-24676-3_4) | §3 Short Signatures Without Random Oracles| [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/bb04/bb04_signature.go)          | Standard Model |
+| **BLS Signature** | *Short Signatures from the Weil Pairing*                                    | [Link](https://link.springer.com/chapter/10.1007/3-540-45682-1_30) | §2.2 The GDH Signature Scheme             | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/bls01_signature/bls_signature.go) | Random Oracle Model         |
+| **ZSS Signature** | *An Efficient Signature Scheme from Bilinear Pairings and Its Applications* | [Link](https://link.springer.com/chapter/10.1007/978-3-540-24632-9_20) | §3.1 The Basic Signature Scheme           | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/zss04_signature/zss04_signature.go)        | Random Oracle Model         |
+| **BB Signature**  | *Short Signatures Without Random Oracles*                                   | [Link](https://link.springer.com/chapter/10.1007/978-3-540-24676-3_4) | §3 Short Signatures Without Random Oracles| [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/signature/bb04_signature/bb04_signature.go)          | Standard Model |
 
 ## Identity Based Encryption Implementation
+
+We have implemented six representative IBE schemes, covering the evolution from the foundational random-oracle construction to fully secure schemes in the standard model:
+
 | Scheme Abbr. | Paper Title | Paper Link | Core Chapter | Code Repository                                                                                          | Security Assumption               |
 | :--- | :--- | :--- | :--- |:---------------------------------------------------------------------------------------------------------|:----------------------------------|
 | **BF01** | *Identity-Based Encryption from the Weil Pairing* | [Link](https://link.springer.com/chapter/10.1007/3-540-44647-8_13) | §4.2 BasicIdent | [code](https://github.com/mmsyan/GnarkPairingProject/blob/main/ibe/bf01_ibe/bf01_ibe.go)                 | CPA (Random Oracle Model)         |
