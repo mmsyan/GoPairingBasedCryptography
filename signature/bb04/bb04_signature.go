@@ -1,6 +1,7 @@
 package bb04
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
@@ -12,8 +13,8 @@ type PrivateKey struct {
 }
 
 type PublicKey struct {
-	Y bn254.G2Affine
-	Z bn254.G2Affine
+	Y bn254.G2Affine // Y = alpha*G2
+	Z bn254.G2Affine // Z = beta*G2
 }
 
 type Message struct {
@@ -22,17 +23,17 @@ type Message struct {
 
 type Signature struct {
 	R     fr.Element
-	Sigma bn254.G1Affine
+	Sigma bn254.G1Affine // sigma = (1 / (alpha + r * beta + m)) * G1
 }
 
 func KeyGenerate() (*PublicKey, *PrivateKey, error) {
 	alpha, err := new(fr.Element).SetRandom()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error generating alpha signature key")
 	}
 	beta, err := new(fr.Element).SetRandom()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error generating beta signature key")
 	}
 	y := new(bn254.G2Affine).ScalarMultiplicationBase(alpha.BigInt(new(big.Int)))
 	z := new(bn254.G2Affine).ScalarMultiplicationBase(beta.BigInt(new(big.Int)))
