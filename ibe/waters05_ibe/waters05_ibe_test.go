@@ -1,4 +1,4 @@
-package ibe
+package waters05_ibe
 
 import (
 	"fmt"
@@ -6,27 +6,27 @@ import (
 	"testing"
 )
 
-// TestBB04Ibe1 测试正确的情况
+// TestWaters05Ibe1 测试正确的情况
 // 场景：使用正确的身份和密钥进行加密解密，验证能否正确恢复原始消息
-func TestBB04Ibe1(t *testing.T) {
+func TestWaters05Ibe1(t *testing.T) {
 	var err error
 
 	// 1. 创建用户身份 (使用字符串)
-	identityString := "test_bb04_user_alpha"
-	identity, err := NewBB04IBEIdentity(identityString)
+	identityString := "test_user_id_123456"
+	identity, err := NewWaters05IBEIdentity(identityString)
 	if err != nil {
 		t.Fatalf("创建身份失败: %v", err)
 	}
 
 	// 2. 生成随机消息 (位于 GT 群)
 	m, _ := new(bn254.GT).SetRandom()
-	message := &BB04IBEMessage{
+	message := &Waters05IBEMessage{
 		Message: *m,
 	}
 	fmt.Println("原始消息:", message.Message)
 
 	// 3. 系统初始化
-	instance, err := NewBB04IBEInstance()
+	instance, err := NewWaters05IBEInstance()
 	if err != nil {
 		t.Fatalf("创建IBE实例失败: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestBB04Ibe1(t *testing.T) {
 	}
 
 	// 6. 使用用户身份加密消息
-	ciphertext, err := instance.Encrypt(identity, message, publicParams)
+	ciphertext, err := instance.Encrypt(message, identity, publicParams)
 	if err != nil {
 		t.Fatalf("加密失败: %v", err)
 	}
@@ -58,29 +58,29 @@ func TestBB04Ibe1(t *testing.T) {
 	fmt.Println("解密消息:", decryptedMessage.Message)
 
 	// 8. 验证解密后的消息与原始消息是否一致
-	if decryptedMessage.Message.String() != message.Message.String() {
+	if decryptedMessage.Message != message.Message {
 		t.Fatal("解密消息与原始消息不匹配")
 	}
 
 	fmt.Println("✓ 测试通过：正确的身份和密钥成功解密")
 }
 
-// TestBB04Ibe2 测试一个用户可以多次加密、多次解密并均得到正确结果
+// TestWaters05Ibe2 测试一个用户可以多次加密、多次解密并均得到正确结果
 // 场景：使用Bob的身份进行多次独立的加密解密操作，验证每次都能成功恢复原始消息。
-func TestBB04Ibe2(t *testing.T) {
+func TestWaters05Ibe2(t *testing.T) {
 	var err error
 
 	// --- 1. 初始化和密钥生成 ---
 
 	// 创建Bob的身份
-	bobIdentityString := "bob_multi_session_bb04"
-	bobIdentity, err := NewBB04IBEIdentity(bobIdentityString)
+	bobIdentityString := "bob_multi_session_user"
+	bobIdentity, err := NewWaters05IBEIdentity(bobIdentityString)
 	if err != nil {
 		t.Fatalf("创建Bob身份失败: %v", err)
 	}
 
 	// 系统初始化
-	instance, err := NewBB04IBEInstance()
+	instance, err := NewWaters05IBEInstance()
 	if err != nil {
 		t.Fatalf("创建IBE实例失败: %v", err)
 	}
@@ -107,13 +107,13 @@ func TestBB04Ibe2(t *testing.T) {
 
 		// a. 生成随机消息
 		m, _ := new(bn254.GT).SetRandom()
-		message := &BB04IBEMessage{
+		message := &Waters05IBEMessage{
 			Message: *m,
 		}
-		fmt.Printf("原始消息 %d: %s...\n", i, message.Message.String()[:10]) // 打印前10个字符
+		fmt.Printf("原始消息 %d: %v...\n", i, message.Message)
 
 		// b. 使用Bob的身份加密消息
-		ciphertext, err := instance.Encrypt(bobIdentity, message, publicParams)
+		ciphertext, err := instance.Encrypt(message, bobIdentity, publicParams)
 		if err != nil {
 			t.Fatalf("轮次 %d: 加密失败: %v", i, err)
 		}
@@ -124,7 +124,7 @@ func TestBB04Ibe2(t *testing.T) {
 			t.Fatalf("轮次 %d: 解密失败: %v", i, err)
 		}
 
-		fmt.Printf("解密消息 %d: %s...\n", i, decryptedMessage.Message.String()[:10]) // 打印前10个字符
+		fmt.Printf("解密消息 %d: %v...\n", i, decryptedMessage.Message)
 
 		// d. 验证解密后的消息与原始消息是否一致
 		if decryptedMessage.Message.String() != message.Message.String() {
@@ -137,11 +137,11 @@ func TestBB04Ibe2(t *testing.T) {
 	fmt.Println("\n✅ 测试通过：一个用户可以多次加密、多次解密并均得到正确结果。")
 }
 
-// TestBB04Ibe3 测试多个用户的独立性
+// TestWaters05Ibe3 测试多个用户的独立性
 // 场景：同一个系统中有多个用户，每个用户只能解密发给自己的消息
-func TestBB04Ibe3(t *testing.T) {
+func TestWaters05Ibe3(t *testing.T) {
 	// 系统初始化
-	instance, err := NewBB04IBEInstance()
+	instance, err := NewWaters05IBEInstance()
 	if err != nil {
 		t.Fatalf("创建IBE实例失败: %v", err)
 	}
@@ -152,9 +152,9 @@ func TestBB04Ibe3(t *testing.T) {
 	}
 
 	// 创建三个用户身份 (使用不同的字符串)
-	alice, err := NewBB04IBEIdentity("alice-bb04-user-1001")
-	bob, err := NewBB04IBEIdentity("bob-bb04-user-2002")
-	charlie, err := NewBB04IBEIdentity("charlie-bb04-user-3003")
+	alice, err := NewWaters05IBEIdentity("alice-user-id-1001")
+	bob, err := NewWaters05IBEIdentity("bob-user-id-2002")
+	charlie, err := NewWaters05IBEIdentity("charlie-user-id-3003")
 
 	// 为每个用户生成密钥
 	aliceKey, err := instance.KeyGenerate(alice, publicParams)
@@ -177,22 +177,22 @@ func TestBB04Ibe3(t *testing.T) {
 	m2, _ := new(bn254.GT).SetRandom()
 	m3, _ := new(bn254.GT).SetRandom()
 
-	msg1 := &BB04IBEMessage{Message: *m1} // 发给 Alice
-	msg2 := &BB04IBEMessage{Message: *m2} // 发给 Bob
-	msg3 := &BB04IBEMessage{Message: *m3} // 发给 Charlie
+	msg1 := &Waters05IBEMessage{Message: *m1} // 发给 Alice
+	msg2 := &Waters05IBEMessage{Message: *m2} // 发给 Bob
+	msg3 := &Waters05IBEMessage{Message: *m3} // 发给 Charlie
 
 	// 分别加密发给不同的用户
-	ct1, err := instance.Encrypt(alice, msg1, publicParams)
+	ct1, err := instance.Encrypt(msg1, alice, publicParams)
 	if err != nil {
 		t.Fatalf("加密消息1(给Alice)失败: %v", err)
 	}
 
-	ct2, err := instance.Encrypt(bob, msg2, publicParams)
+	ct2, err := instance.Encrypt(msg2, bob, publicParams)
 	if err != nil {
 		t.Fatalf("加密消息2(给Bob)失败: %v", err)
 	}
 
-	ct3, err := instance.Encrypt(charlie, msg3, publicParams)
+	ct3, err := instance.Encrypt(msg3, charlie, publicParams)
 	if err != nil {
 		t.Fatalf("加密消息3(给Charlie)失败: %v", err)
 	}
@@ -232,6 +232,7 @@ func TestBB04Ibe3(t *testing.T) {
 	// --- 验证独立性 (可选，检查失败情况) ---
 
 	// 尝试 Alice 用自己的密钥解密 Bob 的消息 (理论上会失败或得到错误结果)
+	// 由于配对加密方案通常不会返回错误，而是返回一个随机值，我们只需检查其不等于原消息即可
 	unintendedDecryption, err := instance.Decrypt(ct2, aliceKey, publicParams)
 	if err != nil {
 		t.Fatalf("意外错误: Alice解密Bob消息时出错: %v", err)
@@ -244,11 +245,11 @@ func TestBB04Ibe3(t *testing.T) {
 	fmt.Println("✅ 测试通过：多用户独立性验证成功")
 }
 
-// TestBB04Ibe4 测试边界情况和特殊身份值
+// TestWaters05Ibe4 测试边界情况和特殊身份值
 // 场景：测试使用特殊身份字符串的情况
-func TestBB04Ibe4(t *testing.T) {
+func TestWaters05Ibe4(t *testing.T) {
 	// 系统初始化
-	instance, err := NewBB04IBEInstance()
+	instance, err := NewWaters05IBEInstance()
 	if err != nil {
 		t.Fatalf("创建IBE实例失败: %v", err)
 	}
@@ -265,8 +266,8 @@ func TestBB04Ibe4(t *testing.T) {
 		expectError bool // 是否期望身份创建时失败 (如空字符串)
 	}{
 		{"短字符串", "1", false},
-		{"长字符串 (哈希碰撞几率低)", "This is a very very long identity string that should definitely produce a unique hash value and a unique key for BB04.", false},
-		{"特殊字符", "!@#$%^&*()_+", false},
+		{"长字符串 (哈希碰撞几率低)", "This is a very very long identity string that should definitely produce a unique hash value and a unique key.", false},
+		{"特殊字符", "!@#$%^&*", false},
 		{"空字符串 (预期失败)", "", true},
 	}
 
@@ -274,7 +275,7 @@ func TestBB04Ibe4(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			// 1. 创建身份
-			identity, err := NewBB04IBEIdentity(tc.identityStr)
+			identity, err := NewWaters05IBEIdentity(tc.identityStr)
 
 			if tc.expectError {
 				if err == nil {
@@ -298,10 +299,10 @@ func TestBB04Ibe4(t *testing.T) {
 
 			// 3. 生成消息
 			m, _ := new(bn254.GT).SetRandom()
-			message := &BB04IBEMessage{Message: *m}
+			message := &Waters05IBEMessage{Message: *m}
 
 			// 4. 加密
-			ciphertext, err := instance.Encrypt(identity, message, publicParams)
+			ciphertext, err := instance.Encrypt(message, identity, publicParams)
 			if err != nil {
 				t.Fatalf("使用 %s 加密失败: %v", tc.name, err)
 			}

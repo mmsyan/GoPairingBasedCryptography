@@ -1,4 +1,4 @@
-package ibe
+package bf01_ibe
 
 import (
 	"fmt"
