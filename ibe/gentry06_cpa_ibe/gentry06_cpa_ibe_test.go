@@ -1,4 +1,4 @@
-package gentry_cpa_ibe
+package gentry06_cpa_ibe
 
 import (
 	"fmt"
