@@ -200,7 +200,7 @@ func (instance *SW05FIBELargeUniverseInstance) Encrypt(messageAttributes *SW05FI
 	// 1. 选择一个随机数 s <- Zq。
 	s, err := new(fr.Element).SetRandom()
 	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt Message")
+		return nil, fmt.Errorf("failed to encrypt MessageBytes")
 	}
 
 	// 2. 计算 Y^s。
@@ -261,13 +261,13 @@ func (instance *SW05FIBELargeUniverseInstance) Decrypt(userSecretKey *SW05FIBELa
 		// 计算配对项 1: $e(d_i, E_i) = e(g_1^{r_i}, T_i^s) = e(g_1, T_i)^{r_i s}$。
 		ediEi, err := bn254.Pair([]bn254.G1Affine{di}, []bn254.G2Affine{ei})
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt Message")
+			return nil, fmt.Errorf("failed to decrypt MessageBytes")
 		}
 
 		// 计算配对项 2: $e(E'', D_i) = e(g_1^s, g_2^{q(i)} \cdot T_i^{r_i}) = e(g_1, g_2)^{s q(i)} \cdot e(g_1, T_i)^{s r_i}$。
 		eDiEPrimePrime, err := bn254.Pair([]bn254.G1Affine{ePrimePrime}, []bn254.G2Affine{Di})
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt Message")
+			return nil, fmt.Errorf("failed to decrypt MessageBytes")
 		}
 
 		// 计算 $P_i = \frac{e(d_i, E_i)}{e(E'', D_i)} = \frac{e(g_1, T_i)^{r_i s}}{e(g_1, g_2)^{s q(i)} \cdot e(g_1, T_i)^{s r_i}} = e(g_1, g_2)^{-s q(i)}$。

@@ -78,7 +78,7 @@ type Waters05IBEMessage struct {
 // 密文由三个部分组成。
 type Waters05IBECiphertext struct {
 	// c1 是密文的第一部分，位于 GT 群。
-	// c1 = Message * e(g1^alpha, g2)^t
+	// c1 = MessageBytes * e(g1^alpha, g2)^t
 	c1 bn254.GT
 	// c2 是密文的第二部分，位于 G1 群。
 	// c2 = g1^t
@@ -217,7 +217,7 @@ func (instance *Waters05IBEInstance) Encrypt(message *Waters05IBEMessage, identi
 	}
 	// 计算 e(g1^alpha, g2)^t
 	eG1AlphaG2ExpT := new(bn254.GT).Exp(eG1AlphaG2, t.BigInt(new(big.Int)))
-	// c1 = Message * e(g1^alpha, g2)^t
+	// c1 = MessageBytes * e(g1^alpha, g2)^t
 	c1 := *new(bn254.GT).Mul(eG1AlphaG2ExpT, &message.Message)
 
 	// c2 = g1^t
@@ -244,7 +244,7 @@ func (instance *Waters05IBEInstance) Encrypt(message *Waters05IBEMessage, identi
 }
 
 // Decrypt 使用私钥对密文进行解密。
-// 解密基于配对性质: Message = c1 * e(d2, c3) / e(c2, d1)
+// 解密基于配对性质: MessageBytes = c1 * e(d2, c3) / e(c2, d1)
 //
 // 参数:
 //   - ciphertext: 要解密的密文 (c1, c2, c3)。
@@ -265,12 +265,12 @@ func (instance *Waters05IBEInstance) Decrypt(ciphertext *Waters05IBECiphertext, 
 	}
 
 	// 分子: c1 * e(d2, c3)
-	// 分子 = (Message * e(g1, g2)^{t*alpha}) * e(g1, Product)^{rt}
+	// 分子 = (MessageBytes * e(g1, g2)^{t*alpha}) * e(g1, Product)^{rt}
 	m := new(bn254.GT).Mul(&ciphertext.c1, &eD2C3)
 
 	// m = 分子 / e(c2, d1)
-	// m = (Message * e(g1, g2)^{t*alpha} * e(g1, Product)^{rt}) / (e(g1, g2)^{t*alpha} * e(g1, Product)^{tr})
-	// m = Message
+	// m = (MessageBytes * e(g1, g2)^{t*alpha} * e(g1, Product)^{rt}) / (e(g1, g2)^{t*alpha} * e(g1, Product)^{tr})
+	// m = MessageBytes
 	m = new(bn254.GT).Div(m, &eC2D1)
 
 	return &Waters05IBEMessage{

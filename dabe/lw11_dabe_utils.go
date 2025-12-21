@@ -155,7 +155,7 @@ func (message *LW11DABEMessage) ToBytes() ([]byte, error) {
 //		return nil, err
 //	}
 //	return &LW11DABEMessage{
-//		Message: element,
+//		MessageBytes: element,
 //	}, nil
 //}
 //
@@ -171,7 +171,7 @@ func (message *LW11DABEMessage) ToBytes() ([]byte, error) {
 ////   - []byte: 长度为 384 字节的原始 AES-256 密钥
 ////   - error: 成功时为 nil；msg 为 nil 或内部实现异常时返回错误
 //func ExtractLW11DABEMessage(message *LW11DABEMessage) ([]byte, error) {
-//	key := message.Message.Marshal()
+//	key := message.MessageBytes.Marshal()
 //	if len(key) != 384 {
 //		return nil, errors.New("AES-256 key must be exactly 32 bytes")
 //	}

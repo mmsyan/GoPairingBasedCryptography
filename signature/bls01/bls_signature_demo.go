@@ -1,4 +1,4 @@
-package bls
+package bls01
 
 import (
 	"crypto/rand"
@@ -12,7 +12,7 @@ func main() {
 	q := ecc.BN254.ScalarField()
 	_, _, g1, _ := bn254.Generators()
 
-	// (2) BLSKeyPair Generation
+	// (2) PrivateKey Generation
 	x, err := rand.Int(rand.Reader, q) // secret key: x <- Zq
 	if err != nil {
 		panic(err)
@@ -20,9 +20,9 @@ func main() {
 	var gx bn254.G1Affine
 	gx.ScalarMultiplication(&g1, x) // public key: G1Generator^x = G1Generator^x in G1Generator
 
-	// (3) Signature
-	message := []byte("Hello, I am a message for bls signing.")
-	messagePointG2, err := bn254.HashToG2(message, []byte("bls Signature")) // compute h(m) in G2
+	// (3) SigmaSignature
+	message := []byte("Hello, I am a message for signature signing.")
+	messagePointG2, err := bn254.HashToG2(message, []byte("signature SigmaSignature")) // compute h(m) in G2
 	if err != nil {
 		panic(err)
 	}
@@ -42,8 +42,8 @@ func main() {
 		panic(err)
 	}
 	if isValid {
-		fmt.Println("Signature verification successful!")
+		fmt.Println("SigmaSignature verification successful!")
 	} else {
-		fmt.Println("Signature verification failed!")
+		fmt.Println("SigmaSignature verification failed!")
 	}
 }
