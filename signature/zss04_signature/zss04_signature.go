@@ -1,4 +1,4 @@
-// Package zss04 implements the Zhang-Safavi-Naini-Susilo short signature scheme (ZSS04).
+// Package zss04_signature implements the Zhang-Safavi-Naini-Susilo short signature scheme (ZSS04).
 // 作者: mmsyan
 // 日期: 2025-12-21
 // 参考论文:
@@ -27,7 +27,7 @@
 // 与 BB04 签名方案的对比:
 //   - ZSS04: 确定性签名,签名更短(仅一个 G1 元素),需要公共参数
 //   - BB04: 随机化签名,签名包含随机值和 G1 元素,不需要公共参数
-package zss04
+package zss04_signature
 
 import (
 	"fmt"

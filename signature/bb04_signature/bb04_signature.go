@@ -1,4 +1,4 @@
-// Package bb04 implements the Boneh-Boyen short signature scheme (BB04).
+// Package bb04_signature implements the Boneh-Boyen short signature scheme (BB04).
 // 作者: mmsyan
 // 日期: 2025-12-21
 // 参考论文:
@@ -20,7 +20,7 @@
 //   - Existential unforgeability under chosen message attack (EUF-CMA)
 //   - Based on the q-Strong Diffie-Hellman (q-SDH) assumption
 //   - Signatures are randomized (different signatures for the same message)
-package bb04
+package bb04_signature
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package bls01
+package bls01_signature
 
 import (
 	"fmt"

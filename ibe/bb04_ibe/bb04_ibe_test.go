@@ -152,9 +152,9 @@ func TestBB04Ibe3(t *testing.T) {
 	}
 
 	// 创建三个用户身份 (使用不同的字符串)
-	alice, err := NewBB04IBEIdentity("alice-bb04-user-1001")
-	bob, err := NewBB04IBEIdentity("bob-bb04-user-2002")
-	charlie, err := NewBB04IBEIdentity("charlie-bb04-user-3003")
+	alice, err := NewBB04IBEIdentity("alice-bb04_signature-user-1001")
+	bob, err := NewBB04IBEIdentity("bob-bb04_signature-user-2002")
+	charlie, err := NewBB04IBEIdentity("charlie-bb04_signature-user-3003")
 
 	// 为每个用户生成密钥
 	aliceKey, err := instance.KeyGenerate(alice, publicParams)

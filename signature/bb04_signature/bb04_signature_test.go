@@ -1,4 +1,4 @@
-package bb04
+package bb04_signature
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"

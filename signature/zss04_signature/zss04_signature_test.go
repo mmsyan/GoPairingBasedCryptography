@@ -1,4 +1,4 @@
-package zss04
+package zss04_signature
 
 import (
 	"crypto/rand"
