@@ -1,4 +1,4 @@
-package bibe
+package afp25_bibe
 
 import (
 	"crypto/sha256"

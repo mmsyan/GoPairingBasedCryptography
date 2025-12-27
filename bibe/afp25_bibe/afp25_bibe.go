@@ -1,4 +1,4 @@
-package bibe
+package afp25_bibe
 
 import (
 	"errors"
@@ -15,10 +15,10 @@ type MasterSecretKey struct {
 	Msk fr.Element
 }
 
-type PublicKey struct {
-	G1ExpTaus []bn254.G1Affine
-	G2ExpTau  bn254.G2Affine
-	G2ExpMsk  bn254.G2Affine
+type MasterPublicKey struct {
+	G1ExpTauPower []bn254.G1Affine
+	G2ExpTau      bn254.G2Affine
+	G2ExpMsk      bn254.G2Affine
 }
 
 type Identity struct {
@@ -55,7 +55,7 @@ func Setup(B int) (*BatchIBEParams, error) {
 	}, nil
 }
 
-func KeyGen(params *BatchIBEParams) (*PublicKey, *MasterSecretKey, error) {
+func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) {
 	msk, err := new(fr.Element).SetRandom()
 	if err != nil {
 		return nil, nil, err
@@ -72,16 +72,16 @@ func KeyGen(params *BatchIBEParams) (*PublicKey, *MasterSecretKey, error) {
 	}
 	g2ExpTau := *new(bn254.G2Affine).ScalarMultiplicationBase(tau.BigInt(new(big.Int)))
 	g2ExpMsk := *new(bn254.G2Affine).ScalarMultiplicationBase(msk.BigInt(new(big.Int)))
-	return &PublicKey{
-			G1ExpTaus: g1ExpTaus,
-			G2ExpTau:  g2ExpTau,
-			G2ExpMsk:  g2ExpMsk,
+	return &MasterPublicKey{
+			G1ExpTauPower: g1ExpTaus,
+			G2ExpTau:      g2ExpTau,
+			G2ExpMsk:      g2ExpMsk,
 		}, &MasterSecretKey{
 			Msk: *msk,
 		}, nil
 }
 
-func Encrypt(pk *PublicKey, m *Message, id *Identity, t *BatchLabel) (*Ciphertext, error) {
+func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Ciphertext, error) {
 	var a [2][3]bn254.G2Affine
 	_, _, _, g2 := bn254.Generators()
 	a[0][0] = g2
@@ -142,11 +142,11 @@ func Encrypt(pk *PublicKey, m *Message, id *Identity, t *BatchLabel) (*Ciphertex
 
 }
 
-func Digest(pk *PublicKey, identities []*Identity) (*BatchDigest, error) {
+func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 	if len(identities) == 0 {
 		return nil, errors.New("identities is empty")
 	}
-	if len(identities) > len(pk.G1ExpTaus) {
+	if len(identities) > len(pk.G1ExpTauPower) {
 		return nil, errors.New("too many identities for batch size")
 	}
 	coefficients := computePolynomialCoeffs(identities)
@@ -157,7 +157,7 @@ func Digest(pk *PublicKey, identities []*Identity) (*BatchDigest, error) {
 
 	for i := 1; i < len(coefficients); i++ {
 		var temp bn254.G1Affine
-		temp.ScalarMultiplication(&pk.G1ExpTaus[i-1], coefficients[i].BigInt(new(big.Int)))
+		temp.ScalarMultiplication(&pk.G1ExpTauPower[i-1], coefficients[i].BigInt(new(big.Int)))
 		d.Add(&d, &temp)
 	}
 
@@ -175,8 +175,7 @@ func ComputeKey(msk *MasterSecretKey, d *BatchDigest, t *BatchLabel) (*SecretKey
 	}, nil
 }
 
-func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identity,
-	id *Identity, t *BatchLabel, pk *PublicKey) (*Message, error) {
+func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identity, id *Identity, t *BatchLabel, pk *MasterPublicKey) (*Message, error) {
 	// 1. 构造商多项式 q(X) = f(X) / (X - id)
 	// q(X) 的根为 identities \ {id}
 	var rootsWithoutId []*Identity
@@ -194,13 +193,13 @@ func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identit
 
 	// 2. 计算 π = g1^q(τ)
 	var pi bn254.G1Affine
-	_, _, g1Gen, _ := bn254.Generators()
+	_, _, g1, _ := bn254.Generators()
 
-	pi.ScalarMultiplication(&g1Gen, qCoeffs[0].BigInt(new(big.Int)))
+	pi.ScalarMultiplication(&g1, qCoeffs[0].BigInt(new(big.Int)))
 
 	for i := 1; i < len(qCoeffs); i++ {
 		var term bn254.G1Affine
-		term.ScalarMultiplication(&pk.G1ExpTaus[i-1], qCoeffs[i].BigInt(new(big.Int)))
+		term.ScalarMultiplication(&pk.G1ExpTauPower[i-1], qCoeffs[i].BigInt(new(big.Int)))
 		pi.Add(&pi, &term)
 	}
 
