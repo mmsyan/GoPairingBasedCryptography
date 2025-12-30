@@ -1,4 +1,4 @@
-module github.com/mmsyan/GnarkPairingProject
+module github.com/mmsyan/GoPairingBasedCryptography
 
 go 1.23.0
 
