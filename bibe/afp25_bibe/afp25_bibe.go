@@ -1,3 +1,29 @@
+// Package afp25_bibe implements the Amit Agarwal, Rex Fernando, Benny Pinkas's Batch scheme (AFP25).
+// 作者: mmsyan
+// 日期: 2025-12-30
+// 参考论文:
+// eprint: https://eprint.iacr.org/2024/1575
+// Agarwal, A., Fernando, R., Pinkas, B. (2025).
+// Efficiently-Thresholdizable Batched Identity Based Encryption, with Applications.
+// In: Tauman Kalai, Y., Kamara, S.F. (eds) Advances in Cryptology – CRYPTO 2025. CRYPTO 2025.
+// Lecture Notes in Computer Science, vol 16002. Springer, Cham.
+// https://doi.org/10.1007/978-3-032-01881-6_3
+//
+// 本包实现了一个高效的批量身份加密(Batched Identity-Based Encryption, BIBE)方案。
+// BIBE允许使用单个密钥对一批身份进行解密,相比传统IBE方案可以显著减少密钥管理开销。
+//
+// 该方案的主要特点:
+//   - 支持批量密钥生成:一个解密密钥可以解密发给多个身份的密文
+//   - 高效的阈值化:可以通过门限秘密共享实现分布式密钥生成
+//   - 基于双线性配对:利用BN254曲线的配对运算保证安全性
+//
+// 方案包含以下主要操作:
+//   - Setup: 初始化系统参数,设置批量大小
+//   - KeyGen: 生成主公钥和主密钥
+//   - Encrypt: 使用身份和批量标签加密消息
+//   - Digest: 为一批身份生成批量摘要
+//   - ComputeKey: 基于批量摘要计算解密密钥
+//   - Decrypt: 使用解密密钥恢复明文消息
 package afp25_bibe
 
 import (
@@ -7,45 +33,88 @@ import (
 	"math/big"
 )
 
+// BatchIBEParams 表示批量身份加密方案的系统参数。
+// 这些参数在系统初始化时设置,定义了批量操作的规模限制。
 type BatchIBEParams struct {
 	B int
 }
 
+// MasterSecretKey 表示系统的主密钥(Master Secret Key)。
+// 主密钥由可信的密钥生成中心(Key Generation Center, KGC)持有,
+// 用于为用户身份生成解密密钥。主密钥必须严格保密。
 type MasterSecretKey struct {
 	Msk fr.Element
 }
 
+// MasterPublicKey 表示系统的主公钥(Master Public Key)。
+// 主公钥可以公开发布,供所有用户用于加密操作和验证。
+// 公钥包含预计算的幂次值,用于支持多项式运算和批量操作。
 type MasterPublicKey struct {
 	G1ExpTauPower []bn254.G1Affine
 	G2ExpTau      bn254.G2Affine
 	G2ExpMsk      bn254.G2Affine
 }
 
+// Identity 表示用户的身份标识。
+// 在身份加密方案中,身份可以是任意字符串(如邮箱地址、用户名等),
+// 这里将身份映射为有限域元素以便进行代数运算。
 type Identity struct {
 	Id fr.Element
 }
 
+// BatchLabel 表示批量操作的标签。
+// 标签用于将多个密文关联到同一个批量上下文,使得可以使用单个密钥解密。
+// 标签可以是时间戳、会话ID或其他上下文信息。
 type BatchLabel struct {
 	T []byte
 }
 
+// BatchDigest 表示一批身份的批量摘要。
+// 摘要是对身份集合的密码学承诺,用于生成批量解密密钥。
+// 摘要的计算涉及多项式运算,确保只有正确的身份集合才能解密。
 type BatchDigest struct {
 	D bn254.G1Affine
 }
 
+// Message 表示待加密的明文消息。
+// 消息被表示为GT群(目标群)中的元素,这是配对运算的输出群。
 type Message struct {
 	M bn254.GT
 }
 
+// Ciphertext 表示加密后的密文。
+// 密文由两部分组成:C1提供密钥封装,C2是加密的消息。
+// 解密需要正确的身份密钥和批量上下文信息。
 type Ciphertext struct {
 	C1 [3]bn254.G2Affine
 	C2 bn254.GT
 }
 
+// SecretKey 表示用户的解密密钥(Secret Key)。
+// 解密密钥由密钥生成中心(KGC)基于批量摘要和批量标签计算生成。
+// 一个解密密钥可以解密发送给批量中任意身份的密文。
 type SecretKey struct {
 	Sk bn254.G1Affine
 }
 
+// Setup 初始化批量身份加密方案的系统参数。
+//
+// 该函数设置批量大小B,定义系统可以支持的最大批量身份数量。
+// 批量大小影响主公钥的大小和系统的计算效率。
+//
+// 参数:
+//   - B: 批量大小,必须至少为1。更大的B支持更大的批量,但会增加存储开销。
+//
+// 返回值:
+//   - *BatchIBEParams: 初始化的系统参数
+//   - error: 如果B无效(小于1)则返回错误
+//
+// 示例:
+//
+//	params, err := Setup(100) // 支持最多100个身份的批量
+//	if err != nil {
+//	    return fmt.Errorf("系统初始化失败: %w", err)
+//	}
 func Setup(B int) (*BatchIBEParams, error) {
 	if B < 1 {
 		return nil, errors.New("invalid B")
@@ -55,6 +124,34 @@ func Setup(B int) (*BatchIBEParams, error) {
 	}, nil
 }
 
+// KeyGen 生成批量身份加密方案的主公钥和主密钥。
+//
+// 该函数是系统初始化的核心步骤,由可信的密钥生成中心(KGC)执行。
+// 生成过程包括:
+//  1. 随机选择主密钥msk和陷门值τ
+//  2. 计算G1群中τ的幂次:[g1^τ, g1^τ², ..., g1^τ^B]
+//  3. 计算G2群中的公钥分量:g2^τ和g2^msk
+//
+// 参数:
+//   - params: 系统参数,包含批量大小B
+//
+// 返回值:
+//   - *MasterPublicKey: 生成的主公钥(可以公开发布)
+//   - *MasterSecretKey: 生成的主密钥(必须严格保密)
+//   - error: 如果随机数生成失败则返回错误
+//
+// 安全注意事项:
+//   - 主密钥msk必须绝对保密,不能泄露给任何用户
+//   - 陷门值τ在计算完公钥后应当安全删除,不能被恢复
+//   - 公钥中的τ幂次只能用于合法的多项式求值,不能用于恢复τ
+//
+// 示例:
+//
+//	mpk, msk, err := KeyGen(params)
+//	if err != nil {
+//	    return fmt.Errorf("密钥生成失败: %w", err)
+//	}
+//	// mpk可以公开,msk必须保密存储
 func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) {
 	msk, err := new(fr.Element).SetRandom()
 	if err != nil {
@@ -65,15 +162,16 @@ func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) 
 		return nil, nil, err
 	}
 	tauPower := new(fr.Element).Set(tau)
-	g1ExpTaus := make([]bn254.G1Affine, params.B)
+	// mpk: $$g_1^{\tau},g_1^{\tau^2}, \dots,g_1^{\tau^B}$$，$$g_2^{\tau}$$，$$g_2^{\text{msk}}$$
+	g1ExpTauPower := make([]bn254.G1Affine, params.B)
 	for i := 0; i < params.B; i++ {
-		g1ExpTaus[i] = *new(bn254.G1Affine).ScalarMultiplicationBase(tauPower.BigInt(new(big.Int)))
+		g1ExpTauPower[i] = *new(bn254.G1Affine).ScalarMultiplicationBase(tauPower.BigInt(new(big.Int)))
 		tauPower.Mul(tauPower, tau)
 	}
 	g2ExpTau := *new(bn254.G2Affine).ScalarMultiplicationBase(tau.BigInt(new(big.Int)))
 	g2ExpMsk := *new(bn254.G2Affine).ScalarMultiplicationBase(msk.BigInt(new(big.Int)))
 	return &MasterPublicKey{
-			G1ExpTauPower: g1ExpTaus,
+			G1ExpTauPower: g1ExpTauPower,
 			G2ExpTau:      g2ExpTau,
 			G2ExpMsk:      g2ExpMsk,
 		}, &MasterSecretKey{
@@ -81,6 +179,42 @@ func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) 
 		}, nil
 }
 
+// Encrypt 使用主公钥对消息进行加密,生成可由指定身份解密的密文。
+//
+// 加密算法基于双线性配对构造密文,包含以下步骤:
+//  1. 构造矩阵A,编码身份信息和公钥分量
+//  2. 构造向量b,包含配对值e(h(t), g2^msk)
+//  3. 随机选择向量r = (r₁, r₂)
+//  4. 计算C1 = r^T · A,包含三个G2群元素
+//  5. 计算C2 = r^T · b · M,在GT群中掩码消息
+//
+// 参数:
+//   - pk: 主公钥,用于加密操作
+//   - m: 待加密的明文消息,必须是GT群元素
+//   - id: 接收者的身份标识
+//   - t: 批量标签,用于关联批量上下文
+//
+// 返回值:
+//   - *Ciphertext: 生成的密文,包含C1和C2两部分
+//   - error: 如果配对计算失败则返回错误
+//
+// 密文结构:
+//   - C1[0] = r₁·g2 + r₂·(g2^msk)
+//   - C1[1] = r₁·(g2^id - g2^τ)
+//   - C1[2] = -r₂·g2
+//   - C2 = M · e(h(t), g2^msk)^r₂ · e(g1, g2)^r₁
+//
+// 安全性质:
+//   - 每次加密使用新的随机数r₁和r₂,确保密文的随机性
+//   - 只有拥有正确身份密钥的用户才能解密
+//   - 批量标签t将密文绑定到特定批量上下文
+//
+// 示例:
+//
+//	ct, err := Encrypt(mpk, msg, userID, batchLabel)
+//	if err != nil {
+//	    return fmt.Errorf("加密失败: %w", err)
+//	}
 func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Ciphertext, error) {
 	var a [2][3]bn254.G2Affine
 	_, _, _, g2 := bn254.Generators()
@@ -142,6 +276,38 @@ func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Cip
 
 }
 
+// Digest 为一批身份生成批量摘要。
+//
+// 批量摘要是身份集合的密码学承诺,用于生成批量解密密钥。
+// 计算过程包括:
+//  1. 构造以所有身份为根的多项式f(X) = ∏(X - id_i)
+//  2. 展开多项式得到系数[c₀, c₁, ..., c_n]
+//  3. 使用公钥中的τ幂次计算D = g1^f(τ) = g1^c₀ · (g1^τ)^c₁ · ... · (g1^τⁿ)^c_n
+//
+// 参数:
+//   - pk: 主公钥,包含τ幂次用于多项式求值
+//   - identities: 身份列表,表示批量中包含的所有身份
+//
+// 返回值:
+//   - *BatchDigest: 生成的批量摘要
+//   - error: 如果身份列表为空或超过批量大小则返回错误
+//
+// 多项式构造:
+//   - 对于身份集合{id₁, id₂, ..., id_n},构造多项式f(X) = (X-id₁)(X-id₂)...(X-id_n)
+//   - 摘要D = g1^f(τ)是对身份集合的承诺
+//   - 只有知道τ才能计算摘要,但τ在密钥生成后已被删除
+//
+// 安全性质:
+//   - 摘要绑定到特定的身份集合,不能用于其他集合
+//   - 基于多项式的结构,支持高效的成员证明
+//   - 摘要可以公开,不泄露关于身份或主密钥的信息
+//
+// 示例:
+//
+//	digest, err := Digest(mpk, []Identity{id1, id2, id3})
+//	if err != nil {
+//	    return fmt.Errorf("摘要生成失败: %w", err)
+//	}
 func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 	if len(identities) == 0 {
 		return nil, errors.New("identities is empty")
@@ -166,6 +332,41 @@ func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 	}, nil
 }
 
+// ComputeKey 基于批量摘要和批量标签计算用户的解密密钥。
+//
+// 该函数由密钥生成中心(KGC)执行,为用户生成批量解密密钥。
+// 密钥计算公式为:sk = msk · (D + h(t))
+// 其中:
+//   - D是批量摘要,承诺了身份集合
+//   - h(t)是批量标签的哈希值,映射到G1群
+//   - msk是主密钥,确保只有KGC能生成有效密钥
+//
+// 参数:
+//   - msk: 主密钥,必须保密
+//   - d: 批量摘要,对应特定的身份集合
+//   - t: 批量标签,定义批量上下文
+//
+// 返回值:
+//   - *SecretKey: 生成的解密密钥
+//   - error: 理论上不会失败,保留用于一致性
+//
+// 密钥性质:
+//   - 一个密钥可以解密发给批量中任意身份的密文
+//   - 密钥绑定到特定的批量标签,不能跨批量使用
+//   - 密钥的安全性依赖于主密钥的保密性
+//
+// 安全注意事项:
+//   - 密钥必须通过安全信道分发给用户
+//   - 不同批量应使用不同标签,避免密钥重用
+//   - 密钥泄露只影响对应批量,不影响其他批量或主密钥
+//
+// 示例:
+//
+//	sk, err := ComputeKey(msk, digest, batchLabel)
+//	if err != nil {
+//	    return fmt.Errorf("密钥计算失败: %w", err)
+//	}
+//	// sk可以安全分发给批量中的用户
 func ComputeKey(msk *MasterSecretKey, d *BatchDigest, t *BatchLabel) (*SecretKey, error) {
 	ht := h(t)
 	dMulHt := new(bn254.G1Affine).Add(&d.D, &ht)
@@ -175,6 +376,49 @@ func ComputeKey(msk *MasterSecretKey, d *BatchDigest, t *BatchLabel) (*SecretKey
 	}, nil
 }
 
+// Decrypt 使用解密密钥从密文中恢复明文消息。
+//
+// 解密算法基于多项式插值和双线性配对验证。主要步骤包括:
+//  1. 构造商多项式q(X) = f(X) / (X - id),其中f(X)是完整批量的身份多项式
+//  2. 计算π = g1^q(τ),使用公钥中的τ幂次
+//  3. 构造向量w = (D, π, sk),其中D是批量摘要,sk是解密密钥
+//  4. 计算配对乘积c1 ∘ w = e(D, C1[0]) · e(π, C1[1]) · e(sk, C1[2])
+//  5. 恢复明文m = C2 / (c1 ∘ w)
+//
+// 参数:
+//   - c: 待解密的密文
+//   - sk: 解密密钥,对应批量和标签
+//   - d: 批量摘要,必须与密钥匹配
+//   - identities: 完整的身份列表,包含解密者身份
+//   - id: 解密者的身份,必须在identities中
+//   - t: 批量标签,必须与加密时使用的标签一致
+//   - pk: 主公钥,用于计算商多项式
+//
+// 返回值:
+//   - *Message: 解密得到的明文消息
+//   - error: 如果身份不在列表中或配对计算失败则返回错误
+//
+// 商多项式构造原理:
+//   - 完整多项式f(X) = (X-id₁)(X-id₂)...(X-id_n)在所有身份处为零
+//   - 商多项式q(X) = f(X)/(X-id)在除id外的所有身份处为零
+//   - q(τ)可以用公钥中的τ幂次高效计算
+//
+// 配对验证原理:
+//   - 密文C1编码了加密随机数和身份信息
+//   - 通过配对运算,验证解密密钥与密文的一致性
+//   - 只有正确的身份和批量才能通过验证
+//
+// 安全性质:
+//   - 只有批量中的合法身份可以解密
+//   - 批量标签必须匹配,防止跨批量攻击
+//   - 基于双线性配对的困难性假设保证安全
+//
+// 示例:
+//
+//	msg, err := Decrypt(ct, sk, digest, allIDs, myID, label, mpk)
+//	if err != nil {
+//	    return fmt.Errorf("解密失败: %w", err)
+//	}
 func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identity, id *Identity, t *BatchLabel, pk *MasterPublicKey) (*Message, error) {
 	// 1. 构造商多项式 q(X) = f(X) / (X - id)
 	// q(X) 的根为 identities \ {id}
