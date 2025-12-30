@@ -2,7 +2,7 @@ package lsss
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/mmsyan/GnarkPairingProject/hash"
+	"github.com/mmsyan/GoPairingBasedCryptography/hash"
 )
 
 // LeafFromString 创建一个叶子节点（属性节点）

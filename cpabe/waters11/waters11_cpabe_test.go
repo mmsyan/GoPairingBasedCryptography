@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	lsss2 "github.com/mmsyan/GnarkPairingProject/access/lsss"
+	lsss2 "github.com/mmsyan/GoPairingBasedCryptography/access/lsss"
 	"testing"
 )
 

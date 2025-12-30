@@ -2,11 +2,11 @@ package dabe
 
 import (
 	"fmt"
-	lsss2 "github.com/mmsyan/GnarkPairingProject/access/lsss"
+	lsss2 "github.com/mmsyan/GoPairingBasedCryptography/access/lsss"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/mmsyan/GnarkPairingProject/hash"
+	"github.com/mmsyan/GoPairingBasedCryptography/hash"
 )
 
 // 测试全局参数设置

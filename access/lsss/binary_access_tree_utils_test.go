@@ -3,7 +3,7 @@ package lsss
 import (
 	"testing"
 
-	"github.com/mmsyan/GnarkPairingProject/hash"
+	"github.com/mmsyan/GoPairingBasedCryptography/hash"
 )
 
 // TestLeaf 测试叶子节点创建

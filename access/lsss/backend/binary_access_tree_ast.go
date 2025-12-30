@@ -3,12 +3,12 @@ package backend
 //
 //import (
 //	"fmt"
-//	"github.com/mmsyan/GnarkPairingProject/lsss"
+//	"github.com/mmsyan/GoPairingBasedCryptography/lsss"
 //	"strings"
 //	"unicode"
 //
 //	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-//	"github.com/mmsyan/GnarkPairingProject/hash"
+//	"github.com/mmsyan/GoPairingBasedCryptography/hash"
 //)
 //
 //// TokenType 定义 token 类型

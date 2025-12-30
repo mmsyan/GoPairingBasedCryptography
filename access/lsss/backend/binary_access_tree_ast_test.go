@@ -2,10 +2,10 @@ package backend
 
 //
 //import (
-//	"github.com/mmsyan/GnarkPairingProject/lsss"
+//	"github.com/mmsyan/GoPairingBasedCryptography/lsss"
 //	"testing"
 //
-//	"github.com/mmsyan/GnarkPairingProject/hash"
+//	"github.com/mmsyan/GoPairingBasedCryptography/hash"
 //)
 //
 //// TestParseBooleanFormula_SimpleExpressions 测试简单表达式

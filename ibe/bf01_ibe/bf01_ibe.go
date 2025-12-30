@@ -26,8 +26,8 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/mmsyan/GnarkPairingProject/hash"
-	"github.com/mmsyan/GnarkPairingProject/utils"
+	"github.com/mmsyan/GoPairingBasedCryptography/hash"
+	"github.com/mmsyan/GoPairingBasedCryptography/utils"
 	"math/big"
 )
 

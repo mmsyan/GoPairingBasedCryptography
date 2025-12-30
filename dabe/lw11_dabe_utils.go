@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/mmsyan/GnarkPairingProject/hash"
+	"github.com/mmsyan/GoPairingBasedCryptography/hash"
 )
 
 // NewLW11DABEAttributes 从 fr.Element 值创建新的属性集合。

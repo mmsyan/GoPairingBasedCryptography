@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/mmsyan/GnarkPairingProject/access/tree"
-	"github.com/mmsyan/GnarkPairingProject/utils"
+	"github.com/mmsyan/GoPairingBasedCryptography/access/tree"
+	"github.com/mmsyan/GoPairingBasedCryptography/utils"
 	"math/big"
 )
 

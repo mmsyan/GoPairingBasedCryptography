@@ -2,7 +2,7 @@ package lsss
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/mmsyan/GnarkPairingProject/hash"
+	"github.com/mmsyan/GoPairingBasedCryptography/hash"
 )
 
 // GetExamples 返回示例树和布尔公式
