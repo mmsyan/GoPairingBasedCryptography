@@ -33,7 +33,7 @@ type Identity struct {
 }
 
 type BatchLabel struct {
-	T []byte
+	Tg fr.Element
 }
 
 type BatchDigest struct {
@@ -45,8 +45,10 @@ type Message struct {
 }
 
 type Ciphertext struct {
-	C1 [3]bn254.G2Affine
-	C2 bn254.GT
+	Ct1 bn254.G1Affine
+	Ct2 bn254.G1Affine
+	Ct3 bn254.G1Affine
+	Ct4 bn254.GT
 }
 
 type SecretKey struct {
@@ -103,5 +105,36 @@ func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) 
 			H:     *h,
 			Alpha: *alpha,
 		}, nil
+}
 
+func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Ciphertext, error) {
+	s, err := new(fr.Element).SetRandom()
+	if err != nil {
+		return nil, err
+	}
+
+	// ct = [s]1
+	ct1 := *new(bn254.G1Affine).ScalarMultiplicationBase(s.BigInt(new(big.Int))) // [s]1
+
+	// ct2 = s[wτ]1-(s·id)[w]1
+	swtau1 := new(bn254.G1Affine).ScalarMultiplication(&pk.G1ExpWTau, s.BigInt(new(big.Int)))
+	sid := new(fr.Element).Mul(s, &id.Id)
+	sidw1 := new(bn254.G1Affine).ScalarMultiplication(&pk.G1ExpW, sid.BigInt(new(big.Int)))
+	ct2 := *new(bn254.G1Affine).Sub(swtau1, sidw1)
+
+	// ct3 = s([v]1+tg·[h]1)
+	tgh1 := new(bn254.G1Affine).ScalarMultiplication(&pk.G1ExpH, t.Tg.BigInt(new(big.Int)))
+	v1Addtgh1 := new(bn254.G1Affine).Add(&pk.G1ExpV, tgh1)
+	ct3 := *new(bn254.G1Affine).ScalarMultiplication(v1Addtgh1, s.BigInt(new(big.Int)))
+
+	// c2 = s[α]T+[m]T
+	sAlphaT := new(bn254.GT).Exp(pk.GTExpAlpha, s.BigInt(new(big.Int)))
+	ct4 := *new(bn254.GT).Mul(sAlphaT, &m.M)
+
+	return &Ciphertext{
+		Ct1: ct1,
+		Ct2: ct2,
+		Ct3: ct3,
+		Ct4: ct4,
+	}, nil
 }
