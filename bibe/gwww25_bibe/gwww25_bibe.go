@@ -84,14 +84,19 @@ func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) 
 	g1ExpWTau := new(bn254.G1Affine).ScalarMultiplicationBase(wMulTau.BigInt(new(big.Int))) // [wτ]1
 	g1ExpV := new(bn254.G1Affine).ScalarMultiplicationBase(v.BigInt(new(big.Int)))          // [v]1
 	g1ExpH := new(bn254.G1Affine).ScalarMultiplicationBase(h.BigInt(new(big.Int)))          // [h]1
-	gtExpAlpha := new(bn254.GT).SetOne()
-	gtExpAlpha.Exp(*gtExpAlpha, alpha.BigInt(new(big.Int))) // [α]T
+
+	_, _, g1, g2 := bn254.Generators()
+	eG1G2, err := bn254.Pair([]bn254.G1Affine{g1}, []bn254.G2Affine{g2})
+	if err != nil {
+		return nil, nil, err
+	}
+	gtExpAlpha := new(bn254.GT).Exp(eG1G2, alpha.BigInt(new(big.Int))) // [α]T
 
 	g2ExpTauPowers := make([]bn254.G2Affine, params.B) // [τ]2, [τ^2]2, [τ^3]2, ..., [τ^B]2
 	tauPower := tau
 	for i := 0; i < params.B; i++ {
 		g2ExpTauPowers[i] = *new(bn254.G2Affine).ScalarMultiplicationBase(tauPower.BigInt(new(big.Int)))
-		tauPower = tauPower.Mul(tauPower, tau)
+		tauPower.Mul(tauPower, tau)
 	}
 
 	return &MasterPublicKey{
@@ -130,7 +135,7 @@ func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Cip
 	v1Addtgh1 := new(bn254.G1Affine).Add(&pk.G1ExpV, tgh1)
 	ct3 := *new(bn254.G1Affine).ScalarMultiplication(v1Addtgh1, s.BigInt(new(big.Int)))
 
-	// c2 = s[α]T+[m]T
+	// ct4 = s[α]T+[m]T
 	sAlphaT := new(bn254.GT).Exp(pk.GTExpAlpha, s.BigInt(new(big.Int)))
 	ct4 := *new(bn254.GT).Mul(sAlphaT, &m.M)
 
@@ -186,9 +191,10 @@ func ComputeKey(msk *MasterSecretKey, d *BatchDigest, t *BatchLabel) (*SecretKey
 	// yw[d]2
 	ywd2 := new(bn254.G2Affine).ScalarMultiplication(&d.D, yw.BigInt(new(big.Int)))
 
-	temp := new(fr.Element).Mul(&msk.H, &t.Tg)
-	temp.Add(&msk.V, temp)
-	temp.Mul(r, temp)
+	temp := new(fr.Element).Mul(&msk.H, &t.Tg) // h·tg
+	temp.Add(&msk.V, temp)                     // v + h·tg
+	temp.Mul(r, temp)                          // r(v + h·tg)
+	temp.Add(&msk.Alpha, temp)                 // α + r(v + h·tg)
 	g2ExpTemp := new(bn254.G2Affine).ScalarMultiplicationBase(temp.BigInt(new(big.Int)))
 	// u[2] = [α + r(v+h·tg)]2 + yw·[d]2, dig = [d]2
 	u2 := new(bn254.G2Affine).Add(ywd2, g2ExpTemp)
