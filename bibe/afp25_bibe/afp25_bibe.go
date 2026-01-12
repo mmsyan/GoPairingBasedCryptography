@@ -1,7 +1,7 @@
 // Package afp25_bibe
 // implements the Amit Agarwal, Rex Fernando, Benny Pinkas's Batch scheme (AFP25).
 // 作者: mmsyan
-// 日期: 2025-12-30
+// 日期: 2026-01-12
 // 参考论文:
 // eprint: https://eprint.iacr.org/2024/1575
 // Agarwal, A., Fernando, R., Pinkas, B. (2025).
@@ -309,10 +309,6 @@ func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 //
 // 该函数由密钥生成中心(KGC)执行,为用户生成批量解密密钥。
 // 密钥计算公式为:sk = msk · (D + h(t))
-// 其中:
-//   - D是批量摘要,承诺了身份集合
-//   - h(t)是批量标签的哈希值,映射到G1群
-//   - msk是主密钥,确保只有KGC能生成有效密钥
 //
 // 参数:
 //   - msk: 主密钥,必须保密
@@ -380,12 +376,11 @@ func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identit
 			rootsWithoutId = append(rootsWithoutId, identity)
 		}
 	}
-	fmt.Println("decrypt rootsWithoutId", rootsWithoutId)
+
 	if len(rootsWithoutId) != len(identities)-1 {
 		return nil, fmt.Errorf("identity not found in identity list")
 	}
 	qxCoef := computePolynomialCoeffs(rootsWithoutId)
-	fmt.Println("decrypt qxCoef", qxCoef)
 
 	// 2. 计算 π = g1^q(τ)
 	pi := computeG1PolynomialTau(pk.G1ExpTauPowers, qxCoef)
