@@ -66,7 +66,8 @@ func TestBasicEncryptionDecryption(t *testing.T) {
 	id1 := NewIdentity(big.NewInt(100))
 	id2 := NewIdentity(big.NewInt(200))
 	id3 := NewIdentity(big.NewInt(300))
-	identities := []*Identity{id1, id2, id3}
+	id4 := NewIdentity(big.NewInt(400))
+	identities := []*Identity{id1, id2, id3, id4}
 
 	batchLabel := NewBatchLabel([]byte("batch-2025-01-12"))
 
@@ -82,19 +83,19 @@ func TestBasicEncryptionDecryption(t *testing.T) {
 		t.Fatalf("ComputeKey failed: %v", err)
 	}
 
-	// 6. 加密消息给 id1
+	// 6. 加密消息给 id4
 	msg, err := RandomMessage()
 	if err != nil {
 		t.Fatalf("RandomMessage failed: %v", err)
 	}
 
-	ct, err := Encrypt(mpk, msg, id1, batchLabel)
+	ct, err := Encrypt(mpk, msg, id4, batchLabel)
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	// 7. id1 解密
-	decryptedMsg, err := Decrypt(ct, sk, digest, identities, id1, batchLabel, mpk)
+	// 7. id4 解密
+	decryptedMsg, err := Decrypt(ct, sk, digest, identities, id4, batchLabel, mpk)
 	if err != nil {
 		t.Fatalf("Decrypt failed: %v", err)
 	}
@@ -262,18 +263,22 @@ func TestLargeBatchSize(t *testing.T) {
 
 // TestSingleIdentityBatch 测试只有一个身份的批量
 func TestSingleIdentityBatch(t *testing.T) {
-	fmt.Println("....")
-	params, err := Setup(5)
+	batchSize := 10
+	params, err := Setup(batchSize)
 	if err != nil {
 		t.Fatalf("Setup failed: %v", err)
 	}
+
 	mpk, msk, err := KeyGen(params)
 	if err != nil {
 		t.Fatalf("KeyGen failed: %v", err)
 	}
 
-	id := NewIdentity(big.NewInt(999))
-	identities := []*Identity{id}
+	id1 := NewIdentity(big.NewInt(100))
+	id2 := NewIdentity(big.NewInt(200))
+	id3 := NewIdentity(big.NewInt(300))
+	identities := []*Identity{id1, id2, id3}
+
 	batchLabel := NewBatchLabel([]byte("single-id-batch"))
 
 	digest, err := Digest(mpk, identities)
@@ -290,17 +295,17 @@ func TestSingleIdentityBatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RandomMessage failed: %v", err)
 	}
-	ct, err := Encrypt(mpk, msg, id, batchLabel)
+	ct, err := Encrypt(mpk, msg, id1, batchLabel)
 	if err != nil {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	decrypted, err := Decrypt(ct, sk, digest, identities, id, batchLabel, mpk)
+	decryptedMsg, err := Decrypt(ct, sk, digest, identities, id1, batchLabel, mpk)
 	if err != nil {
 		t.Fatalf("Decrypt for single identity batch failed: %v", err)
 	}
 
-	if !msg.M.Equal(&decrypted.M) {
+	if !msg.M.Equal(&decryptedMsg.M) {
 		t.Errorf("Single identity batch: message mismatch")
 	}
 }

@@ -1,18 +1,15 @@
 package afp25_bibe
 
 import (
-	"crypto/sha256"
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	hash2 "github.com/mmsyan/GoPairingBasedCryptography/hash"
+	"math/big"
 )
 
 func h(t *BatchLabel) bn254.G1Affine {
-	h := sha256.New()
-	h.Write(t.T)
-	bytes := h.Sum(nil)
-	var result bn254.G1Affine
-	result.SetBytes(bytes)
-	return result
+	return hash2.BytesToG1(t.T)
 }
 
 func computePolynomialCoeffs(identities []*Identity) []fr.Element {
@@ -21,6 +18,7 @@ func computePolynomialCoeffs(identities []*Identity) []fr.Element {
 
 	// 如果没有根，直接返回 [1]
 	if len(identities) == 0 {
+		fmt.Println("No identities")
 		return coeffs
 	}
 
@@ -44,4 +42,16 @@ func computePolynomialCoeffs(identities []*Identity) []fr.Element {
 	}
 
 	return coeffs
+}
+
+func computeG1PolynomialTau(g1TauPowers []bn254.G1Affine, coef []fr.Element) bn254.G1Affine {
+	var result bn254.G1Affine
+	_, _, g1, _ := bn254.Generators()
+	result.ScalarMultiplication(&g1, coef[0].BigInt(new(big.Int)))
+	for i := 1; i < len(coef); i++ {
+		var term bn254.G1Affine
+		term.ScalarMultiplication(&g1TauPowers[i-1], coef[i].BigInt(new(big.Int)))
+		result.Add(&result, &term)
+	}
+	return result
 }

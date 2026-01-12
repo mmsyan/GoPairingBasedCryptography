@@ -297,18 +297,9 @@ func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 	if len(identities) > len(pk.G1ExpTauPowers) {
 		return nil, fmt.Errorf("too many identities for batch size")
 	}
-	coefficients := computePolynomialCoeffs(identities)
-	var d bn254.G1Affine
-	_, _, g1, _ := bn254.Generators()
-
-	d.ScalarMultiplication(&g1, coefficients[0].BigInt(new(big.Int)))
-
-	for i := 1; i < len(coefficients); i++ {
-		var temp bn254.G1Affine
-		temp.ScalarMultiplication(&pk.G1ExpTauPowers[i-1], coefficients[i].BigInt(new(big.Int)))
-		d.Add(&d, &temp)
-	}
-
+	coef := computePolynomialCoeffs(identities)
+	fmt.Println("digest coef", coef)
+	d := computeG1PolynomialTau(pk.G1ExpTauPowers, coef)
 	return &BatchDigest{
 		D: d,
 	}, nil
@@ -393,18 +384,11 @@ func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identit
 	if len(rootsWithoutId) != len(identities)-1 {
 		return nil, fmt.Errorf("identity not found in identity list")
 	}
-	qx := computePolynomialCoeffs(rootsWithoutId)
-	fmt.Println("decrypt qx", qx)
+	qxCoef := computePolynomialCoeffs(rootsWithoutId)
+	fmt.Println("decrypt qxCoef", qxCoef)
 
 	// 2. 计算 π = g1^q(τ)
-	var pi bn254.G1Affine
-	_, _, g1, _ := bn254.Generators()
-	pi.ScalarMultiplication(&g1, qx[0].BigInt(new(big.Int)))
-	for i := 1; i < len(qx); i++ {
-		var term bn254.G1Affine
-		term.ScalarMultiplication(&pk.G1ExpTauPowers[i-1], qx[i].BigInt(new(big.Int)))
-		pi.Add(&pi, &term)
-	}
+	pi := computeG1PolynomialTau(pk.G1ExpTauPowers, qxCoef)
 
 	// 3. 构造向量 w = (d, π, sk) ∈ (G1)^3
 	w := [3]bn254.G1Affine{
