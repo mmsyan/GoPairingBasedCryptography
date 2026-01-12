@@ -1,4 +1,5 @@
-// Package afp25_bibe implements the Amit Agarwal, Rex Fernando, Benny Pinkas's Batch scheme (AFP25).
+// Package afp25_bibe
+// implements the Amit Agarwal, Rex Fernando, Benny Pinkas's Batch scheme (AFP25).
 // 作者: mmsyan
 // 日期: 2025-12-30
 // 参考论文:
@@ -12,11 +13,6 @@
 // 本包实现了一个高效的批量身份加密(Batched Identity-Based Encryption, BIBE)方案。
 // BIBE允许使用单个密钥对一批身份进行解密,相比传统IBE方案可以显著减少密钥管理开销。
 //
-// 该方案的主要特点:
-//   - 支持批量密钥生成:一个解密密钥可以解密发给多个身份的密文
-//   - 高效的阈值化:可以通过门限秘密共享实现分布式密钥生成
-//   - 基于双线性配对:利用BN254曲线的配对运算保证安全性
-//
 // 方案包含以下主要操作:
 //   - Setup: 初始化系统参数,设置批量大小
 //   - KeyGen: 生成主公钥和主密钥
@@ -27,7 +23,7 @@
 package afp25_bibe
 
 import (
-	"errors"
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
@@ -50,9 +46,9 @@ type MasterSecretKey struct {
 // 主公钥可以公开发布,供所有用户用于加密操作和验证。
 // 公钥包含预计算的幂次值,用于支持多项式运算和批量操作。
 type MasterPublicKey struct {
-	G1ExpTauPower []bn254.G1Affine
-	G2ExpTau      bn254.G2Affine
-	G2ExpMsk      bn254.G2Affine
+	G1ExpTauPowers []bn254.G1Affine
+	G2ExpTau       bn254.G2Affine
+	G2ExpMsk       bn254.G2Affine
 }
 
 // Identity 表示用户的身份标识。
@@ -117,7 +113,7 @@ type SecretKey struct {
 //	}
 func Setup(B int) (*BatchIBEParams, error) {
 	if B < 1 {
-		return nil, errors.New("invalid B")
+		return nil, fmt.Errorf("invalid B: %d", B)
 	}
 	return &BatchIBEParams{
 		B: B,
@@ -140,11 +136,6 @@ func Setup(B int) (*BatchIBEParams, error) {
 //   - *MasterSecretKey: 生成的主密钥(必须严格保密)
 //   - error: 如果随机数生成失败则返回错误
 //
-// 安全注意事项:
-//   - 主密钥msk必须绝对保密,不能泄露给任何用户
-//   - 陷门值τ在计算完公钥后应当安全删除,不能被恢复
-//   - 公钥中的τ幂次只能用于合法的多项式求值,不能用于恢复τ
-//
 // 示例:
 //
 //	mpk, msk, err := KeyGen(params)
@@ -155,25 +146,27 @@ func Setup(B int) (*BatchIBEParams, error) {
 func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) {
 	msk, err := new(fr.Element).SetRandom()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("unable to generate master secret key: %s", err)
 	}
 	tau, err := new(fr.Element).SetRandom()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("unable to generate tau value: %s", err)
 	}
+
+	// [τ]1, [τ^2]1, ..., [τ^B]1
 	tauPower := new(fr.Element).Set(tau)
-	// mpk: $$g_1^{\tau},g_1^{\tau^2}, \dots,g_1^{\tau^B}$$，$$g_2^{\tau}$$，$$g_2^{\text{msk}}$$
 	g1ExpTauPower := make([]bn254.G1Affine, params.B)
 	for i := 0; i < params.B; i++ {
 		g1ExpTauPower[i] = *new(bn254.G1Affine).ScalarMultiplicationBase(tauPower.BigInt(new(big.Int)))
 		tauPower.Mul(tauPower, tau)
 	}
-	g2ExpTau := *new(bn254.G2Affine).ScalarMultiplicationBase(tau.BigInt(new(big.Int)))
-	g2ExpMsk := *new(bn254.G2Affine).ScalarMultiplicationBase(msk.BigInt(new(big.Int)))
+
+	g2ExpTau := *new(bn254.G2Affine).ScalarMultiplicationBase(tau.BigInt(new(big.Int))) // [τ]2
+	g2ExpMsk := *new(bn254.G2Affine).ScalarMultiplicationBase(msk.BigInt(new(big.Int))) // [msk]2
 	return &MasterPublicKey{
-			G1ExpTauPower: g1ExpTauPower,
-			G2ExpTau:      g2ExpTau,
-			G2ExpMsk:      g2ExpMsk,
+			G1ExpTauPowers: g1ExpTauPower,
+			G2ExpTau:       g2ExpTau,
+			G2ExpMsk:       g2ExpMsk,
 		}, &MasterSecretKey{
 			Msk: *msk,
 		}, nil
@@ -218,37 +211,37 @@ func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) 
 func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Ciphertext, error) {
 	var a [2][3]bn254.G2Affine
 	_, _, _, g2 := bn254.Generators()
-	a[0][0] = g2
+	a[0][0] = g2 // [1]2
 	g2ExpId := new(bn254.G2Affine).ScalarMultiplicationBase(id.Id.BigInt(new(big.Int)))
 	g2ExpIdDivTau := new(bn254.G2Affine).Sub(g2ExpId, &pk.G2ExpTau)
-	a[0][1] = *g2ExpIdDivTau
-	a[0][2].SetInfinity()
-	a[1][0] = pk.G2ExpMsk
-	a[1][1].SetInfinity()
+	a[0][1] = *g2ExpIdDivTau // [id]2-[τ]2
+	a[0][2].SetInfinity()    // 0
+	a[1][0] = pk.G2ExpMsk    //[msk]2
+	a[1][1].SetInfinity()    // 0
 	negG2 := new(bn254.G2Affine).Neg(&g2)
-	a[1][2] = *negG2
+	a[1][2] = *negG2 // -[1]2
 
 	var b [2]bn254.GT
-	b[0] = *new(bn254.GT).SetOne()
-	eHtG2ExpMsk, err := bn254.Pair([]bn254.G1Affine{
-		h(t),
-	}, []bn254.G2Affine{
-		pk.G2ExpMsk,
-	})
-	if err != nil {
-		return nil, err
-	}
-	b[1] = eHtG2ExpMsk
+	b[0] = *new(bn254.GT).SetOne() // [0]T
 
-	r1, err := new(fr.Element).SetRandom()
+	eHtG2ExpMsk, err := bn254.Pair(
+		[]bn254.G1Affine{h(t)},
+		[]bn254.G2Affine{pk.G2ExpMsk},
+	)
 	if err != nil {
 		return nil, err
 	}
+	b[1] = *new(bn254.GT).Inverse(&eHtG2ExpMsk) // -e(H(t), [msk]2)
 
-	r2, err := new(fr.Element).SetRandom()
-	if err != nil {
-		return nil, err
+	// (r1, r2) <- (Zp)^2
+	randomFr := make([]*fr.Element, 2)
+	for i := 0; i < len(randomFr); i++ {
+		randomFr[i], err = new(fr.Element).SetRandom()
+		if err != nil {
+			return nil, err
+		}
 	}
+	r1, r2 := randomFr[0], randomFr[1]
 
 	// c1 = r^T * A
 	var c1 [3]bn254.G2Affine
@@ -261,8 +254,7 @@ func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Cip
 
 	// c2 = r^T · b + m
 	var c2 bn254.GT
-	// r^T · b = b[0]^r1 * b[1]^r2
-	var bPart1, bPart2 bn254.GT
+	var bPart1, bPart2 bn254.GT // r^T · b = b[0]^r1 * b[1]^r2
 	bPart1.Exp(b[0], r1.BigInt(new(big.Int)))
 	bPart2.Exp(b[1], r2.BigInt(new(big.Int)))
 
@@ -292,16 +284,6 @@ func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Cip
 //   - *BatchDigest: 生成的批量摘要
 //   - error: 如果身份列表为空或超过批量大小则返回错误
 //
-// 多项式构造:
-//   - 对于身份集合{id₁, id₂, ..., id_n},构造多项式f(X) = (X-id₁)(X-id₂)...(X-id_n)
-//   - 摘要D = g1^f(τ)是对身份集合的承诺
-//   - 只有知道τ才能计算摘要,但τ在密钥生成后已被删除
-//
-// 安全性质:
-//   - 摘要绑定到特定的身份集合,不能用于其他集合
-//   - 基于多项式的结构,支持高效的成员证明
-//   - 摘要可以公开,不泄露关于身份或主密钥的信息
-//
 // 示例:
 //
 //	digest, err := Digest(mpk, []Identity{id1, id2, id3})
@@ -310,10 +292,10 @@ func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Cip
 //	}
 func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 	if len(identities) == 0 {
-		return nil, errors.New("identities is empty")
+		return nil, fmt.Errorf("identities is empty")
 	}
-	if len(identities) > len(pk.G1ExpTauPower) {
-		return nil, errors.New("too many identities for batch size")
+	if len(identities) > len(pk.G1ExpTauPowers) {
+		return nil, fmt.Errorf("too many identities for batch size")
 	}
 	coefficients := computePolynomialCoeffs(identities)
 	var d bn254.G1Affine
@@ -323,7 +305,7 @@ func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 
 	for i := 1; i < len(coefficients); i++ {
 		var temp bn254.G1Affine
-		temp.ScalarMultiplication(&pk.G1ExpTauPower[i-1], coefficients[i].BigInt(new(big.Int)))
+		temp.ScalarMultiplication(&pk.G1ExpTauPowers[i-1], coefficients[i].BigInt(new(big.Int)))
 		d.Add(&d, &temp)
 	}
 
@@ -350,23 +332,12 @@ func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 //   - *SecretKey: 生成的解密密钥
 //   - error: 理论上不会失败,保留用于一致性
 //
-// 密钥性质:
-//   - 一个密钥可以解密发给批量中任意身份的密文
-//   - 密钥绑定到特定的批量标签,不能跨批量使用
-//   - 密钥的安全性依赖于主密钥的保密性
-//
-// 安全注意事项:
-//   - 密钥必须通过安全信道分发给用户
-//   - 不同批量应使用不同标签,避免密钥重用
-//   - 密钥泄露只影响对应批量,不影响其他批量或主密钥
-//
 // 示例:
 //
 //	sk, err := ComputeKey(msk, digest, batchLabel)
 //	if err != nil {
 //	    return fmt.Errorf("密钥计算失败: %w", err)
 //	}
-//	// sk可以安全分发给批量中的用户
 func ComputeKey(msk *MasterSecretKey, d *BatchDigest, t *BatchLabel) (*SecretKey, error) {
 	ht := h(t)
 	dMulHt := new(bn254.G1Affine).Add(&d.D, &ht)
@@ -403,16 +374,6 @@ func ComputeKey(msk *MasterSecretKey, d *BatchDigest, t *BatchLabel) (*SecretKey
 //   - 商多项式q(X) = f(X)/(X-id)在除id外的所有身份处为零
 //   - q(τ)可以用公钥中的τ幂次高效计算
 //
-// 配对验证原理:
-//   - 密文C1编码了加密随机数和身份信息
-//   - 通过配对运算,验证解密密钥与密文的一致性
-//   - 只有正确的身份和批量才能通过验证
-//
-// 安全性质:
-//   - 只有批量中的合法身份可以解密
-//   - 批量标签必须匹配,防止跨批量攻击
-//   - 基于双线性配对的困难性假设保证安全
-//
 // 示例:
 //
 //	msg, err := Decrypt(ct, sk, digest, allIDs, myID, label, mpk)
@@ -428,22 +389,20 @@ func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identit
 			rootsWithoutId = append(rootsWithoutId, identity)
 		}
 	}
-
+	fmt.Println("decrypt rootsWithoutId", rootsWithoutId)
 	if len(rootsWithoutId) != len(identities)-1 {
-		return nil, errors.New("identity not found in identity list")
+		return nil, fmt.Errorf("identity not found in identity list")
 	}
-
-	qCoeffs := computePolynomialCoeffs(rootsWithoutId)
+	qx := computePolynomialCoeffs(rootsWithoutId)
+	fmt.Println("decrypt qx", qx)
 
 	// 2. 计算 π = g1^q(τ)
 	var pi bn254.G1Affine
 	_, _, g1, _ := bn254.Generators()
-
-	pi.ScalarMultiplication(&g1, qCoeffs[0].BigInt(new(big.Int)))
-
-	for i := 1; i < len(qCoeffs); i++ {
+	pi.ScalarMultiplication(&g1, qx[0].BigInt(new(big.Int)))
+	for i := 1; i < len(qx); i++ {
 		var term bn254.G1Affine
-		term.ScalarMultiplication(&pk.G1ExpTauPower[i-1], qCoeffs[i].BigInt(new(big.Int)))
+		term.ScalarMultiplication(&pk.G1ExpTauPowers[i-1], qx[i].BigInt(new(big.Int)))
 		pi.Add(&pi, &term)
 	}
 
@@ -459,22 +418,19 @@ func Decrypt(c *Ciphertext, sk *SecretKey, d *BatchDigest, identities []*Identit
 	if err != nil {
 		return nil, err
 	}
-
 	pairing2, err := bn254.Pair([]bn254.G1Affine{w[1]}, []bn254.G2Affine{c.C1[1]})
 	if err != nil {
 		return nil, err
 	}
-
 	pairing3, err := bn254.Pair([]bn254.G1Affine{w[2]}, []bn254.G2Affine{c.C1[2]})
 	if err != nil {
 		return nil, err
 	}
-
 	var c1DotW bn254.GT
 	c1DotW.Mul(&pairing1, &pairing2)
 	c1DotW.Mul(&c1DotW, &pairing3)
 
-	// 5. 计算 m = c2 / (c1 ∘ w) = c2 * (c1 ∘ w)^(-1)
+	// 5. 计算 m = c2 / (c1 ∘ w)
 	var m bn254.GT
 	m.Div(&c.C2, &c1DotW)
 
