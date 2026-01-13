@@ -1,3 +1,16 @@
+// Package gwww25_bibe
+// implements the Junqing Gong, Brent Waters, Hoeteck Wee, David J. Wu's Batch Identity Based Encryption(GWWW25's BIBE)
+// 作者: mmsyan
+// 日期: 2026-01-13
+// 参考论文:
+// eprint: https://eprint.iacr.org/2025/2103
+// @misc{cryptoeprint:2025/2103,
+//
+//	author = {Junqing Gong and Brent Waters and Hoeteck Wee and David J. Wu},
+//	title = {Threshold Batched Identity-Based Encryption from Pairings in the Plain Model},
+//	howpublished = {Cryptology {ePrint} Archive, Paper 2025/2103},
+//	year = {2025},
+//	url = {https://eprint.iacr.org/2025/2103}}
 package gwww25_bibe
 
 import (
