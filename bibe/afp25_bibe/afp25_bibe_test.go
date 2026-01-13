@@ -106,6 +106,152 @@ func TestBasicEncryptionDecryption(t *testing.T) {
 	}
 }
 
+// TestSingleIdentity1 测试单身份(正确)
+func TestSingleIdentity1(t *testing.T) {
+	batchSize := 10
+	params, err := Setup(batchSize)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	mpk, msk, err := KeyGen(params)
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	id1 := NewIdentity(big.NewInt(100))
+	identities := []*Identity{id1}
+	batchLabel := NewBatchLabel([]byte("batch-2026-01-13"))
+
+	digest, err := Digest(mpk, identities)
+	if err != nil {
+		t.Fatalf("Digest failed: %v", err)
+	}
+
+	sk, err := ComputeKey(msk, digest, batchLabel)
+	if err != nil {
+		t.Fatalf("ComputeKey failed: %v", err)
+	}
+
+	msg, err := RandomMessage()
+	if err != nil {
+		t.Fatalf("RandomMessage failed: %v", err)
+	}
+
+	ct, err := Encrypt(mpk, msg, id1, batchLabel)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	decryptedMsg, err := Decrypt(ct, sk, digest, identities, id1, batchLabel, mpk)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if !msg.M.Equal(&decryptedMsg.M) {
+		t.Errorf("Decrypted message does not match original")
+	}
+}
+
+// TestSingleIdentity1 测试单身份(错误)
+func TestSingleIdentity2(t *testing.T) {
+	batchSize := 10
+	params, err := Setup(batchSize)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	mpk, msk, err := KeyGen(params)
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	id1 := NewIdentity(big.NewInt(100))
+	id2 := NewIdentity(big.NewInt(200))
+	identities := []*Identity{id1}
+	batchLabel := NewBatchLabel([]byte("batch-2026-01-13"))
+
+	digest, err := Digest(mpk, identities)
+	if err != nil {
+		t.Fatalf("Digest failed: %v", err)
+	}
+
+	sk, err := ComputeKey(msk, digest, batchLabel)
+	if err != nil {
+		t.Fatalf("ComputeKey failed: %v", err)
+	}
+
+	msg, err := RandomMessage()
+	if err != nil {
+		t.Fatalf("RandomMessage failed: %v", err)
+	}
+
+	ct, err := Encrypt(mpk, msg, id1, batchLabel)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	_, err = Decrypt(ct, sk, digest, identities, id2, batchLabel, mpk)
+	if err != nil {
+		fmt.Println("pass, id2 is not valid")
+	} else {
+		t.Fatalf("pass, id2 is valid")
+	}
+
+}
+
+// TestMultiIdentities1 测试多身份(正确)
+func TestMultiIdentities1(t *testing.T) {
+	batchSize := 10
+	params, err := Setup(batchSize)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	mpk, msk, err := KeyGen(params)
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	id1 := NewIdentity(big.NewInt(100))
+	id2 := NewIdentity(big.NewInt(200))
+	id3 := NewIdentity(big.NewInt(300))
+	id4 := NewIdentity(big.NewInt(400))
+	id5 := NewIdentity(big.NewInt(500))
+	id6 := NewIdentity(big.NewInt(600))
+	identities := []*Identity{id1, id2, id3, id4, id5, id6}
+	batchLabel := NewBatchLabel([]byte("batch-2026-01-13"))
+
+	digest, err := Digest(mpk, identities)
+	if err != nil {
+		t.Fatalf("Digest failed: %v", err)
+	}
+
+	sk, err := ComputeKey(msk, digest, batchLabel)
+	if err != nil {
+		t.Fatalf("ComputeKey failed: %v", err)
+	}
+
+	msg, err := RandomMessage()
+	if err != nil {
+		t.Fatalf("RandomMessage failed: %v", err)
+	}
+
+	ct, err := Encrypt(mpk, msg, id6, batchLabel)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	decryptedMsg, err := Decrypt(ct, sk, digest, identities, id6, batchLabel, mpk)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	if !msg.M.Equal(&decryptedMsg.M) {
+		t.Errorf("Decrypted message does not match original")
+	}
+}
+
 // TestMultipleRecipientsInBatch 测试批量中的多个接收者
 func TestMultipleRecipientsInBatch(t *testing.T) {
 	params, _ := Setup(20)

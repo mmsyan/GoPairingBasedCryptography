@@ -1,7 +1,6 @@
 package afp25_bibe
 
 import (
-	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	hash2 "github.com/mmsyan/GoPairingBasedCryptography/hash"
@@ -18,7 +17,6 @@ func computePolynomialCoeffs(identities []*Identity) []fr.Element {
 
 	// 如果没有根，直接返回 [1]
 	if len(identities) == 0 {
-		fmt.Println("No identities")
 		return coeffs
 	}
 

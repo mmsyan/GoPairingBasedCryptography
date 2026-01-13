@@ -298,7 +298,6 @@ func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 		return nil, fmt.Errorf("too many identities for batch size")
 	}
 	coef := computePolynomialCoeffs(identities)
-	fmt.Println("digest coef", coef)
 	d := computeG1PolynomialTau(pk.G1ExpTauPowers, coef)
 	return &BatchDigest{
 		D: d,
