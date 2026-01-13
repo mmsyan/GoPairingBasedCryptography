@@ -1,3 +1,33 @@
+// Package agka09
+// implements the Qianhong Wu, Yi Mu, Willy Susilo, Bo Qin & Josep Domingo-Ferrer's Aggregatable Signature-Based Broadcast
+// 作者: mmsyan
+// 日期: 2026-01-13
+// 参考论文:
+// Wu, Q., Mu, Y., Susilo, W., Qin, B., Domingo-Ferrer, J. (2009).
+// Asymmetric Group Key Agreement.
+// In: Joux, A. (eds) Advances in Cryptology - EUROCRYPT 2009. EUROCRYPT 2009.
+// Lecture Notes in Computer Science, vol 5479. Springer, Berlin, Heidelberg.
+// https://doi.org/10.1007/978-3-642-01001-9_9
+// eprint link: https://eprint.iacr.org/2010/209.pdf
+//
+// Algorithms:
+// publicParameters := ParaGen()
+// (pk, sk) <- KeyGen(π)
+// σ <- Sign(str, sk)
+// 0/1 := Verify(str, σ, pk)
+// ciphertext <- Encrypt(plaintext, pk)
+// plaintext := Decrypt(ciphertext, str, σ)
+//
+// Key Homomorphism:
+// if:
+//
+//	(1) (pk1, sk1) <- KeyGen(π) and (pk2, sk2) <- KeyGen(π)
+//	(2) σ1 = Sign(str, pk1, sk1) && σ2 = Sign(str, pk2, sk2)
+//
+// then:
+//
+//	(1) Verify(str, σ1*σ2, pk1*pk2) = 1
+//	(2) Encrypt(plaintext, pk1*pk2) = c => Decrypt(c, str, σ1*σ2) = m
 package agka09
 
 import (
