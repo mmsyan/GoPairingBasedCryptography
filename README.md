@@ -11,6 +11,7 @@ Implemented Schemes includes:
 - Fuzzy Identity-Based Encryption (Fuzzy IBE)
 - Ciphertext-Policy Attribute-Based Encryption (CP-ABE)
 - Key-Policy Attribute-Based Encryption (KP-ABE)
+- Batch Identity Based Encryption (BIBE)
 
 ## Digital Signature
 
@@ -52,6 +53,12 @@ We have implemented six representative IBE schemes, covering the evolution from 
 | **SW05 (Large Universe)** | *Fuzzy Identity-Based Encryption* | [Link](https://eprint.iacr.org/2004/086.pdf) | §6 Large Universe Construction | [code](https://github.com/mmsyan/GoPairingBasedCryptography/blob/main/fibe/sw05_fibe_large_universe.go) | Selective-ID CPA  |
 
 
+## Batch Identity Based Encryption Implementation
+
+| Scheme Abbr. | Paper Title | Paper Link | Core Chapter                                          | Code Repository                                                                                        | Security Assumption        |
+|:-------------| :--- | :--- |:------------------------------------------------------|:-------------------------------------------------------------------------------------------------------|:---------------------------|
+| **AFP25**    | *Efficiently-Thresholdizable Batched Identity Based Encryption, with Applications.* | [Link](https://doi.org/10.1007/978-3-032-01881-6_3) | §6 Our Batched Identity Based Encryption construction | [code](https://github.com/mmsyan/GoPairingBasedCryptography/blob/main/bibe/afp25_bibe/afp25_bibe.go)   | BIBE Security(GCM)         |
+| **GWWW25**   | *Threshold Batched Identity-Based Encryption from Pairings in the Plain Model*      | [Link](https://eprint.iacr.org/2025/2103) | §4 Batched Identity-Based Encryption                  | [code](https://github.com/mmsyan/GoPairingBasedCryptography/blob/main/bibe/gwww25_bibe/gwww25_bibe.go) | Selective Security(q-type) |
 
 ## How to use our code
 
