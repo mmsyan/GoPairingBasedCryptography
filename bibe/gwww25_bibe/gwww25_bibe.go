@@ -91,8 +91,8 @@ func KeyGen(params *BatchIBEParams) (*MasterPublicKey, *MasterSecretKey, error) 
 	}
 	gtExpAlpha := new(bn254.GT).Exp(eG1G2, alpha.BigInt(new(big.Int))) // [α]T
 
+	tauPower := new(fr.Element).Set(tau)
 	g2ExpTauPowers := make([]bn254.G2Affine, params.B) // [τ]2, [τ^2]2, [τ^3]2, ..., [τ^B]2
-	tauPower := tau
 	for i := 0; i < params.B; i++ {
 		g2ExpTauPowers[i] = *new(bn254.G2Affine).ScalarMultiplicationBase(tauPower.BigInt(new(big.Int)))
 		tauPower.Mul(tauPower, tau)
@@ -204,6 +204,7 @@ func Decrypt(mpk *MasterPublicKey, sk *SecretKey, identities []*Identity, id *Id
 			rootsWithoutId = append(rootsWithoutId, identity)
 		}
 	}
+
 	if len(rootsWithoutId) != len(identities)-1 {
 		return nil, fmt.Errorf("identity not found in identity list")
 	}
