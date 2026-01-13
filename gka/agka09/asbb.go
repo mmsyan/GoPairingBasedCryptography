@@ -159,3 +159,32 @@ func Decrypt(c CipherText, s *SignMessage, sigma *Signature) (*PlainText, error)
 
 	return &PlainText{M: *plainText}, nil
 }
+
+func AggregatePublicKeys(pks []*PublicKey) (*PublicKey, error) {
+	if len(pks) == 0 {
+		return nil, fmt.Errorf("no public keys provided")
+	}
+	aggregateR := *new(bn254.G2Affine).SetInfinity()
+	aggregateA := *new(bn254.GT).SetOne()
+	for _, pk := range pks {
+		aggregateR.Add(&aggregateR, &pk.R)
+		aggregateA.Add(&aggregateA, &pk.A)
+	}
+	return &PublicKey{
+		R: aggregateR,
+		A: aggregateA,
+	}, nil
+}
+
+func AggregateSignatures(sigmas []*Signature) (*Signature, error) {
+	if len(sigmas) == 0 {
+		return nil, fmt.Errorf("no signatures provided")
+	}
+	aggregateSigma := *new(bn254.G1Affine).SetInfinity()
+	for _, s := range sigmas {
+		aggregateSigma.Add(&aggregateSigma, &s.Sigma)
+	}
+	return &Signature{
+		Sigma: aggregateSigma,
+	}, nil
+}
