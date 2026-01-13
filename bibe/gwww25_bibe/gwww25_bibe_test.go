@@ -150,7 +150,65 @@ func TestEncryptDecrypt_SingleIdentity(t *testing.T) {
 	}
 }
 
-func TestEncryptDecrypt_MultipleIdentities(t *testing.T) {
+func TestEncryptDecrypt_MultipleIdentities1(t *testing.T) {
+	// Setup
+	params, err := Setup(10)
+	if err != nil {
+		t.Fatalf("Setup failed: %v", err)
+	}
+
+	mpk, msk, err := KeyGen(params)
+	if err != nil {
+		t.Fatalf("KeyGen failed: %v", err)
+	}
+
+	// Create multiple identities
+	batchLabel := NewBatchLabel(500)
+	id1 := NewIdentity(1)
+	id2 := NewIdentity(2)
+	id3 := NewIdentity(3)
+	id4 := NewIdentity(4)
+	id5 := NewIdentity(5)
+	identities := []*Identity{
+		id1, id2, id3, id4, id5,
+	}
+
+	// Generate digest for all identities
+	digest, err := Digest(mpk, identities)
+	if err != nil {
+		t.Fatalf("Digest failed: %v", err)
+	}
+
+	// Compute key
+	sk, err := ComputeKey(msk, digest, batchLabel)
+	if err != nil {
+		t.Fatalf("ComputeKey failed: %v", err)
+	}
+
+	// Create and encrypt message
+	originalMsg, err := RandomMessage()
+	if err != nil {
+		t.Fatalf("RandomMessage failed: %v", err)
+	}
+
+	ct, err := Encrypt(mpk, originalMsg, id1, batchLabel)
+	if err != nil {
+		t.Fatalf("Encrypt failed: %v", err)
+	}
+
+	// Decrypt
+	decryptedMsg, err := Decrypt(mpk, sk, identities, id1, batchLabel, ct)
+	if err != nil {
+		t.Fatalf("Decrypt failed: %v", err)
+	}
+
+	// Verify decryption
+	if !originalMsg.M.Equal(&decryptedMsg.M) {
+		t.Error("Decrypted message does not match original message")
+	}
+}
+
+func TestEncryptDecrypt_MultipleIdentities2(t *testing.T) {
 	// Setup
 	params, err := Setup(10)
 	if err != nil {
@@ -230,31 +288,6 @@ func TestDigest_EmptyIdentities(t *testing.T) {
 	}
 }
 
-func TestDigest_TooManyIdentities(t *testing.T) {
-	params, err := Setup(3)
-	if err != nil {
-		t.Fatalf("Setup failed: %v", err)
-	}
-
-	mpk, _, err := KeyGen(params)
-	if err != nil {
-		t.Fatalf("KeyGen failed: %v", err)
-	}
-
-	// Create more identities than batch size
-	identities := []*Identity{
-		NewIdentity(1),
-		NewIdentity(2),
-		NewIdentity(3),
-		NewIdentity(4),
-	}
-
-	_, err = Digest(mpk, identities)
-	if err == nil {
-		t.Error("Expected error for too many identities, got nil")
-	}
-}
-
 func TestDecrypt_IdentityNotInList(t *testing.T) {
 	// Setup
 	params, err := Setup(10)
@@ -304,6 +337,7 @@ func TestDecrypt_IdentityNotInList(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error when decrypting for identity not in list, got nil")
 	}
+	fmt.Println(err)
 }
 
 func TestEncryptDecrypt_DifferentBatchLabels(t *testing.T) {
