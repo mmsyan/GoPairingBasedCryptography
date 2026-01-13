@@ -1,7 +1,6 @@
 package gwww25_bibe
 
 import (
-	"errors"
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -147,27 +146,17 @@ func Encrypt(pk *MasterPublicKey, m *Message, id *Identity, t *BatchLabel) (*Cip
 	}, nil
 }
 
-func Digest(pk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
+func Digest(mpk *MasterPublicKey, identities []*Identity) (*BatchDigest, error) {
 	if len(identities) == 0 {
-		return nil, errors.New("identities is empty")
+		return nil, fmt.Errorf("identities is empty")
 	}
-	if len(identities) > len(pk.G2ExpTauPowers) {
-		return nil, errors.New("too many identities for batch size")
+	if len(identities) > len(mpk.G2ExpTauPowers) {
+		return nil, fmt.Errorf("too many identities for batch size")
 	}
-
 	// Fs(x)=(x-id)
-	coefficients := computePolynomialCoeffs(identities)
-	var d bn254.G2Affine
-	_, _, _, g2 := bn254.Generators()
-	d.ScalarMultiplication(&g2, coefficients[0].BigInt(new(big.Int)))
-
-	// dig = [Fs(τ)]2
-	for i := 1; i < len(coefficients); i++ {
-		var temp bn254.G2Affine
-		temp.ScalarMultiplication(&pk.G2ExpTauPowers[i-1], coefficients[i].BigInt(new(big.Int)))
-		d.Add(&d, &temp)
-	}
-
+	coef := computePolynomialCoeffs(identities)
+	fmt.Printf("digest coefficients: %v\n", coef)
+	d := computeG2PolynomialTau(mpk.G2ExpTauPowers, coef)
 	return &BatchDigest{
 		D: d,
 	}, nil
@@ -216,38 +205,36 @@ func Decrypt(mpk *MasterPublicKey, sk *SecretKey, identities []*Identity, id *Id
 		}
 	}
 	if len(rootsWithoutId) != len(identities)-1 {
-		return nil, errors.New("identity not found in identity list")
+		return nil, fmt.Errorf("identity not found in identity list")
 	}
-	qCoeffs := computePolynomialCoeffs(rootsWithoutId)
+	qCoef := computePolynomialCoeffs(rootsWithoutId)
+	fmt.Printf("qCoeffs: %v\n", qCoef)
 
 	// 2. 计算 π = g2^q(τ)
-	var pi bn254.G2Affine
-	pi.ScalarMultiplicationBase(qCoeffs[0].BigInt(new(big.Int)))
-	for i := 1; i < len(qCoeffs); i++ {
-		var term bn254.G2Affine
-		term.ScalarMultiplication(&mpk.G2ExpTauPowers[i-1], qCoeffs[i].BigInt(new(big.Int)))
-		pi.Add(&pi, &term)
-	}
+	pi := computeG2PolynomialTau(mpk.G2ExpTauPowers, qCoef)
 
+	// 3. 计算分量
 	// [ct1]1 · [u2]2
-	eCt1U2, err := bn254.Pair([]bn254.G1Affine{ct.Ct1}, []bn254.G2Affine{sk.U2})
+	pairA, err := bn254.Pair([]bn254.G1Affine{ct.Ct1}, []bn254.G2Affine{sk.U2})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate eCt1")
 	}
 	yct2 := *new(bn254.G1Affine).ScalarMultiplication(&ct.Ct2, sk.Y.BigInt(new(big.Int)))
-	eYCt2Pi, err := bn254.Pair([]bn254.G1Affine{yct2}, []bn254.G2Affine{pi})
+	// y[ct]1 · pi
+	pairB, err := bn254.Pair([]bn254.G1Affine{yct2}, []bn254.G2Affine{pi})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate eYct2")
 	}
 
-	eCt3U1, err := bn254.Pair([]bn254.G1Affine{ct.Ct3}, []bn254.G2Affine{sk.U1})
+	// [ct3]1 · [u1]2
+	pairC, err := bn254.Pair([]bn254.G1Affine{ct.Ct3}, []bn254.G2Affine{sk.U1})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate eCt3")
 	}
 
-	temp := new(bn254.GT).Div(&eCt1U2, &eYCt2Pi)
-	temp.Div(temp, &eCt3U1)
-	message := new(bn254.GT).Div(&ct.Ct4, temp)
+	temp1 := new(bn254.GT).Div(&pairA, &pairB)
+	temp2 := new(bn254.GT).Div(temp1, &pairC)
+	message := new(bn254.GT).Div(&ct.Ct4, temp2)
 
 	return &Message{
 		M: *message,

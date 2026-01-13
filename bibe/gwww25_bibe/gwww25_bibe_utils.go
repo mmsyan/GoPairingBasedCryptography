@@ -1,10 +1,19 @@
 package gwww25_bibe
 
-import "github.com/consensys/gnark-crypto/ecc/bn254/fr"
+import (
+	"github.com/consensys/gnark-crypto/ecc/bn254"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"math/big"
+)
 
 func computePolynomialCoeffs(identities []*Identity) []fr.Element {
 	// 从常数多项式 1 开始
 	coeffs := []fr.Element{*new(fr.Element).SetOne()}
+
+	// 如果没有根，直接返回 [1]
+	if len(identities) == 0 {
+		return coeffs
+	}
 
 	// 逐个乘以 (X - root)
 	for _, identity := range identities {
@@ -26,4 +35,16 @@ func computePolynomialCoeffs(identities []*Identity) []fr.Element {
 	}
 
 	return coeffs
+}
+
+func computeG2PolynomialTau(g2TauPowers []bn254.G2Affine, coef []fr.Element) bn254.G2Affine {
+	var result bn254.G2Affine
+	_, _, _, g2 := bn254.Generators()
+	result.ScalarMultiplication(&g2, coef[0].BigInt(new(big.Int)))
+	for i := 1; i < len(coef); i++ {
+		var term bn254.G2Affine
+		term.ScalarMultiplication(&g2TauPowers[i-1], coef[i].BigInt(new(big.Int)))
+		result.Add(&result, &term)
+	}
+	return result
 }
