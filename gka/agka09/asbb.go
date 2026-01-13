@@ -168,7 +168,7 @@ func AggregatePublicKeys(pks []*PublicKey) (*PublicKey, error) {
 	aggregateA := *new(bn254.GT).SetOne()
 	for _, pk := range pks {
 		aggregateR.Add(&aggregateR, &pk.R)
-		aggregateA.Add(&aggregateA, &pk.A)
+		aggregateA.Mul(&aggregateA, &pk.A)
 	}
 	return &PublicKey{
 		R: aggregateR,
