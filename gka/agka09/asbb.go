@@ -1,9 +1,17 @@
 package agka09
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/mmsyan/GoPairingBasedCryptography/hash"
+	"math/big"
 )
+
+type PublicParameters struct {
+	G1 bn254.G1Affine
+	G2 bn254.G2Affine
+}
 
 type PublicKey struct {
 	R bn254.G2Affine
@@ -15,7 +23,7 @@ type PrivateKey struct {
 	X bn254.G1Affine
 }
 
-type Message struct {
+type SignMessage struct {
 	S []byte
 }
 
@@ -33,22 +41,121 @@ type CipherText struct {
 	C3 bn254.GT
 }
 
-func KeyGen() {
+func ParaGen() (*PublicParameters, error) {
+	_, _, g1, g2 := bn254.Generators()
+	return &PublicParameters{
+		G1: g1,
+		G2: g2,
+	}, nil
+}
+
+func KeyGen(pp *PublicParameters) (*PublicKey, *PrivateKey, error) {
+	// r <- Zp*
+	r, err := new(fr.Element).SetRandom()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to generate random key: %v", err)
+	}
+
+	// X <- G1
+	xElement, err := new(fr.Element).SetRandom()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to generate random key: %v", err)
+	}
+	x := *new(bn254.G1Affine).ScalarMultiplicationBase(xElement.BigInt(new(big.Int)))
+
+	// R = g2^{-r}
+	negR := new(fr.Element).Neg(r)
+	g2ExpNegR := new(bn254.G2Affine).ScalarMultiplicationBase(negR.BigInt(new(big.Int)))
+
+	// A = e(X, g2)
+	pairXG2, err := bn254.Pair([]bn254.G1Affine{x}, []bn254.G2Affine{pp.G2})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &PublicKey{
+			R: *g2ExpNegR,
+			A: pairXG2,
+		}, &PrivateKey{
+			R: *r,
+			X: x,
+		}, nil
+}
+
+func Sign(s *SignMessage, sk *PrivateKey) (*Signature, error) {
+	hs := hash.BytesToG1(s.S)
+	hsExpR := new(bn254.G1Affine).ScalarMultiplication(&hs, sk.R.BigInt(new(big.Int)))
+	// σ = X·H(s)^r
+	sigma := new(bn254.G1Affine).Add(&sk.X, hsExpR)
+	return &Signature{Sigma: *sigma}, nil
+}
+
+func Verify(s *SignMessage, sigma *Signature, pk *PublicKey) (bool, error) {
+	_, _, _, g2 := bn254.Generators()
+
+	// e(σ, g2)
+	pairSigmaG2, err := bn254.Pair([]bn254.G1Affine{sigma.Sigma}, []bn254.G2Affine{g2})
+	if err != nil {
+		return false, fmt.Errorf("unable to verify signature: %v", err)
+	}
+
+	// e(H(s), R)
+	pairHsR, err := bn254.Pair([]bn254.G1Affine{hash.BytesToG1(s.S)}, []bn254.G2Affine{pk.R})
+	if err != nil {
+		return false, fmt.Errorf("unable to verify signature: %v", err)
+	}
+
+	// e(σ, g2) * e(H(s), R) ==?== A
+	pairLeft := new(bn254.GT).Mul(&pairSigmaG2, &pairHsR)
+	if pairLeft.Equal(&pk.A) {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("sigma is a not valid signature!")
+	}
 
 }
 
-func Sign() {
+func Encrypt(plaintext *PlainText, pk *PublicKey) (*CipherText, error) {
+	// t <- Zp*
+	t, err := new(fr.Element).SetRandom()
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate random ciphertext: %v", err)
+	}
+
+	// c1 = g2^t
+	c1 := new(bn254.G2Affine).ScalarMultiplicationBase(t.BigInt(new(big.Int)))
+
+	// c2 = R^t
+	c2 := new(bn254.G2Affine).ScalarMultiplication(&pk.R, t.BigInt(new(big.Int)))
+
+	// c3 = m·A^t
+	aExpT := new(bn254.GT).Exp(pk.A, t.BigInt(new(big.Int)))
+	c3 := new(bn254.GT).Mul(&plaintext.M, aExpT)
+
+	return &CipherText{
+		C1: *c1,
+		C2: *c2,
+		C3: *c3,
+	}, nil
 
 }
 
-func Verify() {
+func Decrypt(c CipherText, s *SignMessage, sigma *Signature) (*PlainText, error) {
+	// e(σ, c1)
+	pairSigmaC1, err := bn254.Pair([]bn254.G1Affine{sigma.Sigma}, []bn254.G2Affine{c.C1})
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt ciphertext: %v", err)
+	}
 
-}
+	// e(H(s), c2)
+	pairHsC2, err := bn254.Pair([]bn254.G1Affine{hash.BytesToG1(s.S)}, []bn254.G2Affine{c.C2})
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt ciphertext: %v", err)
+	}
 
-func Encrypt() {
+	// c3 / [e(σ, c1)*e(H(s), c2)]
+	temp := new(bn254.GT).Mul(&pairSigmaC1, &pairHsC2)
+	plainText := new(bn254.GT).Div(&c.C3, temp)
 
-}
-
-func Decrypt() {
-
+	return &PlainText{M: *plainText}, nil
 }
