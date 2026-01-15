@@ -54,11 +54,27 @@ We have implemented six representative IBE schemes, covering the evolution from 
 
 
 ## Batch Identity Based Encryption Implementation
+In a batched identity-based encryption (IBE) scheme, ciphertexts are associated with a batch label tg∗ and an identity id∗ while secret keys are associated with a batch label tg and a set of identities S. Decryption is possible whenever tg = tg∗ and id∗ ∈ S. The primary efficiency property in a batched IBE scheme is that the size of the decryption key for a set S should be independent of the size of S.
+
+We have implemented two BIBE shcemes:
+
+- **AFP25**: This is the first BIBE scheme
+- **GWWW25**: A BIBE scheme that is secure under plain model.
 
 | Scheme Abbr. | Paper Title | Paper Link | Core Chapter                                          | Code Repository                                                                                        | Security Assumption        |
 |:-------------| :--- | :--- |:------------------------------------------------------|:-------------------------------------------------------------------------------------------------------|:---------------------------|
 | **AFP25**    | *Efficiently-Thresholdizable Batched Identity Based Encryption, with Applications.* | [Link](https://doi.org/10.1007/978-3-032-01881-6_3) | §6 Our Batched Identity Based Encryption construction | [code](https://github.com/mmsyan/GoPairingBasedCryptography/blob/main/bibe/afp25_bibe/afp25_bibe.go)   | BIBE Security(GCM)         |
 | **GWWW25**   | *Threshold Batched Identity-Based Encryption from Pairings in the Plain Model*      | [Link](https://eprint.iacr.org/2025/2103) | §4 Batched Identity-Based Encryption                  | [code](https://github.com/mmsyan/GoPairingBasedCryptography/blob/main/bibe/gwww25_bibe/gwww25_bibe.go) | Selective Security(q-type) |
+
+
+## Group Key Agreement
+Some group key agreement protocols use bilinear pairings as a building block. Our implementation includes the following:
+- ASBB: The ASBB(Aggregatable Signature-Based Broadcast) is a combination of digital signature and broadcast scheme. It was proposed in *Asymmetric Group Key Agreement*.
+
+| Scheme Abbr. | Paper Title                       | Paper Link | Core Chapter                                          | Code Repository                                                                         | Security Assumption |
+|:-------------|:----------------------------------| :--- |:------------------------------------------------------|:----------------------------------------------------------------------------------------|:--------------------|
+| **AGKA**     | *Asymmetric Group Key Agreement.* | [Link](https://link.springer.com/chapter/10.1007/978-3-642-01001-9_9) | §4.1 An Efficient ASBB Scheme | [code](https://github.com/mmsyan/GoPairingBasedCryptography/blob/main/gka/agka/asbb.go) | CPA Secure(ROM)     |
+
 
 ## How to use our code
 
