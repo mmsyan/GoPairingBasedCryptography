@@ -86,24 +86,24 @@ func Extract(msk *MasterSecretKey, id *Identity) (*UserSecretKey, error) {
 	}, nil
 }
 
-func Encrypt(s []Identity, pk *PublicKey) (*Ciphertext, error) {
-	//k, err := new(fr.Element).SetRandom()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//negK := new(fr.Element).Neg(k)
-	//// c1 = w^{-k}
-	//C1 := new(bn254.G1Affine).ScalarMultiplication(&pk.W, negK.BigInt(new(big.Int)))
-	//
-	//// c2 = h^{k }
-	//prodIdentity := new(fr.Element).SetOne()
-	//for _, id := range s {
-	//	hid := hash.BytesToField(id.Id)
-	//	temp := new(fr.Element).Add(pk.)
-	//}
-	//
-	//C2 := new(bn254.G2Affine).ScalarMultiplication(&pk.H, negK.BigInt(new(big.Int)))
-	//
-	//K := new(bn254.GT).Exp(pk.V, k.BigInt(new(big.Int)))
-}
+//func Encrypt(s []Identity, pk *PublicKey) (*Ciphertext, error) {
+//k, err := new(fr.Element).SetRandom()
+//if err != nil {
+//	return nil, err
+//}
+//
+//negK := new(fr.Element).Neg(k)
+//// c1 = w^{-k}
+//C1 := new(bn254.G1Affine).ScalarMultiplication(&pk.W, negK.BigInt(new(big.Int)))
+//
+//// c2 = h^{k }
+//prodIdentity := new(fr.Element).SetOne()
+//for _, id := range s {
+//	hid := hash.BytesToField(id.Id)
+//	temp := new(fr.Element).Add(pk.)
+//}
+//
+//C2 := new(bn254.G2Affine).ScalarMultiplication(&pk.H, negK.BigInt(new(big.Int)))
+//
+//K := new(bn254.GT).Exp(pk.V, k.BigInt(new(big.Int)))
+//}
