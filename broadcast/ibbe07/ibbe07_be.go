@@ -13,6 +13,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/mmsyan/GoPairingBasedCryptography/hash"
+	"github.com/mmsyan/GoPairingBasedCryptography/utils"
 	"math/big"
 )
 
@@ -115,7 +116,7 @@ func Encrypt(s []Identity, pk *PublicKey) (*BroadcastHeader, *MessageEncyptionKe
 	for i := 0; i < len(elements); i++ {
 		elements[i] = hash.BytesToField(s[i].Id)
 	}
-	coeffs := ComputePolyCoefficients(elements)
+	coeffs := utils.ComputePolyCoefficients(elements)
 
 	// coeffs[i] 对应 γ^i 的系数
 	// 计算 h^{c0} · (h^γ)^{c1} · (h^γ^2)^{c2} · ...
@@ -164,7 +165,7 @@ func Decrypt(s []Identity, id *Identity, sk *UserSecretKey, hdr *BroadcastHeader
 
 	// 3. 计算 ∏_{j≠i}(x + H(ID_j)) 的系数
 	// coeffs[0] = ∏_{j≠i} H(ID_j)，coeffs[1:] 对应 p_{i,S}(γ) 的系数
-	coeffs := ComputePolyCoefficients(elementsWithoutI)
+	coeffs := utils.ComputePolyCoefficients(elementsWithoutI)
 
 	// 4. 计算 h^{p_{i,S}(γ)} = h^{c1} · (h^γ)^{c2} · (h^γ²)^{c3} · ...
 	var hPower bn254.G2Affine
