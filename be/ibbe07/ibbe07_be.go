@@ -31,6 +31,9 @@ type Message struct {
 }
 
 type Ciphertext struct {
+	C1 bn254.G1Affine
+	C2 bn254.G2Affine
+	K  bn254.GT
 }
 
 func Setup(m int) (*PublicKey, *MasterSecretKey, error) {
@@ -74,5 +77,33 @@ func Setup(m int) (*PublicKey, *MasterSecretKey, error) {
 
 func Extract(msk *MasterSecretKey, id *Identity) (*UserSecretKey, error) {
 	hid := hash.BytesToField(id.Id)
-	gammaAddHid
+	gammaAddHid := new(fr.Element).Add(&msk.Gamma, &hid)
+	inverseGammaAddHid := new(fr.Element).Inverse(gammaAddHid)
+	// sk_{id} = g ^ {1 / gamma+H(id)}
+	sk := new(bn254.G1Affine).ScalarMultiplication(&msk.G, inverseGammaAddHid.BigInt(new(big.Int)))
+	return &UserSecretKey{
+		Sk: *sk,
+	}, nil
+}
+
+func Encrypt(s []Identity, pk *PublicKey) (*Ciphertext, error) {
+	//k, err := new(fr.Element).SetRandom()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//negK := new(fr.Element).Neg(k)
+	//// c1 = w^{-k}
+	//C1 := new(bn254.G1Affine).ScalarMultiplication(&pk.W, negK.BigInt(new(big.Int)))
+	//
+	//// c2 = h^{k }
+	//prodIdentity := new(fr.Element).SetOne()
+	//for _, id := range s {
+	//	hid := hash.BytesToField(id.Id)
+	//	temp := new(fr.Element).Add(pk.)
+	//}
+	//
+	//C2 := new(bn254.G2Affine).ScalarMultiplication(&pk.H, negK.BigInt(new(big.Int)))
+	//
+	//K := new(bn254.GT).Exp(pk.V, k.BigInt(new(big.Int)))
 }
